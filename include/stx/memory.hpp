@@ -28,14 +28,20 @@ class owned {
 private:
 	using Tself = owned<T, Tdel>;
 	using Tptr  = pointer_to<T>;
-	using Tref  = remove_pointer<Tptr>;
+	using Tref  = remove_pointer<Tptr>&;
 
 	mutable Tptr m_pointer;
 	mutable Tdel m_deleter;
 
 public:
 	constexpr inline
-	owned(Tptr ptr = nullptr, const Tdel& del = Tdel()) :
+	owned(std::nullptr_t = nullptr) :
+		m_pointer(nullptr),
+		m_deleter()
+	{}
+
+	constexpr inline
+	owned(Tptr ptr, const Tdel& del = Tdel()) :
 		m_pointer(ptr),
 		m_deleter(del)
 	{}
@@ -85,13 +91,21 @@ public:
 	}
 
 	constexpr inline
-	T* get() const noexcept { return m_pointer; }
+	Tptr get() const noexcept { return m_pointer; }
 
 	constexpr inline
-	T* operator->() const noexcept { return m_pointer; }
+	Tptr operator->() const noexcept { return m_pointer; }
 
 	constexpr inline
-	T& operator*()  const noexcept { return *m_pointer; }
+	Tref operator*()  const noexcept { return *m_pointer; }
+
+	constexpr inline
+	operator Tptr() const noexcept { return m_pointer; }
+
+	template<typename Idx, typename = typename std::enable_if<is_array<T>>>
+	Tref operator[](Idx i) const noexcept {
+		return m_pointer[i];
+	}
 };
 
 template<typename T, typename Tdel = stx::default_delete<T>> constexpr inline
@@ -245,22 +259,28 @@ template<typename T>
 class shared {
 	using Tself = shared<T>;
 	using Tptr  = pointer_to<T>;
-	using Tref  = remove_pointer<Tptr>;
+	using Tref  = remove_pointer<Tptr>&;
 
 	detail::shared_block::shared_ref m_shared_block;
 	mutable Tptr                     m_pointer;
 
 public:
 	constexpr
-	shared() :
+	shared(std::nullptr_t = nullptr) :
 		m_pointer(nullptr)
 	{}
 
-	~shared() {}
+	shared(detail::shared_block* block, Tptr ptr) :
+		shared(nullptr)
+	{
+		if(block && block->shared_refs()) {
+			m_shared_block = block->new_shared_ref();
+			m_pointer      = ptr;
+		}
+	}
 
 	shared(Tself const& other) :
-		m_shared_block(other.m_shared_block ? m_shared_block->new_shared_ref() : nullptr),
-		m_pointer(other.m_pointer)
+		shared(other.m_shared_block.get(), other.m_pointer)
 	{}
 
 	shared(Tself&& other) :
@@ -268,6 +288,11 @@ public:
 		m_pointer(other.m_pointer)
 	{
 		other.m_pointer = nullptr;
+	}
+
+	template<typename Tx>
+	shared<Tx> cast() {
+		return shared<Tx>(m_shared_block.get(), static_cast<pointer_to<Tx>>(m_pointer));
 	}
 
 	Tself& operator=(Tself const& other) noexcept {
@@ -284,25 +309,28 @@ public:
 		return *this;
 	}
 
-	inline Tptr get()        const noexcept { return m_pointer; }
-	inline Tptr operator->() const noexcept { return m_pointer; }
-	inline Tref operator*()  const noexcept { return *m_pointer; }
+	constexpr inline Tptr get()        const noexcept { return m_pointer; }
+	constexpr inline Tptr operator->() const noexcept { return m_pointer; }
+	constexpr inline Tref operator*()  const noexcept { return *m_pointer; }
 
-	template<typename Idx, typename = typename std::enable_if<is_array<T>>>
+	constexpr inline
+	operator Tptr() const noexcept { return m_pointer; }
+
+	template<typename Idx, typename = typename std::enable_if<is_array<T>, Idx>::type>
 	Tref operator[](Idx i) const noexcept {
 		return m_pointer[i];
 	}
 };
 
 template<typename T, typename Tdel = stx::default_delete<T>>
-owned<T, Tdel> share(T* t, Tdel const& del = Tdel()) noexcept {
+shared<T> share(T* t, Tdel const& del = Tdel()) noexcept {
 	return share<T>(new detail::simple_shared_block<T, Tdel>(t, del), t);
 }
 
 template<typename T, typename... ARGS>
-owned<T> new_shared(ARGS&&... args) noexcept {
+shared<T> new_shared(ARGS&&... args) noexcept {
 	auto* block = new detail::aligned_shared_block<T>(std::forward<ARGS>(args)...);
-	return share<T>(block, block->pointer());
+	return shared<T>(block, block->pointer());
 }
 
 

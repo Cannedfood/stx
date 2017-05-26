@@ -118,12 +118,13 @@ using default_hash = fast64;
 
 template<typename hashtype = hash_type::default_hash>
 struct basic_hash {
+	using type       = basic_hash<hashtype>;
 	using value_type = typename hashtype::value_type;
 	using state_type = typename hashtype::state_type;
 
 	value_type value;
 
-	inline
+	constexpr inline
 	operator value_type() const noexcept { return value; }
 };
 
@@ -170,6 +171,24 @@ public:
 	operator hash_value() const noexcept {
 		return hash;
 	}
+
+	inline
+	bool operator<(const Tself& other) const noexcept {
+		if(hash != other.hash) return hash < other.hash;
+		for(size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
+			if(value[i] != other.value[i]) return value[i] < other.value[i];
+		}
+		return false; // same
+	}
+
+	inline
+	bool operator==(const Tself& other) const noexcept {
+		if(hash != other.hash) return false;
+		for (size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
+			if(value[i] != other.value[i]) return false;
+		}
+		return true;
+	};
 };
 
 using hash   = basic_hash<>;

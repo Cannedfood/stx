@@ -3,7 +3,7 @@
 #define xgetter(ACCESSOR, MEMBER) \
 	inline auto const& ACCESSOR() const noexcept { return MEMBER; }
 
-#define xsetter(ACCESSOR, MEMBER)                \
+#define xsetter(ACCESSOR, MEMBER)                 \
 	inline auto& ACCESSOR(decltype(MEMBER)& m) {  \
 		MEMBER = m;                               \
 		return *this;                             \
@@ -14,4 +14,5 @@
 		return *this;                             \
 	}
 
-#define xaccess(ACCESSOR, MEMBER) xaccessR(ACCESSOR, MEMBER) xaccessW(ACCESSOR, MEMBER)
+#define xaccess(ACCESSOR, MEMBER) \
+	xgetter(ACCESSOR, MEMBER) xsetter(ACCESSOR, MEMBER)
