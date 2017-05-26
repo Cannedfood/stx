@@ -67,6 +67,8 @@ Replacements for some stl classes with additional functionality and also new cla
 ## Build options
 - `STX_DEBUG_TOOLS X` where X can be 0 or 1
 	- Enables runtime assertions and warnings
+- `STX_DEBUG`
+	- Enables internal debugging
 
 ## License
 The code is lincensed under the MIT license, see License.txt
