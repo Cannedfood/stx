@@ -200,11 +200,18 @@ public:
 
 	inline
 	bool operator==(const Tself& other) const noexcept {
-		if(hash != other.hash) return false;
-		for (std::size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
-			if(value[i] != other.value[i]) return false;
+		if(hash != other.hash) {
+			return false;
 		}
-		return true;
+		else if(value == other.value && length == other.length) {
+			return true;
+		}
+		else {
+			for (std::size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
+				if(value[i] != other.value[i]) return false;
+			}
+			return true;
+		}
 	};
 };
 
