@@ -27,6 +27,11 @@ struct fnv_1a_64bit {
 		return state;
 	}
 
+	constexpr static inline
+	value_type finalize_hash(const state_type& state) noexcept {
+		return state;
+	}
+
 	template<std::size_t len> constexpr static inline
 	value_type constexpr_hash_strn(const char (&strn)[len]) noexcept {
 		state_type state = create_state();
@@ -59,6 +64,11 @@ struct fnv_1a_32bit {
 		return state;
 	}
 
+	constexpr static inline
+	value_type finalize_hash(const state_type& state) noexcept {
+		return state;
+	}
+
 	template<std::size_t len> constexpr static
 	value_type constexpr_hash_strn(const char (&strn)[len]) noexcept {
 		state_type state = create_state();
@@ -85,7 +95,7 @@ struct fnv_1a_32bit_xor_folded {
 	}
 
 	constexpr static inline
-	value_type collapse_hash(const state_type& state) noexcept {
+	value_type finalize_hash(const state_type& state) noexcept {
 		return ((state << 16) ^ state);
 	}
 
@@ -118,10 +128,20 @@ struct basic_hash {
 };
 
 template<typename hashtype = hash_type::default_hash>
-struct basic_symbol {
-	const typename hashtype::value_type hash;
-	const char*                         value;
-	const std::size_t                   length;
+class basic_symbol {
+	using Tself = basic_symbol<hashtype>;
+	using hash_value = typename hashtype::value_type;
+
+	constexpr inline
+	basic_symbol(const char* v, std::size_t len, hash_value h) :
+		hash(h),
+		value(v),
+		length(len)
+	{}
+public:
+	const hash_value  hash;
+	const char*       value;
+	const std::size_t length;
 
 	template<std::size_t len> constexpr // implicit
 	basic_symbol(const char (&strn)[len]) :
@@ -129,6 +149,27 @@ struct basic_symbol {
 		value(strn),
 		length(len)
 	{}
+
+	constexpr inline
+	static Tself unsafe_construct(const char* data, std::size_t len) {
+		auto hash = hashtype::finalize_hash(
+			hashtype::increment_hash(
+				hashtype::create_state(),
+				data, len
+			)
+		);
+		return Tself(data, len, hash);
+	}
+
+	constexpr inline
+	operator const char*() const noexcept {
+		return value;
+	}
+
+	constexpr inline
+	operator hash_value() const noexcept {
+		return hash;
+	}
 };
 
 using hash   = basic_hash<>;
@@ -142,6 +183,11 @@ using symbol32 = basic_symbol<hash_type::fnv_1a_32bit>;
 
 using hash64   = basic_hash<hash_type::fnv_1a_64bit>;
 using symbol64 = basic_symbol<hash_type::fnv_1a_64bit>;
+
+constexpr inline
+symbol operator "" _sym(const char* strn, std::size_t len) {
+	return symbol::unsafe_construct(strn, len);
+}
 
 } // namespace stx
 
