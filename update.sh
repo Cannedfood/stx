@@ -1,12 +1,14 @@
 #!/bin/bash
 
-rm ./include/*
+scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-for header in ./include/stx/*.hpp
+rm "${scriptdir}/include/"* 2> /dev/null
+
+for header in "${scriptdir}/include/stx/"*.hpp
 do
 	if [ ! -d "${header}" ]
 	then
 		name=`basename ${header%.*}`
-		printf '#include "%s"' "stx/${name}.hpp" > "./include/x${name}"
+		printf '#include "%s"' "stx/${name}.hpp" > "${scriptdir}/include/x${name}"
 	fi
 done
