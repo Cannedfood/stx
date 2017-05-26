@@ -1,5 +1,6 @@
 #include "test.hpp"
 
+#include <cstddef>
 #include <iostream>
 
 // Test compile only
@@ -33,5 +34,5 @@ int main(int argc, char const** argv) {
 	std::cout << "passed: " << tests - fails << std::endl;
 	std::cout << "FAILED: " << fails << std::endl;
 
-	return 0;
+	return fails == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
