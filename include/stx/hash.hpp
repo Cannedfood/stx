@@ -2,6 +2,9 @@
 
 #include <cstdint>
 
+#include <utility>
+#include <type_traits>
+
 namespace stx {
 
 namespace hash_type {
@@ -10,8 +13,8 @@ struct fnv_1a_64bit {
 	using value_type = uint64_t;
 	using state_type = uint64_t;
 
-	constexpr static uint64_t FnvPrime    = 1099511628211UL;
-	constexpr static uint64_t OffsetBasis = 14695981039346656037UL;
+	constexpr static const uint64_t FnvPrime    = 1099511628211UL;
+	constexpr static const uint64_t OffsetBasis = 14695981039346656037UL;
 
 	constexpr static inline
 	state_type create_state() noexcept {
@@ -35,11 +38,11 @@ struct fnv_1a_64bit {
 	template<std::size_t len> constexpr static inline
 	value_type constexpr_hash_strn(const char (&strn)[len]) noexcept {
 		state_type state = create_state();
-		for(char c : strn) {
-			state ^= c;
+		for (std::size_t i = 0; i < len - 1; i++) { // len - 1 -> last element == '\0'
+			state ^= strn[i];
 			state *= FnvPrime;
 		}
-		return state;
+		return finalize_hash(state);
 	}
 };
 
@@ -47,8 +50,8 @@ struct fnv_1a_32bit {
 	using value_type = uint32_t;
 	using state_type = uint32_t;
 
-	constexpr static uint32_t FnvPrime    = 16777619U;
-	constexpr static uint32_t OffsetBasis = 2166136261U;
+	constexpr static const uint32_t FnvPrime    = 16777619U;
+	constexpr static const uint32_t OffsetBasis = 2166136261U;
 
 	constexpr static inline
 	state_type create_state() noexcept {
@@ -72,11 +75,11 @@ struct fnv_1a_32bit {
 	template<std::size_t len> constexpr static
 	value_type constexpr_hash_strn(const char (&strn)[len]) noexcept {
 		state_type state = create_state();
-		for(char c : strn) {
-			state ^= c;
+		for (std::size_t i = 0; i < len - 1; i++) { // len - 1 -> last element == '\0'
+			state ^= strn[i];
 			state *= FnvPrime;
 		}
-		return state;
+		return finalize_hash(state);
 	}
 };
 
@@ -116,22 +119,42 @@ using default_hash = fast64;
 
 
 
-template<typename hashtype = hash_type::default_hash>
+template<typename hasher = hash_type::default_hash>
 struct basic_hash {
-	using type       = basic_hash<hashtype>;
-	using value_type = typename hashtype::value_type;
-	using state_type = typename hashtype::state_type;
+	using type       = basic_hash<hasher>;
+	using value_type = typename hasher::value_type;
+	using state_type = typename hasher::state_type;
 
-	value_type value;
+	value_type hash_value;
 
 	constexpr inline
-	operator value_type() const noexcept { return value; }
+	operator value_type() const noexcept { return hash_value; }
+
+	inline
+	basic_hash(const void* data, std::size_t size) :
+		hash_value(hasher::finalize_hash(
+			hasher::increment_hash(
+				hasher::create_state(),
+				(const char*) data, size
+			)
+		))
+	{}
+
+	template<typename T, typename = typename std::enable_if<std::is_trivial<T>::value>::type> inline
+	basic_hash(T const& t) :
+		basic_hash(&t, sizeof(T))
+	{}
+
+	template<std::size_t len> constexpr
+	basic_hash(const char (&strn)[len]) :
+		hash_value(hasher::constexpr_hash_strn(strn))
+	{}
 };
 
-template<typename hashtype = hash_type::default_hash>
+template<typename hasher = hash_type::default_hash>
 class basic_symbol {
-	using Tself = basic_symbol<hashtype>;
-	using hash_value = typename hashtype::value_type;
+	using Tself = basic_symbol<hasher>;
+	using hash_value = typename hasher::value_type;
 
 	constexpr inline
 	basic_symbol(const char* v, std::size_t len, hash_value h) :
@@ -146,20 +169,14 @@ public:
 
 	template<std::size_t len> constexpr // implicit
 	basic_symbol(const char (&strn)[len]) :
-		hash(hashtype::constexpr_hash_strn(strn)),
+		hash(hasher::constexpr_hash_strn(strn)),
 		value(strn),
 		length(len)
 	{}
 
 	constexpr inline
 	static Tself unsafe_construct(const char* data, std::size_t len) {
-		auto hash = hashtype::finalize_hash(
-			hashtype::increment_hash(
-				hashtype::create_state(),
-				data, len
-			)
-		);
-		return Tself(data, len, hash);
+		return Tself(data, len, basic_hash<hasher>(data, len));
 	}
 
 	constexpr inline
@@ -175,7 +192,7 @@ public:
 	inline
 	bool operator<(const Tself& other) const noexcept {
 		if(hash != other.hash) return hash < other.hash;
-		for(size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
+		for(std::size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
 			if(value[i] != other.value[i]) return value[i] < other.value[i];
 		}
 		return false; // same
@@ -184,7 +201,7 @@ public:
 	inline
 	bool operator==(const Tself& other) const noexcept {
 		if(hash != other.hash) return false;
-		for (size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
+		for (std::size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
 			if(value[i] != other.value[i]) return false;
 		}
 		return true;
