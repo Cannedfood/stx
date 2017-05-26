@@ -26,8 +26,10 @@
 
 #else // defined(STX_DEBUG_TOOLS)
 
-#define xassert(TEST)
-#define xassertmsg(TEST, MSG)
+#define xassert(TEST) \
+	do { TEST; } while(false)
+#define xassertmsg(TEST, MSG) \
+	do { TEST; } while(false)
 
 #endif // defined(STX_DEBUG_TOOLS)
 
