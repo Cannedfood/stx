@@ -27,9 +27,9 @@
 #else // defined(STX_DEBUG_TOOLS)
 
 #define xassert(TEST) \
-	do { TEST; } while(false)
+	do { if(TEST); } while(false) // The if is necessary to supress warnings
 #define xassertmsg(TEST, MSG) \
-	do { TEST; } while(false)
+	do { if(TEST); } while(false)
 
 #endif // defined(STX_DEBUG_TOOLS)
 
@@ -46,7 +46,8 @@ class important {
 	mutable bool m_handled;
 
 public:
-	constexpr important(bool val) : m_value(val), m_handled(false) {}
+	template<typename Tx> constexpr
+	important(Tx&& val) : m_value(val), m_handled(false) {}
 
 	~important() noexcept {
 		if(!m_handled) {
@@ -54,9 +55,10 @@ public:
 		}
 	}
 
-	constexpr inline operator T() const noexcept {
+	constexpr inline
+	operator T() const noexcept {
 		m_handled = true;
-		return m_value;
+		return std::move(m_value);
 	}
 };
 
@@ -66,8 +68,8 @@ public:
 
 namespace stx {
 
-template <typename T>
-using important = bool;
+template<typename T>
+using important = T;
 
 } // namespace stx
 
