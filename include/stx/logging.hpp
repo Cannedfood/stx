@@ -6,8 +6,6 @@ namespace stx {
 
 namespace detail {
 
-extern bool allow_log_colors;
-
 template<unsigned level>
 std::ostream& get_logstream() { return std::cout; }
 
@@ -103,4 +101,63 @@ void error(ARGS&&... args) {
 	writelog<log_error>(std::forward<ARGS>(args)...);
 }
 
+} // namespace stx
+
+
+namespace stx {
+namespace detail {
+
+#ifdef STX_LOG_COLORS
+
+template<> inline
+std::ostream& get_logstream<log_warn>() {
+	std::cout << "\033[33m";
+	return std::cout;
+}
+
+template<> inline
+std::ostream& get_logstream<log_perfwarn>() {
+	std::cout << "\033[33m";
+	return std::cout;
+}
+
+template<> inline
+std::ostream& get_logstream<log_error>() {
+	std::cout << "\033[31m";
+	return std::cerr;
+}
+
+template<> inline void release_logstream<log_warn>()     { std::cout << "\033[0m"; }
+template<> inline void release_logstream<log_perfwarn>() { std::cout << "\033[0m"; }
+template<> inline void release_logstream<log_error>()    { std::cout << "\033[0m"; }
+
+#else
+
+template<> inline
+std::ostream& get_logstream<log_info>() {
+	std::cout << "I: ";
+	return std::cout;
+}
+
+template<> inline
+std::ostream& get_logstream<log_warn>() {
+	std::cout << "W: ";
+	return std::cout;
+}
+
+template<> inline
+std::ostream& get_logstream<log_perfwarn>() {
+	std::cout << "PW:";
+	return std::cout;
+}
+
+template<> inline
+std::ostream& get_logstream<log_error>() {
+	std::cout << "E: ";
+	return std::cerr;
+}
+
+#endif
+
+} // namespace detail
 } // namespace stx
