@@ -192,7 +192,7 @@ public:
 	inline
 	bool operator<(const Tself& other) const noexcept {
 		if(hash != other.hash) return hash < other.hash;
-		for(std::size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
+		for(std::size_t i = 0; i < (length - 1) && i < (other.length - 1); i++) {
 			if(value[i] != other.value[i]) return value[i] < other.value[i];
 		}
 		return false; // same
@@ -207,7 +207,7 @@ public:
 			return true;
 		}
 		else {
-			for (std::size_t i = 0; value[i - 1] && other.value[i - 1]; i++) {
+			for (std::size_t i = 0; i < (length - 1) && i < (other.length - 1); i++) {
 				if(value[i] != other.value[i]) return false;
 			}
 			return true;
