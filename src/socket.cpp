@@ -70,13 +70,6 @@ socket& socket::open(sockdomain d, sockprotocol p) {
 
 	m_refcount = new int(1);
 
-	if(0 > fcntl(m_handle, F_SETFL, fcntl(m_handle, F_GETFL, 0) | O_NONBLOCK)) {
-		close();
-		throw failed_operation(
-		    std::string("Could not set the socket to non-blocking: ") +
-		    strerror(errno));
-	}
-
 	return *this;
 }
 

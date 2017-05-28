@@ -6,7 +6,7 @@ using namespace stx;
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-#include <future>
+#include <thread>
 
 #include <string>
 #include <vector>
@@ -46,11 +46,10 @@ void test_xsocket() {
 
 	test(s.open(ip4, tcp).bind(PORT));
 
-	return; // Cannot test accept without timeouts
-
-	std::async(std::launch::async, [&] {
+	bool accepting = false;
+	std::thread([&] {
 		try {
-			c = s.accept(1, 1s);
+			c = s.accept(1);
 			test(c);
 			if(c) {
 				HttpResponse http;
@@ -58,6 +57,7 @@ void test_xsocket() {
 				http.headers.emplace_back("Connection: close");
 				c.write_s(http.to_string().c_str());
 			}
+			c.close();
 		}
 		catch(socket::failed_operation& e) {
 			puts(e.what());
@@ -68,7 +68,10 @@ void test_xsocket() {
 			test(!"Socket thinks there is an error in our code");
 		}
 		s.close();
-	});
+	}).detach();
+
+	std::this_thread::sleep_for(100ms);
+	system("curl localhost:" PORTSTR);
 
 	return;
 }
