@@ -1,151 +1,282 @@
 #include "../include/stx/socket.hpp"
-#include "../include/stx/logging.hpp"
-
-#include <utility>
-
-#ifdef _WIN32
-extern "C" {
-#	include <winsock.h>
-}
-#else // -> Unix
 
 extern "C" {
-#	include <sys/types.h>
-#	include <sys/socket.h>
-#	include <unistd.h>
-
-#	include <errno.h> // errno
-#	include <string.h> // strerror
+#include <fcntl.h>
+#include <netinet/in.h> // struct sockaddr_in
+#include <sys/socket.h>
+#include <unistd.h> // close
 }
 
-#	define SOCKET_ERROR -1
+#include <cstring> // strerror
 
-	inline
-	int closesocket(int s) { return ::close(s); }
-
-	inline
-	const char* sockerr() { return ::strerror(errno); }
-#endif
+using namespace std::chrono;
+using namespace std::chrono_literals;
 
 namespace stx {
 
-// == stx::detail::socket_based ==============================================================
+// == socket ==============================================================
 
-namespace detail {
+// -- socket: Constructors; Moving & Copying --------------------------------------
 
-socket_based::socket_based() :
-	m_socket(SOCKET_ERROR),
-	m_type(socket_type_invalid),
-	m_protocol(socket_protocol_invalid)
-{}
+socket::socket() : m_handle(-1), m_refcount(0) {}
+socket::socket(socket const& other) : socket() { *this = other; }
+socket::socket(socket&& other) : socket() { *this = std::move(other); }
+socket::~socket() { close(); }
 
-socket_based::socket_based(socket_based&& s) :
-	m_socket(s.m_socket),
-	m_type(s.m_type),
-	m_protocol(s.m_protocol)
-{
-	s.m_socket    = SOCKET_ERROR;
-	s.m_type      = socket_type_invalid;
-	s.m_protocol  = socket_protocol_invalid;
-}
-
-socket_based::~socket_based() noexcept {
-	if(m_socket) {
-		close();
-	}
-}
-
-socket_based& socket_based::operator=(socket_based&& other) noexcept {
-	std::swap(m_socket,    other.m_socket);
-	std::swap(m_type,      other.m_type);
-	std::swap(m_protocol, other.m_protocol);
-	other.close();
+socket& socket::operator=(socket&& other) {
+	close();
+	std::swap(m_handle, other.m_handle);
+	std::swap(m_refcount, other.m_refcount);
 	return *this;
 }
 
-bool socket_based::open(socket_type type, socket_protocol proto) {
-	if(m_socket) return false;
+socket& socket::operator=(stx::socket const& other) {
+	m_handle   = other.m_handle;
+	m_refcount = other.m_refcount;
+	if(is_open()) ++*m_refcount;
+	return *this;
+}
 
-	if(type  == socket_type_invalid)     return false;
-	if(proto == socket_protocol_invalid) return false;
 
-	constexpr static const int domain[] = {
-		-1,           //<! INVALID
-		AF_INET,      //<! ipv4, internet protocol (ip) version 4
-		AF_INET6,     //<! ipv6, internet protocol (ip) version 6
-		AF_IRDA,      //<! irda, e.g. infrared sensors
-		AF_BLUETOOTH, //<! bluetooth
-		AF_UNIX       //<! unix_local; unix domain sockets for interprocess communication
-	};
+// -- socket: General -----------------------------------------------------
 
-	constexpr static const int type_values[] = {
-		-1,          //<! INVALID
-		SOCK_STREAM, //<! tcp
-		SOCK_DGRAM   //<! udp
-	};
+socket& socket::open(sockdomain d, sockprotocol p) {
+	if(is_open()) {
+		throw invalid_operation(
+		    "Cannot open an already open socket. Please close it first or "
+		    "create a new one");
+	}
 
-	m_socket = ::socket(domain[type], type_values[type], 0);
+	if(d == sockdomain_invalid || d >= _num_sockdomains) {
+		throw invalid_operation("invalid socket domain: " + std::to_string(d));
+	}
+
+	if(p == sockprotocol_invalid || p >= _num_sockprotocols) {
+		throw invalid_operation("invalid socket protocol: " +
+		                        std::to_string(p));
+	}
+
+	constexpr static int domains[_num_sockdomains] = {
+	    -1, AF_INET, AF_INET6, AF_IRDA, AF_BLUETOOTH, AF_UNIX};
+
+	constexpr static int protocols[_num_sockprotocols] = {
+	    -1, SOCK_DGRAM, SOCK_STREAM};
+
+	m_handle = ::socket(domains[d], protocols[p], 0);
 	if(!is_open()) {
+		throw failed_operation(std::string("Failed opening socket: ") +
+		                       strerror(errno));
+	}
 
-		error("Error opening socket: ", sockerr());
-		return false;
+	m_refcount = new int(1);
+
+	if(0 > fcntl(m_handle, F_SETFL, fcntl(m_handle, F_GETFL, 0) | O_NONBLOCK)) {
+		close();
+		throw failed_operation(
+		    std::string("Could not set the socket to non-blocking: ") +
+		    strerror(errno));
+	}
+
+	return *this;
+}
+
+socket& socket::open(sockdomain d, sockprotocol p, uint16_t port) {
+	return open(d, p).bind(port);
+}
+
+socket& socket::close() {
+	if(is_open()) {
+		if(--*m_refcount == 0) {
+			delete m_refcount;
+			::close(m_handle);
+		}
+		m_handle   = -1;
+		m_refcount = nullptr;
+	}
+	return *this;
+}
+
+socket& socket::bind(uint16_t port) {
+	if(!is_open())
+		throw invalid_operation("Cannot bind a socket which was not opened.");
+
+	sockaddr_in address;
+	address.sin_family      = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port        = htons(port);
+
+	if(::bind(m_handle, (sockaddr*)&address, sizeof(address))) {
+		throw failed_operation("Failed binding socket to port " +
+		                       std::to_string(port) + ": " + strerror(errno));
+	}
+
+	return *this;
+}
+
+// -- socket: Server -------------------------------------------------------
+
+connection socket::accept(size_t                    max_queued,
+                          std::chrono::milliseconds timeout) {
+	if(!is_open()) {
+		throw invalid_operation(
+		    "Cannot accept connections on an unopened socket.");
+	}
+
+	// TODO: check if bound?
+
+	{
+		int status;
+
+		if(timeout < 0ms) {
+			blocking(true);
+			status = ::listen(m_handle, max_queued);
+		} else {
+			throw invalid_operation("Timeouts not yet implemented");
+
+			auto beg = high_resolution_clock::now();
+			do {
+				status = ::listen(m_handle, max_queued);
+
+				if(high_resolution_clock::now() - beg > timeout) {
+					puts("Timeout");
+					return connection();
+				}
+			} while(status == EWOULDBLOCK);
+		}
+
+		if(status) {
+			printf("Error waiting for incoming connections in accept: %s\n", strerror(errno));
+			return connection();
+		}
+	}
+
+	connection c;
+
+	// TODO: What connection members should we extract from the adress struct?
+	sockaddr_in address;
+	socklen_t   len = sizeof(address);
+
+	c.m_handle = ::accept(m_handle, (sockaddr*)&address, &len);
+	if(c) { // Only assign socket if connection is valid
+		c.m_socket = *this;
 	}
 	else {
-		m_type     = type;
-		m_protocol = proto;
-		return true;
+		printf("Failed opening connection: %s\n", strerror(errno));
 	}
+
+	return c;
 }
 
-void socket_based::close() {
-	if(is_open()) {
-		if(::closesocket(m_socket)) {
-			error("Failed closing socket: ", sockerr());
-		}
-		m_socket   = SOCKET_ERROR;
-		m_type     = socket_type_invalid;
-		m_protocol = socket_protocol_invalid;
+connection socket::accept(sockdomain                d,
+                          sockprotocol              p,
+                          uint16_t                  port,
+                          size_t                    max_queued,
+                          std::chrono::milliseconds timeout) {
+	return open(d, p, port).accept(max_queued, timeout);
+}
+
+// -- socket: Client --------------------------------------------------------------
+
+
+// -- socket: Getters & Setters --------------------------------------------------
+
+
+sockprotocol socket::protocol() const noexcept {
+	if(!is_open()) { return sockprotocol_invalid; }
+
+	int       type;
+	socklen_t type_size = sizeof(type);
+
+	if(getsockopt(m_handle, SOL_SOCKET, SO_TYPE, &type, &type_size)) {
+		return sockprotocol_invalid;
 	}
+
+	if(type == SOCK_STREAM) return sockprotocol::tcp;
+	if(type == SOCK_DGRAM) return sockprotocol::udp;
+	return sockprotocol_invalid;
 }
 
-} // namespace detail
+// TODO: implement sockdomain socket::domain() const noexcept;
 
-// == stx::server ==============================================================
+size_t socket::references() const noexcept {
+	if(!is_open()) return 0;
+	return *m_refcount;
+}
 
-server::server() :
-	socket_based()
-{}
+bool socket::listening() const noexcept {
+	if(!is_open()) return false;
 
-server::~server() noexcept {
+	int       listens;
+	socklen_t listens_size = sizeof(listens);
+
+	if(getsockopt(
+	       m_handle, SOL_SOCKET, SO_ACCEPTCONN, &listens, &listens_size)) {
+		return false;
+	}
+
+	return listens != 0;
+}
+
+bool socket::blocking() const noexcept {
+	return (fcntl(m_handle, F_GETFL, 0) & O_NONBLOCK) == 0;
+}
+
+socket& socket::blocking(bool b) {
+	int flags = fcntl(m_handle, F_GETFL, 0);
+
+	int result;
+	if(b) {
+		result = fcntl(m_handle, F_SETFL, flags & ~O_NONBLOCK);
+	}
+	else {
+		result = fcntl(m_handle, F_SETFL, flags | O_NONBLOCK);
+	}
+
+	if(result != 0) {
+		close();
+		throw failed_operation(
+		    std::string("Could not set the socket::blocking to ") + (b ? "true" : "false") + ": " +
+		    strerror(errno));
+	}
+
+	return *this;
+}
+
+// == connection ==============================================================
+
+// -- Constructors; Copy & Move behavior --------------------------------------
+connection::connection() : m_socket(), m_handle(-1) {}
+
+connection::connection(connection&& other) : connection() {
+	*this = std::move(other);
+}
+
+connection::~connection() { close(); }
+
+connection& connection::operator=(connection&& other) {
 	close();
+	std::swap(m_handle, other.m_handle);
+	std::swap(m_socket, other.m_socket);
+	return *this;
 }
 
-bool server::open(socket_type type, socket_protocol proto) noexcept {
-	socket_based::open(type, proto);
-	return false;
+// -- connection: General --------------------------------------------------------------
+connection& connection::close() {
+	if(*this) {
+		::close(m_handle);
+		m_handle = -1;
+		m_socket.close();
+	}
+	return *this;
 }
 
-void server::close() noexcept {
-	// if(is_open()) {
-		socket_based::close();
-	// }
-}
+// -- connection: IO --------------------------------------------------------------
+void connection::write_s(const char* s) {
+	if(!(*this)) {
+		throw socket::invalid_operation("Cannot write to invalid connection");
+	}
 
-
-// == stx::client ==============================================================
-
-client::client() :
-	socket_based()
-{}
-
-client::~client() noexcept {
-	close();
-}
-
-void client::close() noexcept {
-	// if(is_open()) {
-		socket_based::close();
-	// }
+	write(m_handle, s, strlen(s));
 }
 
 } // namespace stx
