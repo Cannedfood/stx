@@ -261,8 +261,8 @@ class shared {
 	using Tptr  = pointer_to<T>;
 	using Tref  = remove_pointer<Tptr>&;
 
-	detail::shared_block::shared_ref m_shared_block;
-	mutable Tptr                     m_pointer;
+	mutable detail::shared_block::shared_ref m_shared_block;
+	mutable Tptr                             m_pointer;
 
 public:
 	constexpr
@@ -313,6 +313,8 @@ public:
 	constexpr inline Tptr operator->() const noexcept { return m_pointer; }
 	constexpr inline Tref operator*()  const noexcept { return *m_pointer; }
 
+	constexpr inline detail::shared_block* get_block() const noexcept { return m_shared_block.get(); }
+
 	constexpr inline
 	operator Tptr() const noexcept { return m_pointer; }
 
@@ -334,7 +336,7 @@ shared<T> new_shared(ARGS&&... args) noexcept {
 }
 
 
-// == weak<T> ==============================================================
+// == weak<T> ========================================================
 
 template<typename T>
 class weak {
@@ -345,6 +347,13 @@ class weak {
 	mutable T* m_pointer;
 
 public:
+	// -- Constructor -----------------------------------------
+
+	weak() :
+		m_shared_block(),
+		m_pointer(nullptr)
+	{}
+
 	weak(detail::shared_block* block, T* ptr) :
 		m_shared_block(),
 		m_pointer(nullptr)
@@ -359,22 +368,7 @@ public:
 		}
 	}
 
-	void reset(detail::shared_block* block, T* ptr) {
-		if(block && block->shared_refs()) {
-			m_shared_block = block->new_weak_ref();
-			m_pointer      = ptr;
-		}
-		else {
-			m_shared_block = nullptr;
-			m_pointer      = nullptr;
-		}
-	}
-
-	void reset() {
-		m_shared_block = nullptr;
-		m_pointer      = nullptr;
-	}
-
+	// -- Copy & Move ---------------------------------------------
 	weak(Tself const& other) :
 		weak(other.m_shared_block.get(), other.pointer)
 	{
@@ -388,27 +382,47 @@ public:
 		m_pointer(other)
 	{}
 
-	weak(Tshared const& s) :
-		weak()
-	{}
-
-	void operator=(Tself const& other) {
+	Tself& operator=(Tself const& other) {
 		reset(other.m_shared_block.get(), other.m_pointer);
+		return *this;
 	}
 
-	void operator=(Tself&& other) {
+	Tself& operator=(Tself&& other) {
 		reset(other.m_shared_block.release(), other.m_pointer);
 		other.m_pointer = nullptr;
+		return *this;
 	}
 
-	operator bool() const {
-		if(m_shared_block && m_shared_block->shared_refs())
-			return true;
-		else {
-			m_shared_block.reset();
-			m_pointer = nullptr;
-			return false;
+	// -- Assignment --------------------------------------------
+	weak(Tshared const& s) :
+		weak(s.get_block(), s.get())
+	{}
+
+	Tself& operator=(Tshared const& s) {
+		reset(s);
+		return *this;
+	}
+
+	// -- General operations -----------------------------------
+
+	void reset(detail::shared_block* block, T* ptr) {
+		if(block && block->shared_refs()) {
+			m_shared_block = block->new_weak_ref();
+			m_pointer      = ptr;
 		}
+		else {
+			m_shared_block = nullptr;
+			m_pointer      = nullptr;
+		}
+	}
+
+	void reset(Tshared const& s) {
+		reset(s.get_block(), s.get());
+	}
+
+	void reset() {
+		m_shared_block = nullptr;
+		m_pointer      = nullptr;
 	}
 
 	shared<T> lock() noexcept {
@@ -424,6 +438,16 @@ public:
 			return m_pointer;
 		else
 			return nullptr;
+	}
+
+	operator bool() const {
+		if(m_shared_block && m_shared_block->shared_refs())
+			return true;
+		else {
+			m_shared_block.reset();
+			m_pointer = nullptr;
+			return false;
+		}
 	}
 
 	inline T* operator->() const noexcept { return get(); }
