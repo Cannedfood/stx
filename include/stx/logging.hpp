@@ -131,7 +131,7 @@ template<> inline void release_logstream<log_warn>()     { std::cout << "\033[0m
 template<> inline void release_logstream<log_perfwarn>() { std::cout << "\033[0m"; }
 template<> inline void release_logstream<log_error>()    { std::cout << "\033[0m"; }
 
-#else
+#else // STX_LOG_COLORS
 
 template<> inline
 std::ostream& get_logstream<log_info>() {
@@ -157,7 +157,7 @@ std::ostream& get_logstream<log_error>() {
 	return std::cerr;
 }
 
-#endif
+#endif // STX_LOG_COLORS
 
 } // namespace detail
 } // namespace stx
