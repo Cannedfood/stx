@@ -176,7 +176,7 @@ protected:
 
 public:
 	using shared_ref = owned<shared_block, shared_ownership>;
-	using weak_ref = owned<shared_block, weak_ownership>;
+	using weak_ref   = owned<shared_block, weak_ownership>;
 
 	inline int shared_refs() const noexcept { return m_shared_refs; }
 	inline int weak_refs()   const noexcept { return m_weak_refs; }
@@ -207,7 +207,7 @@ public:
 	constexpr
 	simple_shared_block(Tptr ptr, const Tdel& del = Tdel()) :
 		m_pointer(ptr),
-		m_deleter(m_deleter)
+		m_deleter(del)
 	{}
 
 	inline Tptr pointer() noexcept { return m_pointer; }
@@ -229,8 +229,9 @@ public:
 	template<typename... ARGS> constexpr
 	aligned_shared_block(ARGS&&... args) {
 #ifdef STX_DEBUG
+		T* p = new (m_data) T(std::forward<ARGS>(args)...);
 		xassertmsg(
-			new (m_data) T(std::forward<ARGS>(args)...) == pointer(),
+			p == pointer(),
 			"STX code error! Please open an issue with reproduction information on github!"
 		);
 #else
@@ -238,9 +239,7 @@ public:
 #endif
 	}
 
-	~aligned_shared_block() {
-		reinterpret_cast<T*>(m_data)->~T();
-	}
+	~aligned_shared_block() {}
 
 	inline T* pointer() noexcept { return reinterpret_cast<T*>(m_data); }
 
@@ -267,17 +266,14 @@ class shared {
 public:
 	constexpr
 	shared(std::nullptr_t = nullptr) :
+		m_shared_block(nullptr),
 		m_pointer(nullptr)
 	{}
 
 	shared(detail::shared_block* block, Tptr ptr) :
-		shared(nullptr)
-	{
-		if(block && block->shared_refs()) {
-			m_shared_block = block->new_shared_ref();
-			m_pointer      = ptr;
-		}
-	}
+		m_shared_block(block ? block->new_shared_ref() : nullptr),
+		m_pointer(block ? ptr : nullptr)
+	{}
 
 	shared(Tself const& other) :
 		shared(other.m_shared_block.get(), other.m_pointer)
@@ -288,6 +284,18 @@ public:
 		m_pointer(other.m_pointer)
 	{
 		other.m_pointer = nullptr;
+	}
+
+	void reset(std::nullptr_t = nullptr) {
+		m_shared_block.reset();
+		m_pointer = nullptr;
+	}
+
+	void reset(detail::shared_block* block, Tptr ptr) {
+		if(block && block->shared_refs() != 0) {
+			m_shared_block = block->new_shared_ref();
+			m_pointer      = ptr;
+		}
 	}
 
 	template<typename Tx>
@@ -311,12 +319,15 @@ public:
 
 	constexpr inline Tptr get()        const noexcept { return m_pointer; }
 	constexpr inline Tptr operator->() const noexcept { return m_pointer; }
-	constexpr inline Tref operator*()  const noexcept { return *m_pointer; }
+	constexpr inline Tref operator*()  const { return *m_pointer; }
 
 	constexpr inline detail::shared_block* get_block() const noexcept { return m_shared_block.get(); }
 
 	constexpr inline
 	operator Tptr() const noexcept { return m_pointer; }
+
+	constexpr inline
+	operator bool() const noexcept { return m_pointer != nullptr; }
 
 	template<typename Idx, typename = typename std::enable_if<is_array<T>, Idx>::type>
 	Tref operator[](Idx i) const noexcept {
@@ -326,13 +337,13 @@ public:
 
 template<typename T, typename Tdel = stx::default_delete<T>>
 shared<T> share(T* t, Tdel const& del = Tdel()) noexcept {
-	return share<T>(new detail::simple_shared_block<T, Tdel>(t, del), t);
+	return shared<T>(new detail::simple_shared_block<T, Tdel>(t, del), t);
 }
 
-template<typename T, typename... ARGS>
+template<typename T, typename... ARGS> // TODO: this is somehow broken
 shared<T> new_shared(ARGS&&... args) noexcept {
 	auto* block = new detail::aligned_shared_block<T>(std::forward<ARGS>(args)...);
-	return shared<T>(block, block->pointer());
+	return shared<T>((detail::shared_block*) block, block->pointer());
 }
 
 
