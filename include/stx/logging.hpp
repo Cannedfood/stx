@@ -65,7 +65,7 @@ template<unsigned level, typename... ARGS> static
 void writelog(ARGS&&... args) {
 	auto& stream = detail::get_logstream<level>();
 #ifdef STX_MODULE_NAME
-	detail::write_simple(stream, '[', STX_MODULE_NAME, ']');
+	detail::write_simple(stream, '[', STX_MODULE_NAME, "] ");
 #endif
 	detail::write_simple(detail::get_logstream<level>(), std::forward<ARGS>(args)..., std::endl);
 	detail::release_logstream<level>();
@@ -75,7 +75,7 @@ template<unsigned level, typename... ARGS> static
 void writelog(const char* fmt, ARGS&&... args) {
 	auto& stream = detail::get_logstream<level>();
 #ifdef STX_MODULE_NAME
-	detail::write_simple(stream, '[', STX_MODULE_NAME, ']');
+	detail::write_simple(stream, '[', STX_MODULE_NAME, "] ");
 #endif
 	detail::write_formatted(stream, fmt, std::forward<ARGS>(args)...);
 	stream << std::endl;
