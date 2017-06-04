@@ -74,7 +74,7 @@ public:
 		if(m_pointer) {
 			m_deleter(m_pointer);
 		}
-		m_pointer = nullptr;
+		m_pointer = ptr;
 		m_deleter = del;
 	}
 
@@ -200,20 +200,23 @@ template<typename T, typename Tdel = stx::default_delete<T>>
 class simple_shared_block : public shared_block {
 	using Tptr = pointer_to<T>;
 
-	Tptr m_pointer;
-	Tdel m_deleter;
+	owned<T, Tdel> m_pointer;
 
 public:
 	constexpr
 	simple_shared_block(Tptr ptr, const Tdel& del = Tdel()) :
-		m_pointer(ptr),
-		m_deleter(del)
+		m_pointer(ptr, del)
 	{}
 
-	inline Tptr pointer() noexcept { return m_pointer; }
+	constexpr
+	simple_shared_block(owned<T, Tdel>&& p) :
+		m_pointer(std::move(p))
+	{}
+
+	inline Tptr pointer() noexcept { return m_pointer.get(); }
 
 	void destroy_pointer() override {
-		m_deleter(m_pointer);
+		m_pointer.reset();
 	}
 
 	void destroy_block()   override {
@@ -286,6 +289,11 @@ public:
 		other.m_pointer = nullptr;
 	}
 
+	template<typename Tdel>
+	shared(owned<T, Tdel>&& t) {
+		reset(std::move(t));
+	}
+
 	void reset(std::nullptr_t = nullptr) {
 		m_shared_block.reset();
 		m_pointer = nullptr;
@@ -295,6 +303,14 @@ public:
 		if(block && block->shared_refs() != 0) {
 			m_shared_block = block->new_shared_ref();
 			m_pointer      = ptr;
+		}
+	}
+
+	template<typename Tdel>
+	void reset(owned<T, Tdel>&& t) {
+		if(t) {
+			m_pointer      = t.get();
+			m_shared_block = (new detail::simple_shared_block<T, Tdel>(std::move(t)))->new_shared_ref();
 		}
 	}
 
@@ -314,6 +330,12 @@ public:
 		m_shared_block  = std::move(other.m_shared_block);
 		m_pointer       = other.m_pointer;
 		other.m_pointer = nullptr;
+		return *this;
+	}
+
+	template<typename Tdel>
+	Tself& operator=(owned<T, Tdel>&& p) noexcept {
+		reset(std::move(p));
 		return *this;
 	}
 
