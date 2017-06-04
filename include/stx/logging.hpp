@@ -12,10 +12,11 @@ std::ostream& get_logstream() { return std::cout; }
 template<unsigned level>
 void release_logstream() {}
 
-inline void write_simple(std::ostream& to) {}
+inline void write_simple(std::ostream&) {}
 
 template<typename T, typename... ARGS>
 void write_simple(std::ostream& to, T&& t, ARGS&&... args) {
+	to << t;
 	write_simple(to, std::forward<ARGS>(args)...);
 }
 
