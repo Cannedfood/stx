@@ -65,10 +65,12 @@ Replacements for some stl classes with additional functionality and also new cla
 	- A threadpool
 
 ## Build options
-- `STX_DEBUG_TOOLS X` where X can be 0 or 1
+- `STX_DEBUG_TOOLS=1`
 	- Enables runtime assertions and warnings
-- `STX_DEBUG`
-	- Enables internal debugging
+- `STX_DEBUG=1`
+	- Enables internal assertions (to debug the stx libraries)
+- `STX_MODULE_NAME=ModuleName`
+	- Mainly used for logging, prefixes logs from this module with '[ModuleName]'
 
 ## License
 The code is lincensed under the MIT license, see License.txt

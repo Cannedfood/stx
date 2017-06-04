@@ -2,6 +2,12 @@
 
 #include <iostream>
 
+#ifdef STX_MODULE_NAME
+#	define _STX_TO_STRING(X) #X
+#	define _STX_MARKO_TO_STRING(X) _STX_TO_STRING(X)
+#	define _STX_MODULE_NAME_STRING() _STX_MARKO_TO_STRING(STX_MODULE_NAME)
+#endif
+
 namespace stx {
 
 namespace detail {
@@ -65,7 +71,7 @@ template<unsigned level, typename... ARGS> static
 void writelog(ARGS&&... args) {
 	auto& stream = detail::get_logstream<level>();
 #ifdef STX_MODULE_NAME
-	detail::write_simple(stream, '[', STX_MODULE_NAME, "] ");
+	detail::write_simple(stream, "[" _STX_MODULE_NAME_STRING() "] ");
 #endif
 	detail::write_simple(detail::get_logstream<level>(), std::forward<ARGS>(args)..., std::endl);
 	detail::release_logstream<level>();
@@ -75,7 +81,7 @@ template<unsigned level, typename... ARGS> static
 void writelog(const char* fmt, ARGS&&... args) {
 	auto& stream = detail::get_logstream<level>();
 #ifdef STX_MODULE_NAME
-	detail::write_simple(stream, '[', STX_MODULE_NAME, "] ");
+	detail::write_simple(stream, "[" _STX_MODULE_NAME_STRING() "] ");
 #endif
 	detail::write_formatted(stream, fmt, std::forward<ARGS>(args)...);
 	stream << std::endl;
@@ -162,3 +168,9 @@ std::ostream& get_logstream<log_error>() {
 
 } // namespace detail
 } // namespace stx
+
+#ifdef STX_MODULE_NAME
+#	undef _STX_TO_STRING
+#	undef _STX_MARKO_TO_STRING
+#	undef _STX_MODULE_NAME_STRING
+#endif
