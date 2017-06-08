@@ -1,4 +1,4 @@
-#include <xsocket>
+#include <stx/wip/socket.hpp>
 
 #include "test.hpp"
 
@@ -46,7 +46,7 @@ void test_xsocket() {
 
 	test(s.open(ip4, tcp).bind(PORT));
 
-	bool accepting = false;
+	// bool accepting = false;
 	std::thread([&] {
 		try {
 			c = s.accept(1);
