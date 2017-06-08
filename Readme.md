@@ -5,6 +5,10 @@ Replacements for some stl classes with additional functionality and also new cla
 - More goals:
 	- More debugging capabilities (from off to insane, insane would be for example full iterator debugging)
 
+## Disclaimer
+The tests are very lacking at some points so don't yet rely on this stuff.
+I use it in my own projects, so I'll catch the worst errors there but still.
+
 ## Replacements
 - `memory` -> `xmemory`
 	- `std::unique_ptr<T, Tdel>` -> `stx::owned<T, Tdel>`
@@ -71,6 +75,10 @@ Replacements for some stl classes with additional functionality and also new cla
 	- Enables internal assertions (to debug the stx libraries)
 - `STX_MODULE_NAME=ModuleName`
 	- Mainly used for logging, prefixes logs from this module with '[ModuleName]'
+- `STX_UNSTABLE`
+	- Enable untested/VERY unstable features
+- `STX_WIP`
+	- Enable totally work in progress, pretty much unusable features
 
 ## License
 The code is lincensed under the MIT license, see License.txt
