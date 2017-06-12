@@ -29,7 +29,7 @@ public:
 		return duration_cast<duration<double, ratio<60>>>(now() - m_begin).count();
 	}
 	double seconds() const noexcept {
-		return duration_cast<duration<double>>(now() - m_begin).count();
+		return duration_cast<duration<double, ratio<1>>>(now() - m_begin).count();
 	}
 	double millis() const noexcept {
 		return duration_cast<duration<double, milli>>(now() - m_begin).count();
