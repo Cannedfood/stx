@@ -67,6 +67,34 @@ public:
 	}
 };
 
+/// A class used for debugging which checks whether a returned value was handled
+template <typename T>
+class asserted {
+	T            m_value;
+	mutable bool m_handled;
+
+public:
+	template<typename Tx> constexpr
+	asserted(Tx&& val) : m_value(val), m_handled(false) {}
+
+	~asserted() {
+		if(!m_handled) {
+			if(!m_value) {
+				xfatal("Asserted return value was not handled and evaluates to false");
+			}
+			else {
+				stx::warn("Unhandled important value! (important function result not handled)");
+			}
+		}
+	}
+
+	constexpr inline
+	operator T() const noexcept {
+		m_handled = true;
+		return std::move(m_value);
+	}
+};
+
 } // namespace stx
 
 #else // STX_DEBUG_TOOLS > 0
@@ -75,6 +103,9 @@ namespace stx {
 
 template<typename T>
 using important = T;
+
+template<typename T>
+using asserted = T;
 
 } // namespace stx
 
