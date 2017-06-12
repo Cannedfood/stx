@@ -28,11 +28,13 @@ void _testResult(const char* file, int line, const char* fn, const char* test, b
 void test_xmemory();
 void test_xhash();
 void test_xsocket();
+void test_xhandles();
 
 int main(int argc, char const** argv) {
 	test_xmemory();
 	test_xhash();
 	test_xsocket();
+	test_xhandles();
 
 
 	std::cout << "tests: "  << tests << std::endl;

@@ -1,14 +1,14 @@
 #pragma once
 
-#include "xqueue.hpp"
-#include "xmutex.hpp"
+#include <mutex>
+#include <queue>
 
 namespace stx {
 
 template<typename T>
 class threadsafe_queue {
-	::stx::mutex    m_mutex;
-	::stx::queue<T> m_queue;
+	::std::mutex    m_mutex;
+	::std::queue<T> m_queue;
 };
 
 } // namespace stx

@@ -85,8 +85,7 @@ void test_shared() {
 
 static
 void test_weak_shared() {
-	int count = 0;
-
+	// TODO
 }
 
 void test_xmemory() {
