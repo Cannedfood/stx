@@ -8,7 +8,7 @@ DEFINES+= -DSTX_WIP=1\
           -DSTX_UNSTABLE=1\
           -DSTX_DEBUG=2
 
-CXX_FLAGS+= --std=c++14 -Wall -Wextra
+CXX_FLAGS+= --std=c++14 -Wall -Wextra -Wno-unused-parameter
 
 LD_FLAGS+= -lpthread -ldl
 
