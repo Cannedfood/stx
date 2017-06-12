@@ -174,22 +174,22 @@ public:
 		length(len)
 	{}
 
-	constexpr inline
+	constexpr
 	static Tself unsafe_construct(const char* data, std::size_t len) {
 		return Tself(data, len, basic_hash<hasher>(data, len));
 	}
 
-	constexpr inline
+	constexpr
 	operator const char*() const noexcept {
 		return value;
 	}
 
-	constexpr inline
+	constexpr
 	operator hash_value() const noexcept {
 		return hash;
 	}
 
-	inline
+
 	bool operator<(const Tself& other) const noexcept {
 		if(hash != other.hash) return hash < other.hash;
 		for(std::size_t i = 0; i < (length - 1) && i < (other.length - 1); i++) {
@@ -198,7 +198,6 @@ public:
 		return false; // same
 	}
 
-	inline
 	bool operator==(const Tself& other) const noexcept {
 		if(hash != other.hash) {
 			return false;
