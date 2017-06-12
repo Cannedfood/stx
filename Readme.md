@@ -34,6 +34,8 @@ I use it in my own projects, so I'll catch the worst errors there but still.
 - xhash
 	- implements various hash algorithms
 	- `symbol<hash_algorithm>` Similar to rubys symbol, this is essentially a compile-time string with a compile-time precomputed hash
+- xevent
+	- `event` attach callbacks get handles back
 - xshared_lib
 	- `shared_lib` Represents a shared library.
 - xlogging
@@ -81,7 +83,7 @@ I use it in my own projects, so I'll catch the worst errors there but still.
 	- Enable totally work in progress, pretty much unusable features
 
 ## License
-The code is lincensed under the MIT license, see License.txt
+The code is licensed under the MIT license, see License.txt
 
 ## Building
 
@@ -92,4 +94,4 @@ c++ --std=c++14 src/* -o stx.o
 ```
 
 ## Tests
-Run the makefile to run the tests, although they have horrible coverage.
+Run the Makefile to run the tests, although they have horrible coverage.
