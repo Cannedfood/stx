@@ -255,6 +255,21 @@ public:
 	}
 };
 
+template<typename T, typename Callback>
+class aligned_shared_block_with_callback : public aligned_shared_block<T> {
+	Callback mCallback;
+
+	template<typename... ARGS>
+	aligned_shared_block_with_callback(Callback&& c, ARGS&&... args) :
+		aligned_shared_block<T>(std::forward<ARGS>(args)...),
+		mCallback(c)
+	{}
+
+	void destroy_pointer() override {
+		mCallback();
+	}
+};
+
 } // namespace detail
 
 template<typename T>
@@ -362,12 +377,31 @@ shared<T> share(T* t, Tdel const& del = Tdel()) noexcept {
 	return shared<T>(new detail::simple_shared_block<T, Tdel>(t, del), t);
 }
 
-template<typename T, typename... ARGS> // TODO: this is somehow broken
+template<typename T, typename Tdel = stx::default_delete<T>, typename C>
+shared<T> share_with_callback(T* t, C&& c, Tdel const& del = Tdel()) {
+	auto actual_deleter = [c, del](T* t) {
+		c(t);
+		del(t);
+	};
+	using Tactual_deleter = typename std::remove_reference<decltype(actual_deleter)>::type;
+
+	auto* block = new detail::simple_shared_block<T, Tactual_deleter>(t, std::move(actual_deleter));
+
+	return shared<T>((detail::shared_block*) block, block->pointer());
+}
+
+template<typename T, typename... ARGS>
 shared<T> new_shared(ARGS&&... args) noexcept {
 	auto* block = new detail::aligned_shared_block<T>(std::forward<ARGS>(args)...);
 	return shared<T>((detail::shared_block*) block, block->pointer());
 }
 
+template<typename T, typename C, typename... ARGS>
+shared<T> new_shared_with_callback(C&& c, ARGS&&... args) noexcept {
+	using callback_type = typename std::remove_reference<C>::type;
+	auto* block = new detail::aligned_shared_block_with_callback<T, callback_type>(c, std::forward<ARGS>(args)...);
+	return shared<T>((detail::shared_block*) block, block->pointer());
+}
 
 // == weak<T> ========================================================
 
