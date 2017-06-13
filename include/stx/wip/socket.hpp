@@ -113,20 +113,20 @@ public:
 	connection();
 	~connection();
 
-	// == Movable =========================================================
+	// -- Movable ---------------------------------------------------------
 	connection(connection&&);
 	connection& operator=(connection&&);
 
-	// == Not copiable ====================================================
+	// -- Not copiable ----------------------------------------------------
 	connection(connection const&) = delete;
 	connection& operator=(connection const&) = delete;
 
-	// == Methods =========================================================
+	// -- Methods ---------------------------------------------------------
 	connection& close();
 
 	void write_s(const char* s);
 
-	// == Getters =========================================================
+	// -- Getters --------------------------------------------------------
 	socket const& sock() const noexcept { return m_socket; }
 	inline operator bool() const noexcept { return m_handle >= 0; }
 };

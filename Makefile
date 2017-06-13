@@ -1,5 +1,5 @@
 ifeq ($(origin CXX), default)
-    CXX = clang++
+    CXX = g++
 endif
 
 INCLUDES+= -Iinclude
@@ -10,7 +10,7 @@ CXX_FLAGS+= --std=c++14 -Wall -Wextra -Wno-unused-parameter
 
 LD_FLAGS+= -lpthread -ldl
 
-test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.hpp)
+test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.hpp) $(wildcard include/stx/wip/*.hpp)
 	${CXX}\
 	 ${INCLUDES}\
 	 ${DEFINES}\
@@ -19,7 +19,9 @@ test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.
 	 $(wildcard src/*.cpp)\
 	 $(wildcard test/*.cpp)\
 	 -o $@
-	
+	-./test.run
+
+run: test.run
 	./test.run
 
 .PHONY: run_test
