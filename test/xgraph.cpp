@@ -50,7 +50,7 @@ void test_pointer_pair() {
 	}
 }
 
-void test_xhandles() {
+void test_xgraph() {
 	test_list_element();
 	test_parent_child();
 	test_tree();
