@@ -30,6 +30,15 @@ static void test_pointer_pair() {
 		test(c.get() == &b);
 		test(b.get() == &c);
 	}
+
+	{
+		twin b;
+		a.reset(&b);
+		c = std::move(b);
+		test(b.get() == nullptr);
+		test(c.get() == &a);
+		test(a.get() == &c);
+	}
 }
 
 void test_handles() {

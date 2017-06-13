@@ -36,6 +36,7 @@ public:
 	}
 	Tself& operator=(Tself&& other) noexcept {
 		reset(other.m_other);
+		other.m_other = nullptr;
 		return *this;
 	}
 
