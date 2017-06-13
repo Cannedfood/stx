@@ -20,6 +20,10 @@ I use it in my own projects, so I'll catch the worst errors there but still.
 	- `xassertmsg(TEST, MSG)` throws and exception if test is false; includes the message in the exception
 	- `important<T>` marks a value as important and gives a warning in debug mode if it is not handled
 
+## TODO
+
+See [here](Todo.md)
+
 ## New
 - xaccess
 	- A header which contains makros for getters and setters
