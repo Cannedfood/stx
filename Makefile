@@ -4,16 +4,11 @@ endif
 
 INCLUDES+= -Iinclude
 
-DEFINES+= -DSTX_WIP=1\
-          -DSTX_UNSTABLE=1\
-          -DSTX_DEBUG=2
+DEFINES+= -DSTX_DEBUG=2
 
 CXX_FLAGS+= --std=c++14 -Wall -Wextra -Wno-unused-parameter
 
 LD_FLAGS+= -lpthread -ldl
-
-run_test: test.run
-	./test.run
 
 test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.hpp)
 	${CXX}\
@@ -24,5 +19,7 @@ test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.
 	 $(wildcard src/*.cpp)\
 	 $(wildcard test/*.cpp)\
 	 -o $@
+	
+	./test.run
 
 .PHONY: run_test
