@@ -6,7 +6,7 @@ using namespace stx;
 
 template<typename hasher> static
 void test_hasher() {
-	// TODO: test hashers
+	// TODO: test hasher
 
 	// Make the constexpr_hash_strn(text) yields the same result as the runtime hash
 	const char text[]    = "Hello";

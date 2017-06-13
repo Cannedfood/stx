@@ -168,10 +168,10 @@ connection socket::accept(sockdomain                d,
 	return open(d, p, port).accept(max_queued, timeout);
 }
 
-// -- socket: Client --------------------------------------------------------------
+// -- socket: Client ---------------------------------------------------------
 
 
-// -- socket: Getters & Setters --------------------------------------------------
+// -- socket: Getters & Setters ----------------------------------------------
 
 
 sockprotocol socket::protocol() const noexcept {
