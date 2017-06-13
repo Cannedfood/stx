@@ -127,7 +127,7 @@ public:
 	void write_s(const char* s);
 
 	// == Getters =========================================================
-	socket const& socket() const noexcept { return m_socket; }
+	socket const& sock() const noexcept { return m_socket; }
 	inline operator bool() const noexcept { return m_handle >= 0; }
 };
 

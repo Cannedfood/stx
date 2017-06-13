@@ -32,9 +32,9 @@
 #else // defined(STX_DEBUG_TOOLS)
 
 #define xassert(TEST) \
-	do { if(TEST); } while(false) // The if is necessary to supress warnings
+	do { if(TEST) {} } while(false) // The if is necessary to supress warnings
 #define xassertmsg(TEST, MSG) \
-	do { if(TEST); } while(false)
+	do { if(TEST) {} } while(false)
 
 #endif // defined(STX_DEBUG_TOOLS)
 
