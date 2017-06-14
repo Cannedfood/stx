@@ -1,5 +1,5 @@
 ifeq ($(origin CXX), default)
-    CXX = g++
+    CXX = clang++
 endif
 
 INCLUDES+= -Iinclude
@@ -23,5 +23,8 @@ test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.
 
 run: test.run
 	./test.run
+
+clean:
+	-rm test.run
 
 .PHONY: run_test
