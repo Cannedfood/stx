@@ -185,7 +185,9 @@ void parent_element<T, TChild>::push_front(TChild* c) noexcept {
 // == child_element<T, TParent> ==============================================
 
 template<typename T, typename TParent> constexpr
-child_element<T, TParent>::child_element() {}
+child_element<T, TParent>::child_element() :
+	m_parent(nullptr)
+{}
 
 template<typename T, typename TParent>
 child_element<T, TParent>::~child_element() noexcept {
