@@ -56,7 +56,8 @@ public:
 		}
 	}
 
-	Tother* get() noexcept { return m_other; }
+	      Tother* get()       noexcept { return m_other; }
+	const Tother* get() const noexcept { return m_other; }
 };
 
 class handle;
@@ -85,6 +86,10 @@ public:
 			get()->on_handle_destroyed();
 		}
 		pointer_pair<handle, handle_socket>::reset(h);
+	}
+
+	operator bool() const {
+		return get() != nullptr;
 	}
 };
 
