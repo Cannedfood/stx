@@ -232,7 +232,9 @@ class basic_symstring : public basic_symbol<hasher> {
 	}
 
 public:
-	basic_symstring() : basic_symbol<hasher>("", 0) {}
+	basic_symstring() :
+		basic_symbol<hasher>(nullptr, 0)
+	{}
 	basic_symstring(const char* str) :
 		basic_symstring(str, strlen(str))
 	{}
