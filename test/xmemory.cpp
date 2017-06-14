@@ -85,7 +85,34 @@ void test_shared() {
 
 static
 void test_weak_shared() {
-	// TODO
+	int count = 0;
+
+	{
+		weak<InstanceCounter> w;
+		test(!w);
+		{
+			auto s = share(new InstanceCounter(&count));
+			w = s;
+			test(w);
+			test(w.lock() == s.get());
+			test(s.get_block()->weak_refs() == 1);
+		}
+		test(!w);
+		test(w.lock() == nullptr);
+	}
+
+	{
+		weak<InstanceCounter> w;
+		test(!w);
+		{
+			auto s = share(new InstanceCounter(&count));
+			w = s;
+			test(w);
+			test(w.lock() == s.get());
+		}
+		test(!w);
+		test(w.lock() == nullptr);
+	}
 }
 
 void test_xmemory() {

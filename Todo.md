@@ -8,7 +8,6 @@
 
 ## Tests
 - Actually test hashers in test_hasher
-- Test memory.hpp weak pointer
 - Implement tree_node
 - Implement graph_node
 
