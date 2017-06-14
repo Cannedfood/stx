@@ -19,8 +19,8 @@ void test_symbol() {
 	sym a = "Hi";
 	sym b = "Hi";
 	sym c = "Ho";
-	test(a.hash == b.hash);
-	test(b.hash != c.hash);
+	test(a.hash() == b.hash());
+	test(b.hash() != c.hash());
 }
 
 void test_xhash() {
@@ -31,4 +31,8 @@ void test_xhash() {
 	test_symbol<symbol16>();
 	test_symbol<symbol32>();
 	test_symbol<symbol64>();
+
+	test_symbol<symstring16>();
+	test_symbol<symstring32>();
+	test_symbol<symstring64>();
 }

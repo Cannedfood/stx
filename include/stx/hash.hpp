@@ -4,6 +4,7 @@
 
 #include <utility>
 #include <type_traits>
+#include <cstring>
 
 namespace stx {
 
@@ -149,6 +150,11 @@ struct basic_hash {
 	basic_hash(const char (&strn)[len]) :
 		hash_value(hasher::constexpr_hash_strn(strn))
 	{}
+
+	constexpr
+	basic_hash() :
+		hash_value(hasher::finalize_hash(hasher::create_state()))
+	{}
 };
 
 template<typename hasher = hash_type::default_hash>
@@ -156,22 +162,24 @@ class basic_symbol {
 	using Tself = basic_symbol<hasher>;
 	using hash_value = typename hasher::value_type;
 
+protected:
+	hash_value  m_hash;
+	const char* m_value;
+	std::size_t m_length;
+
 	constexpr inline
 	basic_symbol(const char* v, std::size_t len, hash_value h) :
-		hash(h),
-		value(v),
-		length(len)
+		m_hash(h),
+		m_value(v),
+		m_length(len)
 	{}
-public:
-	const hash_value  hash;
-	const char*       value;
-	const std::size_t length;
 
+public:
 	template<std::size_t len> constexpr // implicit
 	basic_symbol(const char (&strn)[len]) :
-		hash(hasher::constexpr_hash_strn(strn)),
-		value(strn),
-		length(len)
+		m_hash(hasher::constexpr_hash_strn(strn)),
+		m_value(strn),
+		m_length(len)
 	{}
 
 	constexpr
@@ -179,52 +187,144 @@ public:
 		return Tself(data, len, basic_hash<hasher>(data, len));
 	}
 
-	constexpr
-	operator const char*() const noexcept {
-		return value;
-	}
+	constexpr const char* value()  const noexcept { return m_value; }
+	constexpr hash_value  hash()   const noexcept { return m_hash; }
+	constexpr std::size_t length() const noexcept { return m_length; }
 
 	constexpr
-	operator hash_value() const noexcept {
-		return hash;
-	}
+	operator const char*() const noexcept { return value(); }
 
+	constexpr
+	operator hash_value() const noexcept { return hash(); }
 
 	bool operator<(const Tself& other) const noexcept {
-		if(hash != other.hash) return hash < other.hash;
-		for(std::size_t i = 0; i < (length - 1) && i < (other.length - 1); i++) {
-			if(value[i] != other.value[i]) return value[i] < other.value[i];
+		if(m_hash != other.m_hash) return m_hash < other.m_hash;
+		for(std::size_t i = 0; i < (m_length - 1) && i < (other.m_length - 1); i++) {
+			if(m_value[i] != other.m_value[i]) return m_value[i] < other.m_value[i];
 		}
 		return false; // same
 	}
 
 	bool operator==(const Tself& other) const noexcept {
-		if(hash != other.hash) {
+		if(m_hash != other.m_hash) {
 			return false;
 		}
-		else if(value == other.value && length == other.length) {
+		else if(m_value == other.m_value && m_length == other.m_length) {
+			// Pointers are the same -> Probably string pooling
 			return true;
 		}
 		else {
-			for (std::size_t i = 0; i < (length - 1) && i < (other.length - 1); i++) {
-				if(value[i] != other.value[i]) return false;
+			for (std::size_t i = 0; i < (m_length - 1) && i < (other.m_length - 1); i++) {
+				if(m_value[i] != other.m_value[i]) return false;
 			}
 			return true;
 		}
 	};
 };
 
-using hash   = basic_hash<>;
-using symbol = basic_symbol<>;
+template<typename hasher = hash_type::default_hash>
+class basic_symstring : public basic_symbol<hasher> {
+	static const char* clone_string(const char* c, std::size_t len) {
+		char* cc = new char[len + 1];
+		memcpy(cc, c, len);
+		cc[len] = '\0';
+		return cc;
+	}
 
-using hash16   = basic_hash<hash_type::fnv_1a_32bit_xor_folded>;
-using symbol16 = basic_symbol<hash_type::fnv_1a_32bit_xor_folded>;
+public:
+	basic_symstring() : basic_symbol<hasher>("", 0) {}
+	basic_symstring(const char* str) :
+		basic_symstring(str, strlen(str))
+	{}
+	basic_symstring(const char* str, std::size_t len) :
+		basic_symbol<hasher>(clone_string(str, len), len, basic_hash<hasher>(str, len))
+	{}
+	basic_symstring(basic_symbol<hasher> const& s) :
+		basic_symbol<hasher>(clone_string(s.value(), s.length()), s.length(), s.hash())
+	{}
+	~basic_symstring() {
+		if(this->m_value) {
+			delete[] this->m_value;
+		}
+	}
 
-using hash32   = basic_hash<hash_type::fnv_1a_32bit>;
-using symbol32 = basic_symbol<hash_type::fnv_1a_32bit>;
+	// -- Copy --------------------------------------------------------------
+	basic_symstring(basic_symstring<hasher> const& other) :
+		basic_symbol<hasher>(clone_string(other.value(), other.length()), other.length(), other.hash())
+	{}
 
-using hash64   = basic_hash<hash_type::fnv_1a_64bit>;
-using symbol64 = basic_symbol<hash_type::fnv_1a_64bit>;
+	basic_symstring<hasher>& operator=(basic_symstring<hasher> const& other) {
+		if(this->m_value) {
+			delete[] this->m_value;
+		}
+		this->value  = clone_string(other.value(), other.length());
+		this->length = other.length();
+		this->hash   = other.hash();
+	}
+
+	// -- Move -------------------------------------------------------------
+	basic_symstring(basic_symstring<hasher>&& other) :
+		basic_symbol<hasher>(other.m_value, other.m_length, other.m_hash)
+	{
+		other.m_value  = nullptr;
+		other.m_length = 0;
+		other.m_hash   = basic_hash<hasher>();
+	}
+
+	basic_symstring<hasher>& operator=(basic_symstring<hasher>&& other) {
+		if(this->m_value) {
+			delete[] this->m_value;
+		}
+
+		this->m_value  = other.m_value;
+		this->m_length = other.m_length;
+		this->m_hash   = other.m_hash;
+
+		other.m_value  = nullptr;
+		other.m_length = 0;
+		other.m_hash   = basic_hash<hasher>();
+	}
+
+	// -- Functionality -------------------------------------------------------
+
+	void reset() {
+		if(this->value) {
+			this->value  = nullptr;
+			this->length = 0;
+			this->hash   = basic_hash<hasher>();
+		}
+	}
+
+	void reset(const char* str) {
+		reset(str, strlen(str));
+	}
+
+	void reset(const char* str, size_t len) {
+		if(this->value) {
+			delete[] this->value;
+		}
+		this->value  = clone_string(str, len);
+		this->length = len;
+		this->hash   = basic_hash<hasher>(str, len);
+	}
+};
+
+
+using hash      = basic_hash<>;
+using symbol    = basic_symbol<>;
+using symstring = basic_symstring<>;
+
+using hash16      = basic_hash<hash_type::fnv_1a_32bit_xor_folded>;
+using symbol16    = basic_symbol<hash_type::fnv_1a_32bit_xor_folded>;
+using symstring16 = basic_symstring<hash_type::fnv_1a_32bit_xor_folded>;
+
+using hash32      = basic_hash<hash_type::fnv_1a_32bit>;
+using symbol32    = basic_symbol<hash_type::fnv_1a_32bit>;
+using symstring32 = basic_symstring<hash_type::fnv_1a_32bit>;
+
+using hash64      = basic_hash<hash_type::fnv_1a_64bit>;
+using symbol64    = basic_symbol<hash_type::fnv_1a_64bit>;
+using symstring64 = basic_symstring<hash_type::fnv_1a_64bit>;
 
 constexpr inline
 symbol operator "" _sym(const char* strn, std::size_t len) {
