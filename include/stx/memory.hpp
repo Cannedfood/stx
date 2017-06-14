@@ -12,8 +12,6 @@
 
 namespace stx {
 
-class refcounted_interface;
-
 template<typename T>
 class weak;
 
