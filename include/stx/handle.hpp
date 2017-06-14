@@ -88,7 +88,7 @@ public:
 		pointer_pair<handle, handle_socket>::reset(h);
 	}
 
-	operator bool() const {
+	operator bool() const noexcept {
 		return get() != nullptr;
 	}
 };
