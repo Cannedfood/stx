@@ -136,6 +136,10 @@ protected:
 		--m_shared_refs;
 		if(m_shared_refs == 0) {
 			destroy_pointer();
+
+			if(m_weak_refs == 0) {
+				destroy_block();
+			}
 		}
 	}
 
@@ -147,7 +151,7 @@ protected:
 	inline
 	void decrement_weak() noexcept {
 		--m_weak_refs;
-		if(m_weak_refs == 0) {
+		if(m_weak_refs == 0 && m_shared_refs == 0) {
 			destroy_block();
 		}
 	}
