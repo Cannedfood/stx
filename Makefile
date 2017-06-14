@@ -6,7 +6,7 @@ INCLUDES+= -Iinclude
 
 DEFINES+= -DSTX_DEBUG=2
 
-CXX_FLAGS+= --std=c++14 -Wall -Wextra -Wno-unused-parameter
+CXX_FLAGS+= --std=c++14 -Wall -Wextra -Wno-unused-parameter -ggdb -g3
 
 LD_FLAGS+= -lpthread -ldl
 
@@ -19,7 +19,7 @@ test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.
 	 $(wildcard src/*.cpp)\
 	 $(wildcard test/*.cpp)\
 	 -o $@
-	-./test.run
+	-valgrind --leak-check=full --track-origins=yes ./test.run
 
 run: test.run
 	./test.run
