@@ -22,8 +22,7 @@ test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.
 	 $(wildcard src/*.cpp)\
 	 $(wildcard test/*.cpp)\
 	 -o $@
-
-	-make run
+	-+make run
 
 run: test.run
 	valgrind --leak-check=full --track-origins=yes ./test.run
