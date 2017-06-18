@@ -1,47 +1,65 @@
 #pragma once
 
+#define STX_WIP
+
+#include "../handle.hpp"
+
 #include <vector>
+#include <list>
+
+#include "event.inl"
 
 namespace stx {
 
-namespace detail {
+// == Event policies =========================================================
+namespace result_policy {
 
-namespace event_policy {
-
-template<typename T>
-struct collector_policy_struct : std::vector<T> {
-	template<typename Container, typename... ARGS>
-	void operator()(Container&& callbacks, ARGS&&... args) {
-		std::vector<T>::reserve(callbacks.size());
-		for(auto& c : callbacks)
-			push_back(c(std::forward<ARGS>(args)...));
-	}
-};
-
-template<typename T>
-struct default_policy_struct;
-
-template<typename T, typename... ARGS>
-struct default_policy_struct<T(ARGS...)> {
-	using type = collector_policy_struct<T>();
-};
+/*
+using ignore = detail::result_policy::ignore_struct;
+using collect = detail::result_policy::collect_struct;
+using first_true = detail::result_policy::first_true_struct;
+using first_false = detail::result_policy::first_false_struct;
+*/
 
 } // namespace event_policy
 
-} // namespace detail
 
-namespace event_policy {
-
-template<typename T>
-using default_policy = detail::event_policy::default_policy_struct<T>;
-
-} // namespace event_policy
-
-template <typename Fn, typename Policy = event_policy::default_policy<Fn>>
+// == event<fn, policy> ======================================================
+template<typename FnSig, typename Policy = void>
 class event {
+	using observer = detail::observer_interface_of<FnSig>;
+
+	observer* m_observers;
 public:
-	event();
-	~event() noexcept;
+	event() : m_observers(nullptr) {}
+
+	~event() {
+		clear_observers();
+	}
+
+	void add_observer(observer* o) {
+		o->attach_to(&m_observers);
+	}
+
+	template<typename Fn>
+	void add_observer(Fn&& fn) {
+		add_observer(detail::create_new_observer<FnSig>(std::forward<Fn>(fn)));
+	}
+
+	void clear_observers() {
+		while(m_observers) {
+			m_observers->detach();
+		}
+	}
+
+	template<typename... ARGS>
+	void trigger(ARGS... args) {
+		observer* o = m_observers;
+		while(o) {
+			o->on_event(std::forward<ARGS>(args)...);
+			o = o->next();
+		}
+	}
 };
 
 } // namespace stx
