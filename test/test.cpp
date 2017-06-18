@@ -33,7 +33,6 @@ void _testResult(const char* file, int line, const char* fn, const char* test, b
 
 void test_xmemory();
 void test_xhash();
-void test_xhandle();
 void test_xgraph();
 void test_xevent();
 void test_xsocket();
@@ -41,7 +40,6 @@ void test_xsocket();
 int main(int argc, char const** argv) {
 	test_xmemory();
 	test_xhash();
-	test_xhandle();
 	test_xgraph();
 	test_xevent();
 	test_xsocket();

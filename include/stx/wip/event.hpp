@@ -2,8 +2,6 @@
 
 #define STX_WIP
 
-#include "../handle.hpp"
-
 #include <vector>
 #include <list>
 
@@ -37,13 +35,14 @@ public:
 		clear_observers();
 	}
 
-	void add_observer(observer* o) {
+	observer* add_observer(observer* o) {
 		o->attach_to(&m_observers);
+		return o;
 	}
 
 	template<typename Fn>
-	void add_observer(Fn&& fn) {
-		add_observer(detail::create_new_observer<FnSig>(std::forward<Fn>(fn)));
+	observer* add_observer(Fn&& fn) {
+		return add_observer(detail::create_new_observer<FnSig>(std::forward<Fn>(fn)));
 	}
 
 	void clear_observers() {

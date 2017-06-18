@@ -22,8 +22,12 @@ class default_observer_implementation;
 
 // == Observer list ==========================================================
 
+struct handle_socket {
+	virtual void on_handle_destroyed() noexcept = 0;
+};
+
 template<typename Result, typename... ARGS>
-class observer_interface {
+class observer_interface : public handle_socket {
 	using Tself = observer_interface<Result, ARGS...>;
 
 	Tself** m_head;
@@ -112,6 +116,8 @@ public:
 	}
 
 	Tself* next() { return m_next; }
+
+	void on_handle_destroyed() noexcept final override { detach(); }
 
 	virtual ~observer_interface() { detach(); }
 	virtual Result on_event(ARGS... args) = 0;
