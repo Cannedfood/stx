@@ -13,7 +13,7 @@ CXX_FLAGS+= --std=c++14\
 
 LD_FLAGS+= -lpthread -ldl
 
-test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.hpp) $(wildcard include/stx/wip/*.hpp) Makefile
+test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.hpp) $(wildcard include/stx/*.inl) $(wildcard include/stx/wip/*.hpp) $(wildcard include/stx/wip/*.inl) Makefile
 	${CXX}\
 	 ${INCLUDES}\
 	 ${DEFINES}\
