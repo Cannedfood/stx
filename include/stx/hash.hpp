@@ -183,6 +183,13 @@ public:
 	{}
 
 	constexpr
+	basic_symbol() :
+		m_hash(basic_hash<hasher>()),
+		m_value(nullptr),
+		m_length(0)
+	{}
+
+	constexpr
 	static Tself unsafe_construct(const char* data, std::size_t len) {
 		return Tself(data, len, basic_hash<hasher>(data, len));
 	}
