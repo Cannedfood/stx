@@ -331,6 +331,14 @@ public:
 		}
 	}
 
+	template<typename Tdel>
+	void reset(Tptr p, Tdel const& del = Tdel()) {
+		if(p) {
+			m_pointer      = p;
+			m_shared_block = (new detail::simple_shared_block<T, Tdel>(p, del))->new_shared_ref();
+		}
+	}
+
 	template<typename Tx>
 	shared<Tx> cast() {
 		return shared<Tx>(m_shared_block.get(), static_cast<pointer_to<Tx>>(m_pointer));
