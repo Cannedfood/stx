@@ -97,6 +97,8 @@ public:
 
 } // namespace stx
 
+#define STX_RESULT_HANDLED(X) {if(X){}}
+
 #else // STX_DEBUG_TOOLS > 0
 
 namespace stx {
@@ -108,5 +110,7 @@ template<typename T>
 using asserted = T;
 
 } // namespace stx
+
+#define STX_RESULT_HANDLED(X) {X}
 
 #endif // STX_DEBUG_TOOLS > 0
