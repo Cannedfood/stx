@@ -37,12 +37,15 @@ void test_xgraph();
 void test_xevent();
 void test_xsocket();
 
+void test_xfilesystem_monitor();
+
 int main(int argc, char const** argv) {
 	test_xmemory();
 	test_xhash();
 	test_xgraph();
 	test_xevent();
 	test_xsocket();
+	test_xfilesystem_monitor();
 
 
 	std::cout << "tests: "  << tests << std::endl;
