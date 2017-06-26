@@ -366,7 +366,7 @@ public:
 
 	constexpr inline Tptr get()        const noexcept { return m_pointer; }
 	constexpr inline Tptr operator->() const noexcept { return m_pointer; }
-	constexpr inline Tref operator*()  const { return *m_pointer; }
+	constexpr inline Tref operator*()  const noexcept { return *m_pointer; }
 
 	constexpr inline detail::shared_block* get_block() const noexcept { return m_shared_block.get(); }
 
@@ -517,7 +517,7 @@ public:
 			return nullptr;
 	}
 
-	operator bool() const {
+	operator bool() const noexcept {
 		if(m_shared_block && m_shared_block->shared_refs())
 			return true;
 		else {

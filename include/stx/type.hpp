@@ -32,7 +32,7 @@ struct default_delete {
 	using pointer = pointer_to<T>;
 
 	inline
-	void operator()(pointer p) const {
+	void operator()(pointer p) const noexcept {
 		delete p;
 	}
 };

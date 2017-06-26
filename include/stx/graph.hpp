@@ -88,8 +88,8 @@ public:
 	void push_front(TChild* c) noexcept;
 
 	// -- Getters / Setters -------------------------------------------------
-	      TChild* children()       { return m_children; }
-	const TChild* children() const { return m_children; }
+	      TChild* children()       noexcept { return m_children; }
+	const TChild* children() const noexcept { return m_children; }
 };
 
 template<typename T, typename TParent>
