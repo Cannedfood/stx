@@ -58,7 +58,6 @@
 #	define STX_ARCHITECTURE_x64 1
 #elif defined(__i386) || defined(__M_IX86)
 #	define STX_ARCHITECTURE_x86 1
-#	warning "This engine was not tested on x86 (should work though)"
 #elif defined(__arm__) || defined(_M_ARM)
 #   define STX_ARCHITECTURE_ARM 1
 #	error "ARM architecture not currently supported"
