@@ -25,9 +25,10 @@ test.run: $(wildcard test/*.cpp) $(wildcard src/*.cpp) $(wildcard include/stx/*.
 	-+make run
 
 run: test.run
-	valgrind --leak-check=full --track-origins=yes ./test.run
+	-valgrind --leak-check=full --track-origins=yes ./test.run
+	-rm vgcore.*
 
 clean:
 	-rm test.run
 
-.PHONY: run_test
+.PHONY: run
