@@ -143,7 +143,7 @@ const char* filesystem_monitor::Stringify(mask m) {
 } // namespace stx
 
 #elif defined(STX_OS_WINDOWS)
-#	error Windows version of filesystem_monitor not implemented
-#elif
-#	error Filesystem_monitor not implemented for this OS
+#	warning Windows version of filesystem_monitor not implemented
+#else
+#	warning Filesystem_monitor not implemented for this OS
 #endif

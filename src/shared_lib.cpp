@@ -59,7 +59,11 @@ unsigned shared_lib::supported_flags() noexcept { return 0; }
 
 } // namespace stx
 
-// == Linux implementation ==============================================================
+// == Macosx implementation
+#elif STX_OS_MACOSX
+#warning "Not implemented on macos"
+
+// == Linux/Unix implementation ==============================================================
 #elif STX_OS_LINUX
 
 #include <dlfcn.h>

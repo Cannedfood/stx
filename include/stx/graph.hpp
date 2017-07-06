@@ -1,6 +1,7 @@
 #pragma once
 
 #include <type_traits>
+#include <utility>
 
 #ifdef STX_DEBUG
 #	include "assert.hpp"

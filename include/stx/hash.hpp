@@ -240,7 +240,7 @@ class basic_symstring : public basic_symbol<hasher> {
 
 public:
 	basic_symstring() :
-		basic_symbol<hasher>(nullptr, 0)
+		basic_symbol<hasher>(nullptr, 0, basic_hash<hasher>())
 	{}
 	basic_symstring(const char* str) :
 		basic_symstring(str, strlen(str))
@@ -280,7 +280,7 @@ public:
 		other.m_hash   = basic_hash<hasher>();
 	}
 
-	basic_symstring<hasher>& operator=(basic_symstring<hasher>&& other) {
+	basic_symstring<hasher>& operator=(basic_symstring<hasher>&& other) noexcept {
 		if(this->m_value) {
 			delete[] this->m_value;
 		}
@@ -296,7 +296,7 @@ public:
 
 	// -- Functionality -------------------------------------------------------
 
-	void reset() {
+	void reset() noexcept {
 		if(this->value) {
 			this->value  = nullptr;
 			this->length = 0;
@@ -304,17 +304,21 @@ public:
 		}
 	}
 
-	void reset(const char* str) {
+	void reset(const char* str) noexcept {
 		reset(str, strlen(str));
 	}
 
-	void reset(const char* str, size_t len) {
+	void reset(const char* str, size_t len) noexcept {
 		if(this->value) {
 			delete[] this->value;
 		}
 		this->value  = clone_string(str, len);
 		this->length = len;
 		this->hash   = basic_hash<hasher>(str, len);
+	}
+
+	operator bool() const noexcept {
+		return this->value != nullptr;
 	}
 };
 
@@ -349,14 +353,21 @@ struct hash;
 
 template<typename H>
 struct hash<::stx::basic_symbol<H>> {
-	size_t operator()(const ::stx::basic_symbol<H>& sym) const noexcept {
+	size_t operator()(::stx::basic_symbol<H> const& sym) const noexcept {
+		return sym.hash();
+	}
+};
+
+template<typename H>
+struct hash<::stx::basic_symstring<H>> {
+	size_t operator()(::stx::basic_symstring<H> const& sym) const noexcept {
 		return sym.hash;
 	}
 };
 
 template<typename H>
 struct hash<stx::basic_hash<H>> {
-	size_t operator()(const stx::basic_hash<H>& h) const noexcept {
+	size_t operator()(::stx::basic_hash<H> const& h) const noexcept {
 		return h.value;
 	}
 };

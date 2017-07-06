@@ -10,8 +10,9 @@
 /// </ul>
 /// Compiler:
 /// <ul>
-///    <li> STX_COMPILER_GCC (also defined for clang, because they are very much alike) </li>
+///    <li> STX_COMPILER_GCC   (also defined for clang, because they are very much alike) </li>
 ///    <li> STX_COMPILER_CLANG (Defined together with STX_COMPILER_GCC, because clang is very close to it) </li>
+///    <li> STX_COMPILER_MINGW (Defined together with STX_COMPILER_GCC, because it essentially is) </li>
 ///    <li> STX_COMPILER_MSVC </li>
 /// </ul>
 /// Architecture:
@@ -37,12 +38,16 @@
 #	elif defined(__gnu_linux__) // Detecting OS (some linux)
 #		define STX_OS_LINUX  1
 #       define STX_OS_UNIX 1
+#	elif defined(__MINGW32__)
+#		define STX_OS_UNIX 1
 #	else
 #		error "Unknown OS, is it very similar to Linux? yes -> Just copy the defines around STX_OS_LINUX. no -> you're screwed."
 #	endif // Detecting OS
 #	define STX_COMPILER_GCC 1 // (or clang)
 #   ifdef __clang__
-#	   define STX_COMPILER_CLANG
+#	   define STX_COMPILER_CLANG 1
+#	elif defined(__MINGW32__)
+#		define STX_COMPILER_MINGW 1
 #   endif // Detecting clang
 #elif defined(_WIN32) // Detecting Compiler (Windows)
 #	define STX_COMPILER_MSVC 1
