@@ -6,13 +6,70 @@ namespace detail {
 
 namespace result_policy {
 
-struct ignore_struct {};
-struct collect_struct {};
-struct first_true_struct {};
-struct first_false_struct {};
+struct ignore_struct {
+	template<typename T, typename... ARGS>
+	bool operator()(T* o, ARGS&&... args) const {
+		while(o) {
+			o->on_event(std::forward<ARGS>(args)...);
+			o = o->next();
+		}
+		return true;
+	}
+};
 
-template<typename T>
-struct default_policy_struct;
+template<typename Tcontainer>
+struct collect_struct {
+	template<typename T, typename Container, typename... ARGS>
+	bool operator()(T* o, Container& c, ARGS&&... args) const {
+		while(o) {
+			c.emplace_back(o->on_event(std::forward<ARGS>(args)...));
+			o = o->next();
+		}
+		return true;
+	}
+};
+
+struct first_true_struct {
+	template<typename T, typename... ARGS>
+	bool operator()(T* o, ARGS&&... args) const {
+		while(o) {
+			if(o->on_event(std::forward<ARGS>(args)...)) return true;
+			o = o->next();
+		}
+		return false;
+	}
+};
+
+struct first_false_struct {
+	template<typename T, typename... ARGS>
+	bool operator()(T* o, ARGS&&... args) const {
+		while(o) {
+			if(!o->on_event(std::forward<ARGS>(args)...)) return true;
+			o = o->next();
+		}
+		return false;
+	}
+};
+
+struct event_object_policy_struct {
+	template<typename T, typename E>
+	bool operator()(T* o, E const& e) const {
+		while(!e.handled() && o) {
+			o->on_event(e);
+			o = o->next();
+		}
+		return e.handled();
+	}
+
+	template<typename T, typename E>
+	bool operator()(T* o, E& e) const {
+		while(!e.handled() && o) {
+			o->on_event(e);
+			o = o->next();
+		}
+		return e.handled();
+	}
+};
 
 } // namespace result_policy
 
@@ -21,10 +78,6 @@ template<typename Callback, typename Result, typename... ARGS>
 class default_observer_implementation;
 
 // == Observer list ==========================================================
-
-struct handle_socket {
-	virtual void on_handle_destroyed() noexcept = 0;
-};
 
 template<typename Result, typename... ARGS>
 class observer_interface : public handle_socket {
