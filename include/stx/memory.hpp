@@ -68,12 +68,13 @@ public:
 	Tself& operator=(Tself const&) = delete;
 
 	constexpr inline
-	void reset(Tptr ptr = nullptr, const Tdel& del = Tdel()) {
+	Tself& reset(Tptr ptr = nullptr, const Tdel& del = Tdel()) {
 		if(m_pointer) {
 			m_deleter(m_pointer);
 		}
 		m_pointer = ptr;
 		m_deleter = del;
+		return *this;
 	}
 
 	constexpr inline
@@ -311,32 +312,36 @@ public:
 		reset(std::move(t));
 	}
 
-	void reset(std::nullptr_t = nullptr) {
+	Tself& reset(std::nullptr_t = nullptr) {
 		m_shared_block.reset();
 		m_pointer = nullptr;
+		return *this;
 	}
 
-	void reset(detail::shared_block* block, Tptr ptr) {
+	Tself& reset(detail::shared_block* block, Tptr ptr) {
 		if(block && block->shared_refs() != 0) {
 			m_shared_block = block->new_shared_ref();
 			m_pointer      = ptr;
 		}
+		return *this;
 	}
 
 	template<typename Tdel>
-	void reset(owned<T, Tdel>&& t) {
+	Tself& reset(owned<T, Tdel>&& t) {
 		if(t) {
 			m_pointer      = t.get();
 			m_shared_block = (new detail::simple_shared_block<T, Tdel>(std::move(t)))->new_shared_ref();
 		}
+		return *this;
 	}
 
 	template<typename Tdel>
-	void reset(Tptr p, Tdel const& del = Tdel()) {
+	Tself& reset(Tptr p, Tdel const& del = Tdel()) {
 		if(p) {
 			m_pointer      = p;
 			m_shared_block = (new detail::simple_shared_block<T, Tdel>(p, del))->new_shared_ref();
 		}
+		return *this;
 	}
 
 	template<typename Tx>
