@@ -136,6 +136,6 @@ using asserted = T;
 } // namespace stx
 
 #define STX_RESULT_HANDLED(X) \
-	{ X }
+	{ X; }
 
 #endif // STX_DEBUG_TOOLS > 0
