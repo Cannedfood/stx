@@ -34,11 +34,6 @@
 		if(!(TEST)) { xfatal(#TEST + MSG); } \
 	} while(false)
 
-// These are intentionally not defined when the debug tools are off:
-// they are only for debugging and should NEVER be in production code build
-#define xhere() printf("%s:%i:\n", STX_FUNCTION, __LINE__)
-#define xhere_class() printf("%s:%i: (%p)\n", STX_FUNCTION, __LINE__, this)
-
 #else // defined(STX_DEBUG_TOOLS)
 
 #define xassert(TEST) \
