@@ -38,14 +38,14 @@ public:
 		clear_observers();
 	}
 
-	observer* add_observer(observer* o) {
+	observer* subscribe(observer* o) {
 		o->attach_to(&m_observers);
 		return o;
 	}
 
 	template<typename Fn>
-	observer* add_observer(Fn&& fn) {
-		return add_observer(detail::create_new_observer<FnSig>(std::forward<Fn>(fn)));
+	observer* subscribe(Fn&& fn) {
+		return subscribe(detail::create_new_observer<FnSig>(std::forward<Fn>(fn)));
 	}
 
 	void clear_observers() {

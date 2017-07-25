@@ -68,7 +68,7 @@ public:
 
 	template<typename C>
 	void set_observer(int watch, C const& c) {
-		m_event.add_observer([watch, c](int w, unsigned mask) {
+		m_event.subscribe([watch, c](int w, unsigned mask) {
 			if(w == watch)
 				c(mask);
 		});
@@ -76,7 +76,7 @@ public:
 
 	template<typename C>
 	void set_observer(C&& c) {
-		m_event.add_observer(c);
+		m_event.subscribe(c);
 	}
 
 	template<typename C>

@@ -15,7 +15,7 @@ void test_xevent() {
 	stx::event<void()> e;
 
 	// Test if one is calle
-	e.add_observer([&called]() {
+	e.subscribe([&called]() {
 		called++;
 	});
 
@@ -27,10 +27,10 @@ void test_xevent() {
 	// Test if multiples are called
 	called = 0;
 
-	e.add_observer([&called]() {
+	e.subscribe([&called]() {
 		called += 2;
 	});
-	e.add_observer([&called]() {
+	e.subscribe([&called]() {
 		called += 7;
 	});
 
