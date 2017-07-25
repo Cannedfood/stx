@@ -12,26 +12,18 @@ class handle {
 public:
 	handle() : m_socket(nullptr) {}
 	handle(handle_socket* s) : m_socket(s) {}
-	handle(handle&& h) : m_socket(h.m_socket) {
-		h.m_socket = nullptr;
-	}
+	handle(handle&& h) : m_socket(h.m_socket) { h.m_socket = nullptr; }
 	~handle() {
-		if(m_socket) {
-			m_socket->on_handle_destroyed();
-		}
+		if(m_socket) { m_socket->on_handle_destroyed(); }
 	}
 
 	handle& reset(handle_socket* new_sock = nullptr) {
-		if(m_socket) {
-			m_socket->on_handle_destroyed();
-		}
+		if(m_socket) { m_socket->on_handle_destroyed(); }
 		m_socket = new_sock;
 		return *this;
 	}
 
-	handle& operator=(handle_socket* s) {
-		return reset(s);
-	}
+	handle& operator=(handle_socket* s) { return reset(s); }
 
 	handle& operator=(handle&& s) {
 		reset(s.m_socket);
