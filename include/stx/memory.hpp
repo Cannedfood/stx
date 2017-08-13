@@ -77,6 +77,11 @@ public:
 		return *this;
 	}
 
+	template<typename... ARGS>
+	Tself& create(ARGS&&... args) {
+		return reset(new T(std::forward<ARGS>(args)...));
+	}
+
 	constexpr inline
 	Tptr release() noexcept {
 		auto tmp = std::move(m_pointer);
@@ -345,8 +350,23 @@ public:
 	}
 
 	template<typename Tx>
-	shared<Tx> cast() {
+	shared<Tx> cast_static() noexcept {
 		return shared<Tx>(m_shared_block.get(), static_cast<pointer_to<Tx>>(m_pointer));
+	}
+
+	template<typename Tx>
+	const shared<Tx> cast_static() const noexcept {
+		return shared<Tx>(m_shared_block.get(), static_cast<pointer_to<Tx>>(m_pointer));
+	}
+
+	template<typename Tx>
+	shared<Tx> cast_dynamic() noexcept {
+		return shared<Tx>(m_shared_block.get(), dynamic_cast<pointer_to<Tx>>(m_pointer));
+	}
+
+	template<typename Tx>
+	const shared<Tx> cast_dynamic() const noexcept {
+		return shared<Tx>(m_shared_block.get(), dynamic_cast<pointer_to<Tx>>(m_pointer));
 	}
 
 	Tself& operator=(Tself const& other) noexcept {
