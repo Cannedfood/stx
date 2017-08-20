@@ -372,7 +372,6 @@ public:
 	Tself& operator=(Tself const& other) noexcept {
 		m_shared_block  = other.m_shared_block ? other.m_shared_block->new_shared_ref() : nullptr;
 		m_pointer       = other.m_pointer;
-		other.m_pointer = nullptr;
 		return *this;
 	}
 
