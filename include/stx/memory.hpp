@@ -110,6 +110,15 @@ public:
 	Tref operator[](Idx i) const noexcept {
 		return m_pointer[i];
 	}
+
+	constexpr inline
+	bool operator==(Tself const& other) const noexcept { return get() == other.get(); }
+	constexpr inline
+	bool operator!=(Tself const& other) const noexcept { return get() != other.get(); }
+	constexpr inline
+	bool operator==(Tptr ptr) const noexcept { return get() == ptr; }
+	constexpr inline
+	bool operator!=(Tptr ptr) const noexcept { return get() != ptr; }
 };
 
 template<typename T, typename Tdel = stx::default_delete<T>> constexpr inline
@@ -400,6 +409,23 @@ public:
 	constexpr inline
 	operator bool() const noexcept { return m_pointer != nullptr; }
 
+	constexpr inline
+	bool operator==(Tself const& other) const {
+		return m_shared_block == other.m_shared_block && m_pointer == other.m_pointer;
+	}
+	constexpr inline
+	bool operator!=(Tself const& other) const {
+		return !(*this == other);
+	}
+	constexpr inline
+	bool operator==(Tptr const& ptr) const {
+		return m_pointer == ptr;
+	}
+	constexpr inline
+	bool operator!=(Tptr const& ptr) const {
+		return !(*this == ptr);
+	}
+
 	template<typename Idx, typename = typename std::enable_if<is_array<T>, Idx>::type>
 	Tref operator[](Idx i) const noexcept {
 		return m_pointer[i];
@@ -553,6 +579,15 @@ public:
 
 	inline T* operator->() const noexcept { return get(); }
 	inline T& operator*()  const noexcept { return *get(); }
+
+	constexpr inline
+	bool operator==(Tself const& other) const {
+		return m_shared_block == other.m_shared_block && m_pointer == other.m_pointer;
+	}
+	constexpr inline
+	bool operator!=(Tself const& other) const {
+		return !(*this == other);
+	}
 };
 
 } // namespace stx
