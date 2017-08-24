@@ -1,6 +1,7 @@
 #include "../include/stx/wip/filesystem_monitor.hpp"
 
 #include "../include/stx/platform.hpp"
+#include "../include/stx/logging.hpp"
 
 #ifdef STX_OS_LINUX // TODO: does this work on mac? On unix?
 
@@ -115,7 +116,7 @@ void filesystem_monitor::poll_events() {
 		CONVERT_FLAG(e.mask, emask, IN_ATTRIB, meta_changed);
 
 		if(emask == 0) {
-			printf("Ignored filesystem_monitor event from inotify: event mask is %u\n", e.mask);
+			info("Ignored filesystem_monitor event from inotify: event mask is %%\n", e.mask);
 			continue;
 		}
 
