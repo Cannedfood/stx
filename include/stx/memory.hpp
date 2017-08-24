@@ -497,7 +497,7 @@ public:
 
 	// -- Copy & Move ---------------------------------------------
 	weak(Tself const& other) :
-		weak(other.m_shared_block.get(), other.pointer)
+		weak(other.m_shared_block.get(), other.m_pointer)
 	{
 		if(other.m_shared_block && other.m_shared_block->shared_refs())
 			m_shared_block = other.m_shared_block->new_weak_ref();
