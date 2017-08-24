@@ -73,6 +73,8 @@ See [here](Todo.md)
 	- A threadsafe queue
 - xthreadpool (WIP)
 	- A threadpool
+- xassert
+	- `STX_FATAL_IMPORTANT_VALUES`
 
 ## Build options
 - `STX_DEBUG_TOOLS=1`

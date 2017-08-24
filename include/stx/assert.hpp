@@ -66,9 +66,14 @@ public:
 
 	~important() noexcept {
 		if(!m_handled) {
+#ifdef STX_FATAL_IMPORTANT_VALUES
+			throw std::runtime_error(
+			    "Unhandled important value! (important function result not handled)");
+#else
 			stx::warn(
 			    "Unhandled important value! (important function result not "
 			    "handled)");
+#endif
 		}
 	}
 
@@ -96,11 +101,17 @@ public:
 				    "Asserted return value was not handled and evaluates "
 				    "to "
 				    "false");
-			} else {
-				stx::warn(
-				    "Unhandled important value! (important function result "
-				    "not "
-				    "handled)");
+			}
+			else {
+				#ifdef STX_FATAL_IMPORTANT_VALUES
+							throw std::runtime_error(
+							    "Unhandled important value! (important function result not handled, but it was not an error)");
+				#else
+							stx::warn(
+							    "Unhandled important value! (important function result "
+							    "not "
+							    "handled, but it was not an error)");
+				#endif
 			}
 		}
 	}
