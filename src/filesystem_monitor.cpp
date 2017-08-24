@@ -114,7 +114,10 @@ void filesystem_monitor::poll_events() {
 
 		CONVERT_FLAG(e.mask, emask, IN_ATTRIB, meta_changed);
 
-		if(emask == 0) continue; // TODO: write out everything that'd go here
+		if(emask == 0) {
+			printf("Ignored filesystem_monitor event from inotify: event mask is %u\n", e.mask);
+			continue;
+		}
 
 		m_event.trigger(e.wd, emask);
 	}
@@ -143,7 +146,42 @@ const char* filesystem_monitor::Stringify(mask m) {
 } // namespace stx
 
 #elif defined(STX_OS_WINDOWS)
-#	warning Windows version of filesystem_monitor not implemented
+#	warning Windows version of filesystem_monitor not fully implemented
+
+// from https://developersarea.wordpress.com/2014/09/26/win32-file-watcher-api-to-monitor-directory-changes/
+
+#include <Winbase.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <tchar.h>
+#include <windows.h>
+
+extern "C" {
+
+WINBASEAPI
+BOOL WINAPI ReadDirectoryChangesW(HANDLE                          hDirectory,
+                                  LPVOID                          lpBuffer,
+                                  DWORD                           nBufferLength,
+                                  BOOL                            bWatchSubtree,
+                                  DWORD                           dwNotifyFilter,
+                                  LPDWORD                         lpBytesReturned,
+                                  LPOVERLAPPED                    lpOverlapped,
+                                  LPOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine);
+
+}
+
+#define MAX_DIRS 25
+#define MAX_FILES 255
+#define MAX_BUFFER 4096
+
+typedef struct _DIRECTORY_INFO {
+    HANDLE hDir;
+    TCHAR lpszDirName[MAX_PATH];
+    CHAR lpBuffer[MAX_BUFFER];
+    DWORD dwBufLength;
+    OVERLAPPED Overlapped;
+ } DIRECTORY_INFO, *PDIRECTORY_INFO, *LPDIRECTORY_INFO;
+
 #else
 #	warning Filesystem_monitor not implemented for this OS
 #endif
