@@ -8,8 +8,6 @@ using namespace stx;
 
 
 void test_xevent() {
-	//return; // TODO
-
 	int called = 0;
 
 	stx::event<void()> e;
