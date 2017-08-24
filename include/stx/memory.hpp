@@ -369,13 +369,12 @@ public:
 	}
 
 	template<typename Tx>
-	shared<Tx> cast_dynamic() noexcept {
-		return shared<Tx>(m_shared_block.get(), dynamic_cast<pointer_to<Tx>>(m_pointer));
-	}
-
-	template<typename Tx>
-	const shared<Tx> cast_dynamic() const noexcept {
-		return shared<Tx>(m_shared_block.get(), dynamic_cast<pointer_to<Tx>>(m_pointer));
+	shared<Tx> cast_dynamic() const noexcept {
+		auto* ptr = dynamic_cast<pointer_to<Tx>>(m_pointer);
+		if(!ptr)
+			return nullptr;
+		else
+			return shared<Tx>(m_shared_block.get(), ptr);
 	}
 
 	Tself& operator=(Tself const& other) noexcept {
