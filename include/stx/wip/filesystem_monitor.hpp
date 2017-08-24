@@ -3,7 +3,7 @@
 #include <string>
 #include <thread>
 
-#include "event.hpp"
+#include "../event.hpp"
 
 namespace stx {
 
