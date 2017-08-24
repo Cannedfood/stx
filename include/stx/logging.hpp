@@ -178,6 +178,6 @@ std::ostream& get_logstream<log_error>() {
 // These are intentionally not defined when the debug tools are off:
 // they are only for debugging and should not end up in release builds
 #ifdef STX_DEBUG_TOOLS
-#define xhere() ::stx::info("%%:%%: ", STX_FUNCTION, __LINE__)
-#define xhere_class() ::stx::info("%%:%%: (%%)", STX_FUNCTION, __LINE__, this)
+#define xhere       ::stx::info("%%:%%: ", STX_FUNCTION, __LINE__);
+#define xhere_class ::stx::info("%%:%%: (%%)", STX_FUNCTION, __LINE__, this);
 #endif
