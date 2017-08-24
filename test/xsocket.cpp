@@ -3,75 +3,54 @@
 #include "test.hpp"
 
 using namespace stx;
-using namespace std::chrono;
-using namespace std::chrono_literals;
-
-#include <thread>
 
 #include <string>
 #include <vector>
 
-#define PORT 27175
-#define PORTSTR "27175"
+#define PHRASE "Hallo ihr menschen"
 
-struct HttpResponse {
-	std::vector<std::string> headers;
-	std::string              content;
+#include <chrono>
+#include <cstring>
 
-	std::string to_string() {
-		std::string total = "HTTP/1.1 200 OK\n";
+using namespace std::chrono;
+using namespace std::chrono_literals;
 
-		headers.emplace_back("Content-length: " + std::to_string(content.size() + 2));
-
-		size_t ntotal = 0;
-		for(auto& s : headers) ntotal += s.size() + 1;
-		ntotal += 2 + content.size();
-
-		total.reserve(ntotal);
-
-		for(auto& s : headers) {
-			total.append(s);
-			total.push_back('\n');
-		}
-		total.append("\n\n");
-		total.append(content);
-
-		return total;
+#define attempt(OPERATION)                             \
+	try {                                              \
+		OPERATION;                                     \
+	} catch(std::runtime_error e) {                    \
+		printf("Caught runtime_error at %s:%i:  %s\n", \
+		       __FILE__,                               \
+		       __LINE__,                               \
+		       e.what());                              \
 	}
-};
 
 void test_xsocket() {
-	socket s;
-	connection c;
+	char buffer[] = PHRASE;
 
-	test(s.open(ip4, tcp).bind(PORT));
+	tcp_server srv;
+	puts("Server: Creating server...");
+	attempt(srv.bind(8080, true));
+	if(!srv) return;
 
-	// bool accepting = false;
-	std::thread([&] {
-		try {
-			c = s.accept(1);
-			test(c);
-			if(c) {
-				HttpResponse http;
-				http.content = "Hello there\n";
-				http.headers.emplace_back("Connection: close");
-				c.write_s(http.to_string().c_str());
-			}
-			c.close();
-		}
-		catch(socket::failed_operation& e) {
-			puts(e.what());
-			test(!"Socket threw an error");
-		}
-		catch(socket::invalid_operation& e) {
-			puts(e.what());
-			test(!"Socket thinks there is an error in our code");
-		}
-		s.close();
-	}).detach();
+	puts("Server: Listening...");
+	auto thread = srv.listenAsync([&](tcp_connection&& c) {
+		puts("Server: New connection!");
+		attempt(c.send(buffer, sizeof(buffer)));
+	});
 
-	std::this_thread::sleep_for(100ms);
-	system("curl localhost:" PORTSTR);
+	std::this_thread::sleep_for(200ms);
 
-	return;
+	tcp_connection c;
+	puts("Client: Connecting to localhost:8080");
+	attempt(c.connect("localhost", "8080", true));
+	if(!c.connected()) return;
+
+	puts("Client: Reading from connection...");
+	attempt(test(c.recv_raw(buffer, sizeof(buffer)) == sizeof(buffer)));
+
+	test(strcmp(buffer, PHRASE) == 0);
+
+	srv.close();
+	c.close();
 }

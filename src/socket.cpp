@@ -5,271 +5,266 @@ extern "C" {
 #include <netinet/in.h> // struct sockaddr_in
 #include <sys/socket.h>
 #include <unistd.h> // close
+
+#include <netdb.h> // getaddrinfo
+
 }
 
-#include <cstring> // strerror
-
-using namespace std::chrono;
-using namespace std::chrono_literals;
+#include <cstring>
+#include <string>
 
 namespace stx {
 
-// == socket ==============================================================
+// =============================================================
+// == Detail =============================================
+// =============================================================
 
-// -- socket: Constructors; Moving & Copying --------------------------------------
+namespace detail {
 
-socket::socket() : m_handle(-1), m_refcount(0) {}
-socket::socket(socket const& other) : socket() { *this = other; }
-socket::socket(socket&& other) : socket() { *this = std::move(other); }
-socket::~socket() { close(); }
+// TODO: only create new references pointer when the shared_socket is copied
 
-socket& socket::operator=(socket&& other) {
-	close();
-	std::swap(m_handle, other.m_handle);
-	std::swap(m_refcount, other.m_refcount);
-	return *this;
+shared_socket::shared_socket() :
+	handle(-1),
+	references(nullptr)
+{}
+
+shared_socket::shared_socket(shared_socket const& s) : shared_socket() {
+	reset(s);
 }
 
-socket& socket::operator=(stx::socket const& other) {
-	m_handle   = other.m_handle;
-	m_refcount = other.m_refcount;
-	if(is_open()) ++*m_refcount;
-	return *this;
+shared_socket::shared_socket(shared_socket&& s) : shared_socket() {
+	reset(std::move(s));
 }
 
-
-// -- socket: General -----------------------------------------------------
-
-socket& socket::open(sockdomain d, sockprotocol p) {
-	if(is_open()) {
-		throw invalid_operation(
-		    "Cannot open an already open socket. Please close it first or "
-		    "create a new one");
-	}
-
-	if(d == sockdomain_invalid || d >= _num_sockdomains) {
-		throw invalid_operation("invalid socket domain: " + std::to_string(d));
-	}
-
-	if(p == sockprotocol_invalid || p >= _num_sockprotocols) {
-		throw invalid_operation("invalid socket protocol: " +
-		                        std::to_string(p));
-	}
-
-	constexpr static int domains[_num_sockdomains] = {
-	    -1, AF_INET, AF_INET6, AF_IRDA, AF_BLUETOOTH, AF_UNIX};
-
-	constexpr static int protocols[_num_sockprotocols] = {
-	    -1, SOCK_DGRAM, SOCK_STREAM};
-
-	m_handle = ::socket(domains[d], protocols[p], 0);
-	if(!is_open()) {
-		throw failed_operation(std::string("Failed opening socket: ") +
-		                       strerror(errno));
-	}
-
-	m_refcount = new int(1);
-
-	return *this;
+shared_socket::shared_socket(int i) : shared_socket() {
+	reset(i);
 }
 
-socket& socket::open(sockdomain d, sockprotocol p, uint16_t port) {
-	return open(d, p).bind(port);
+shared_socket::~shared_socket() {
+	reset();
 }
 
-socket& socket::close() {
-	if(is_open()) {
-		if(--*m_refcount == 0) {
-			delete m_refcount;
-			::close(m_handle);
-		}
-		m_handle   = -1;
-		m_refcount = nullptr;
-	}
-	return *this;
-}
-
-socket& socket::bind(uint16_t port) {
-	if(!is_open())
-		throw invalid_operation("Cannot bind a socket which was not opened.");
-
-	sockaddr_in address;
-	address.sin_family      = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port        = htons(port);
-
-	if(::bind(m_handle, (sockaddr*)&address, sizeof(address))) {
-		throw failed_operation("Failed binding socket to port " +
-		                       std::to_string(port) + ": " + strerror(errno));
-	}
-
-	return *this;
-}
-
-// -- socket: Server -------------------------------------------------------
-
-connection socket::accept(size_t                    max_queued,
-                          std::chrono::milliseconds timeout) {
-	if(!is_open()) {
-		throw invalid_operation(
-		    "Cannot accept connections on an unopened socket.");
-	}
-
-	// TODO: check if bound?
-
-	{
-		int status;
-
-		if(timeout < 0ms) {
-			blocking(true);
-			status = ::listen(m_handle, max_queued);
-		} else {
-			throw invalid_operation("Timeouts not yet implemented");
-
-			auto beg = high_resolution_clock::now();
-			do {
-				status = ::listen(m_handle, max_queued);
-
-				if(high_resolution_clock::now() - beg > timeout) {
-					puts("Timeout");
-					return connection();
-				}
-			} while(status == EWOULDBLOCK);
-		}
-
-		if(status) {
-			printf("Error waiting for incoming connections in accept: %s\n", strerror(errno));
-			return connection();
+shared_socket& shared_socket::reset() {
+	if(references) {
+		if(--(*references) == 0) {
+			close(handle);
+			delete references;
 		}
 	}
-
-	connection c;
-
-	// TODO: What connection members should we extract from the adress struct?
-	sockaddr_in address;
-	socklen_t   len = sizeof(address);
-
-	c.m_handle = ::accept(m_handle, (sockaddr*)&address, &len);
-	if(c) { // Only assign socket if connection is valid
-		c.m_socket = *this;
-	}
-	else {
-		printf("Failed opening connection: %s\n", strerror(errno));
-	}
-
-	return c;
-}
-
-connection socket::accept(sockdomain                d,
-                          sockprotocol              p,
-                          uint16_t                  port,
-                          size_t                    max_queued,
-                          std::chrono::milliseconds timeout) {
-	return open(d, p, port).accept(max_queued, timeout);
-}
-
-// -- socket: Client ---------------------------------------------------------
-
-
-// -- socket: Getters & Setters ----------------------------------------------
-
-
-sockprotocol socket::protocol() const noexcept {
-	if(!is_open()) { return sockprotocol_invalid; }
-
-	int       type;
-	socklen_t type_size = sizeof(type);
-
-	if(getsockopt(m_handle, SOL_SOCKET, SO_TYPE, &type, &type_size)) {
-		return sockprotocol_invalid;
-	}
-
-	if(type == SOCK_STREAM) return sockprotocol::tcp;
-	if(type == SOCK_DGRAM) return sockprotocol::udp;
-	return sockprotocol_invalid;
-}
-
-// TODO: implement sockdomain socket::domain() const noexcept;
-
-size_t socket::references() const noexcept {
-	if(!is_open()) return 0;
-	return *m_refcount;
-}
-
-bool socket::listening() const noexcept {
-	if(!is_open()) return false;
-
-	int       listens;
-	socklen_t listens_size = sizeof(listens);
-
-	if(getsockopt(
-	       m_handle, SOL_SOCKET, SO_ACCEPTCONN, &listens, &listens_size)) {
-		return false;
-	}
-
-	return listens != 0;
-}
-
-bool socket::blocking() const noexcept {
-	return (fcntl(m_handle, F_GETFL, 0) & O_NONBLOCK) == 0;
-}
-
-socket& socket::blocking(bool b) {
-	int flags = fcntl(m_handle, F_GETFL, 0);
-
-	int result;
-	if(b) {
-		result = fcntl(m_handle, F_SETFL, flags & ~O_NONBLOCK);
-	}
-	else {
-		result = fcntl(m_handle, F_SETFL, flags | O_NONBLOCK);
-	}
-
-	if(result != 0) {
-		close();
-		throw failed_operation(
-		    std::string("Could not set the socket::blocking to ") + (b ? "true" : "false") + ": " +
-		    strerror(errno));
-	}
-
+	handle = -1;
+	references = nullptr;
 	return *this;
 }
 
-// == connection ==============================================================
-
-// -- Constructors; Copy & Move behavior --------------------------------------
-connection::connection() : m_socket(), m_handle(-1) {}
-
-connection::connection(connection&& other) : connection() {
-	*this = std::move(other);
-}
-
-connection::~connection() { close(); }
-
-connection& connection::operator=(connection&& other) {
-	close();
-	std::swap(m_handle, other.m_handle);
-	std::swap(m_socket, other.m_socket);
-	return *this;
-}
-
-// -- connection: General --------------------------------------------------------------
-connection& connection::close() {
-	if(*this) {
-		::close(m_handle);
-		m_handle = -1;
-		m_socket.close();
+shared_socket& shared_socket::reset(int i) {
+	reset();
+	handle = i;
+	if(i != -1) {
+		references = new std::atomic<int>(1);
 	}
 	return *this;
 }
 
-// -- connection: IO --------------------------------------------------------------
-void connection::write_s(const char* s) {
-	if(!(*this)) {
-		throw socket::invalid_operation("Cannot write to invalid connection");
+shared_socket& shared_socket::reset(shared_socket&& other) {
+	reset();
+	handle = other.handle;
+	references = other.references;
+	other.handle = -1;
+	other.references = nullptr;
+	return *this;
+}
+
+shared_socket& shared_socket::reset(shared_socket const& other) {
+	if(other.references) {
+		++(*other.references);
 	}
 
-	write(m_handle, s, strlen(s));
+	reset();
+	handle = other.handle;
+	references = other.references;
+	return *this;
+}
+
+shared_socket::operator bool() const noexcept {
+	return handle != -1;
+}
+
+} // namespace detail
+
+// =============================================================
+// == Url =============================================
+// =============================================================
+
+std::string url::port_of   (std::string const& url) {
+	size_t pos = url.find_last_of(':');
+	if(pos == std::string::npos) return "";
+	return url.substr(pos);
+}
+std::string url::protocol_of(std::string const& url) {
+	size_t pos = url.find("://");
+	if(pos == std::string::npos) return "";
+	return url.substr(0, pos);
+}
+std::string url::host_of   (std::string const& url) {
+	size_t beg = url.find("://");
+	if(beg == std::string::npos) beg = 0;
+
+	size_t end = url.find("/", beg);
+	if(end == std::string::npos) end = url.size() - beg;
+
+	return url.substr(beg, end);
+}
+std::string url::path_of   (std::string const& url) {
+	// TODO
+	return "Unimplemented function";
+}
+
+// =============================================================
+// == TCP =============================================
+// =============================================================
+
+// ** Connection *******************************************************
+
+tcp_connection::tcp_connection() {}
+
+bool tcp_connection::connect(char const* url, char const* service, bool allow_ipv6) {
+	addrinfo* info = nullptr;
+
+	getaddrinfo(url, service, nullptr, &info);
+
+	if(!info) {
+		throw socket_error::failed_operation("Failed resolving '" + std::string(url) + "': " + strerror(errno));
+	}
+
+	addrinfo* used_info = info;
+
+	if(!allow_ipv6) {
+		while(used_info && info->ai_family == AF_INET6) {
+			used_info = used_info->ai_next;
+		}
+		if(!used_info) {
+			freeaddrinfo(info);
+			throw socket_error::failed_operation("Server " + std::string(url) + " requires ipv6");
+		}
+	}
+
+	m_socket.reset(::socket(used_info->ai_family, SOCK_STREAM, 0));
+	if(!m_socket) {
+		freeaddrinfo(info);
+		throw socket_error::failed_operation("Failed creating socket: " + std::string(strerror(errno)));
+	}
+
+	if(::connect(m_socket.handle, used_info->ai_addr, used_info->ai_addrlen)) {
+		m_socket.reset();
+		freeaddrinfo(info);
+		throw socket_error::failed_operation("Failed to connect: " + std::string(strerror(errno)));
+	}
+
+	freeaddrinfo(info);
+
+	return true;
+}
+
+void tcp_connection::close() {
+	m_socket.reset();
+	m_server_socket.reset();
+}
+
+void tcp_connection::send_raw(void const* data, std::size_t len) {
+	::send(m_socket.handle, data, len, 0);
+}
+
+std::size_t tcp_connection::recv_raw(void* to, std::size_t max_len) {
+	return ::recv(m_socket.handle, to, max_len, 0);
+}
+
+// ** Server *******************************************************
+
+tcp_server::tcp_server() {}
+
+tcp_server::tcp_server(uint16_t port, bool blocking) {
+	bind(port, blocking);
+}
+
+bool tcp_server::bind(uint16_t port, bool blocking) {
+	int type = SOCK_STREAM;
+
+	if(!blocking) type |= SOCK_NONBLOCK;
+
+	m_socket.reset(::socket(AF_INET, type, 0));
+	if(!m_socket) {
+		throw socket_error::failed_operation("Failed creating socket: " + std::string(::strerror(errno)));
+	}
+
+	::sockaddr_in addr   = {};
+	addr.sin_family      = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port        = htons(port);
+
+	if(::bind(m_socket.handle, (sockaddr*) &addr, sizeof(addr))) {
+		m_socket.reset();
+		throw socket_error::failed_operation("Failed binding socket to port " + std::to_string(port) + ": " + std::string(::strerror(errno)));
+	}
+
+	return m_socket;
+}
+
+tcp_connection tcp_server::listen(std::size_t max_connections) {
+	if(!m_socket) {
+		throw socket_error::invalid_operation("Socket was not bound to a port!");
+	}
+
+	tcp_connection connection;
+
+	if(::listen(m_socket.handle, ((int) max_connections) - 1)) {
+		throw socket_error::failed_operation("Failed listening for connections: " + std::string(::strerror(errno)));
+	}
+
+	sockaddr_in addr;
+	unsigned int sz = sizeof(addr);
+	connection.m_socket.reset(::accept(m_socket.handle, (sockaddr*) &addr, &sz));
+	if(connection.m_socket) {
+		connection.m_server_socket.reset(m_socket);
+	}
+	else throw socket_error::failed_operation("Failed creating connection: " + std::string(::strerror(errno)));
+
+	printf("New connection %i: %i\n", connection.m_server_socket.handle, connection.m_socket.handle);
+
+	return connection;
+}
+
+void tcp_server::close() {
+	m_socket.reset();
+}
+
+// =============================================================
+// == Udp =============================================
+// =============================================================
+
+udp_server::udp_server() :
+	m_socket(::socket(AF_INET, SOCK_DGRAM, 0))
+{}
+
+udp_server::udp_server(uint16_t port) :
+	udp_server()
+{
+	bind(port);
+}
+
+udp_server& udp_server::bind(uint16_t port) {
+	sockaddr_in addr;
+	addr.sin_family      = AF_INET;
+	addr.sin_port        = htons(port);
+	addr.sin_addr.s_addr = INADDR_ANY;
+
+	int yes = 1;
+	setsockopt(m_socket.handle, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
+	if(::bind(m_socket.handle, (sockaddr const*) &addr, sizeof(addr))) {
+		throw socket_error::failed_operation("Failed binding socket to port " + std::to_string(port) + ": " + strerror(errno));
+	}
+
+	return *this;
 }
 
 } // namespace stx
