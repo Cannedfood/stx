@@ -198,6 +198,12 @@ public:
 	constexpr hash_value  hash()   const noexcept { return m_hash; }
 	constexpr std::size_t length() const noexcept { return m_length; }
 
+	// Required to properly convert to bool
+	constexpr
+	operator int() const noexcept { return length(); }
+	constexpr
+	operator bool() const noexcept { return length(); }
+
 	constexpr
 	operator const char*() const noexcept { return value(); }
 
