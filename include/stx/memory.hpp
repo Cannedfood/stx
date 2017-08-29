@@ -38,7 +38,7 @@ public:
 		m_deleter()
 	{}
 
-	constexpr inline
+	constexpr inline explicit
 	owned(Tptr ptr, const Tdel& del = Tdel()) :
 		m_pointer(ptr),
 		m_deleter(del)
