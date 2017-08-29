@@ -16,7 +16,7 @@ template<unsigned level>
 std::ostream& get_logstream() { return std::cout; }
 
 template<unsigned level>
-void release_logstream() {}
+void release_logstream(std::ostream& s) { s << std::endl; }
 
 inline void write_simple(std::ostream&) {}
 
@@ -61,7 +61,8 @@ void write_formatted(std::ostream& s, const char* fmt, First&& first, ARGS&&... 
 } // namespace detail
 
 enum log_target : unsigned {
-	log_info = 0,
+	log_verbose = 0,
+	log_info,
 	log_warn,
 	log_perfwarn,
 	log_error
@@ -73,8 +74,8 @@ void writelog(ARGS&&... args) {
 #ifdef STX_MODULE_NAME
 	detail::write_simple(stream, "[" STX_MODULE_NAME_STRING "] ");
 #endif
-	detail::write_simple(detail::get_logstream<level>(), std::forward<ARGS>(args)..., std::endl);
-	detail::release_logstream<level>();
+	detail::write_simple(stream, std::forward<ARGS>(args)...);
+	detail::release_logstream<level>(stream);
 }
 
 template<unsigned level, typename... ARGS> static
@@ -84,8 +85,14 @@ void writelog(const char* fmt, ARGS&&... args) {
 	detail::write_simple(stream, "[" STX_MODULE_NAME_STRING "] ");
 #endif
 	detail::write_formatted(stream, fmt, std::forward<ARGS>(args)...);
-	stream << std::endl;
-	detail::release_logstream<level>();
+	detail::release_logstream<level>(stream);
+}
+
+template<typename... ARGS> inline static
+void verbose(ARGS&&... args) {
+#ifdef STX_LOG_VERBOSE
+	writelog<log_verbose>(std::forward<ARGS>(args)...);
+#endif
 }
 
 template<typename... ARGS> inline static
@@ -134,11 +141,21 @@ std::ostream& get_logstream<log_error>() {
 	return std::cerr;
 }
 
-template<> inline void release_logstream<log_warn>()     { std::cout << "\033[0m"; }
-template<> inline void release_logstream<log_perfwarn>() { std::cout << "\033[0m"; }
-template<> inline void release_logstream<log_error>()    { std::cout << "\033[0m"; }
+template<> inline void release_logstream<log_warn>(std::ostream& s)     { s << "\033[0m" << std::endl; }
+template<> inline void release_logstream<log_perfwarn>(std::ostream& s) { s << "\033[0m" << std::endl; }
+template<> inline void release_logstream<log_error>(std::ostream& s)    { s << "\033[0m" << std::endl; }
 
 #else // STX_LOG_COLORS
+
+template<> inline
+std::ostream& get_logstream<log_verbose>() {
+	std::cout << "V: (";
+	return std::cout;
+}
+template<> inline
+void release_logstream<log_verbose>(std::ostream& s) {
+	s << ")" << std::endl;
+}
 
 template<> inline
 std::ostream& get_logstream<log_info>() {
