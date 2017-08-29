@@ -17,7 +17,7 @@ class timer {
 public:
 	timer() { begin(); }
 
-	void begin() noexcept { m_begin = now(); }
+	void reset() noexcept { m_begin = now(); }
 
 	double days() const noexcept {
 		return duration_cast<duration<double, ratio<86400>>>(now() - m_begin).count();
