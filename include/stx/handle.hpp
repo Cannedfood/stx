@@ -40,6 +40,10 @@ public:
 		m_handles.emplace_back(std::move(h));
 		return *this;
 	}
+
+	void clear() {
+		m_handles.clear();
+	}
 };
 
 } // namespace stx
