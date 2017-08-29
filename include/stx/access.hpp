@@ -26,3 +26,7 @@
 
 #define xaccessv(ACCESSOR, MEMBER) \
 	xgetter(ACCESSOR, MEMBER) xsetterv(ACCESSOR, MEMBER)
+
+#define xproperty_r(TYPE, NAME) TYPE NAME();
+#define xproperty_w(TYPE, NAME) void NAME(TYPE const&);
+#define xproperty(TYPE, NAME) xproperty_r(TYPE, NAME); xproperty_w(TYPE, NAME)
