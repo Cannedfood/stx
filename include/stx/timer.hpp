@@ -15,7 +15,7 @@ class timer {
 	high_resolution_clock::time_point now() noexcept { return high_resolution_clock::now(); }
 
 public:
-	timer() { begin(); }
+	timer() { reset(); }
 
 	void reset() noexcept { m_begin = now(); }
 
