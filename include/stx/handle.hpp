@@ -36,13 +36,17 @@ class handles {
 	std::vector<handle> m_handles;
 
 public:
-	handles& operator<<(handle&& h) {
+	void add(handle&& h) {
 		m_handles.emplace_back(std::move(h));
-		return *this;
 	}
 
 	void clear() {
 		m_handles.clear();
+	}
+
+	handles& operator<<(handle&& h) {
+		add(std::move(h));
+		return *this;
 	}
 };
 
