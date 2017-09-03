@@ -72,6 +72,9 @@ class parent_element {
 	friend class child_element<TChild, T>;
 
 protected:
+	using parent_element_t = parent_element<T, TChild>;
+	using child_element_t  = child_element<TChild, T>;
+
 	parent_element();
 	~parent_element() noexcept;
 
@@ -99,6 +102,9 @@ class child_element : public list_element<T> {
 
 	friend class parent_element<TParent, T>;
 protected:
+	using parent_element_t = parent_element<TParent, T>;
+	using child_element_t  = child_element<T, TParent>;
+
 	constexpr
 	child_element();
 	~child_element() noexcept;
