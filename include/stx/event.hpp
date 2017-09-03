@@ -28,9 +28,12 @@ using default_policy = ignore;
 // == event<fn, policy> ======================================================
 template<typename FnSig, typename Policy = result_policy::default_policy<FnSig>>
 class event {
+public:
 	using observer = detail::observer_interface_of<FnSig>;
 
+private:
 	observer* m_observers;
+
 public:
 	event() : m_observers(nullptr) {}
 
