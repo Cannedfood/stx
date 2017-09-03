@@ -287,6 +287,21 @@ class aligned_shared_block_with_callback : public aligned_shared_block<T> {
 	}
 };
 
+class fake_shared_block : public shared_block {
+	void destroy_pointer() override {} // Do nothing
+	void destroy_block() override {} // Do nothing
+
+	fake_shared_block() {}
+public:
+	static fake_shared_block* instance();
+};
+
+inline
+fake_shared_block* fake_shared_block::instance() {
+	static fake_shared_block fake = fake_shared_block();
+	return &fake;
+}
+
 } // namespace detail
 
 template<typename T>
@@ -430,6 +445,11 @@ public:
 		return m_pointer[i];
 	}
 };
+
+template<typename T>
+shared<T> share_without_ownership(T* t) {
+	return shared<T>(detail::fake_shared_block::instance(), t);
+}
 
 template<typename T, typename Tdel = stx::default_delete<T>>
 shared<T> share(T* t, Tdel const& del = Tdel()) noexcept {
