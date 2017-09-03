@@ -66,35 +66,47 @@ public:
 	void remove(std::string const& path);
 	void remove(int handle);
 
-	template<typename C>
-	void set_observer(int watch, C const& c) {
-		m_event.subscribe([watch, c](int w, unsigned mask) {
-			if(w == watch)
-				c(mask);
-		});
-	}
+	template<typename Fn>
+	void set_observer(int watch, Fn const& callback);
 
-	template<typename C>
-	void set_observer(C&& c) {
-		m_event.subscribe(c);
-	}
+	template<typename Fn>
+	void set_observer(Fn&& callback);
 
-	template<typename C>
-	void set_observer(std::string const& path, C const& c) {
-		set_observer(add(path, change), c);
-	}
+	template<typename Fn>
+	void set_observer(std::string const& path, Fn const& callback);
 
-	template<typename C>
-	void set_observer(std::string const& path, unsigned mask, C const& c) {
-		set_observer(add(path, mask), c);
-	}
+	template<typename Fn>
+	void set_observer(std::string const& path, unsigned mask, Fn const& callback);
 
 	void poll_events();
 
 	bool initialized() const noexcept;
 	inline operator bool() const noexcept { return initialized(); }
 
-	static const char* Stringify(mask m);
+	static const char* to_string(mask m);
 };
+
+template<typename Fn>
+void filesystem_monitor::set_observer(int watch, Fn const& c) {
+	m_event.subscribe([watch, c](int w, unsigned mask) {
+		if(w == watch)
+			c(mask);
+	});
+}
+
+template<typename Fn>
+void filesystem_monitor::set_observer(Fn&& callback) {
+	m_event.subscribe(callback);
+}
+
+template<typename Fn>
+void filesystem_monitor::set_observer(std::string const& path, Fn const& callback) {
+	set_observer(add(path, change), callback);
+}
+
+template<typename Fn>
+void filesystem_monitor::set_observer(std::string const& path, unsigned mask, Fn const& callback) {
+	set_observer(add(path, mask), callback);
+}
 
 } // namespace stx

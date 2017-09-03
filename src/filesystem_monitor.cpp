@@ -124,7 +124,7 @@ void filesystem_monitor::poll_events() {
 	}
 }
 
-const char* filesystem_monitor::Stringify(mask m) {
+const char* filesystem_monitor::to_string(mask m) {
 	switch (m) {
 		case any: return "any";
 

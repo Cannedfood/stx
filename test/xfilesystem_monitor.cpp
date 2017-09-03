@@ -22,7 +22,7 @@ void test_xfilesystem_monitor() {
 	filesystem_monitor monitor;
 
 	monitor.set_observer(name, filesystem_monitor::modified, [](unsigned mask) {
-		printf("Something changed! %s\n", filesystem_monitor::Stringify((filesystem_monitor::mask)mask));
+		printf("Something changed! %s\n", filesystem_monitor::to_string((filesystem_monitor::mask)mask));
 	});
 
 	std::ofstream(name) << "Hi" << std::endl;
