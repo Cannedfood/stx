@@ -85,7 +85,7 @@ public:
 
 /// A class used for debugging which checks whether a returned value was
 /// handled
-template <typename T>
+template<typename T>
 class asserted {
 	T            m_value;
 	mutable bool m_handled;
@@ -103,15 +103,15 @@ public:
 				    "false");
 			}
 			else {
-				#ifdef STX_FATAL_IMPORTANT_VALUES
-							throw std::runtime_error(
-							    "Unhandled important value! (important function result not handled, but it was not an error)");
-				#else
-							stx::warn(
-							    "Unhandled important value! (important function result "
-							    "not "
-							    "handled, but it was not an error)");
-				#endif
+#ifdef STX_FATAL_IMPORTANT_VALUES
+				throw std::runtime_error(
+				    "Unhandled important value! (important function result not handled, but it was not an error)");
+#else
+				stx::warn(
+				    "Unhandled important value! (important function result "
+				    "not "
+				    "handled, but it was not an error)");
+#endif
 			}
 		}
 	}
@@ -124,24 +124,16 @@ public:
 
 } // namespace stx
 
-#define STX_RESULT_HANDLED(X) \
-	{                         \
-		if(X) {}              \
-	}
-
 #else // STX_DEBUG_TOOLS > 0
 
 namespace stx {
 
-template <typename T>
+template<typename T>
 using important = T;
 
-template <typename T>
+template<typename T>
 using asserted = T;
 
 } // namespace stx
-
-#define STX_RESULT_HANDLED(X) \
-	{ X; }
 
 #endif // STX_DEBUG_TOOLS > 0
