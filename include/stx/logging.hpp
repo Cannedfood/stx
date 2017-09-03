@@ -41,7 +41,7 @@ const char* write_formatted_next(std::ostream& s, const char* fmt, T&& t) {
 	throw std::runtime_error("Unexpected end of formatting string!");
 }
 
-static
+inline
 void write_formatted(std::ostream& s, const char* fmt) {
 	s << fmt;
 }
