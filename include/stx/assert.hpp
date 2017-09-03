@@ -64,7 +64,7 @@ public:
 	template <typename Tx>
 	constexpr important(Tx&& val) : m_value(val), m_handled(false) {}
 
-	~important() noexcept {
+	~important() {
 		if(!m_handled) {
 #ifdef STX_FATAL_IMPORTANT_VALUES
 			throw std::runtime_error(
