@@ -33,7 +33,10 @@ struct default_delete {
 
 	inline
 	void operator()(pointer p) const noexcept {
-		delete p;
+		if(std::is_array<T>::value)
+			delete[] p;
+		else
+			delete p;
 	}
 };
 
