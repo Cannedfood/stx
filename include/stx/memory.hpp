@@ -103,7 +103,7 @@ public:
 	constexpr inline
 	Tref operator*()  const noexcept { return *m_pointer; }
 
-	constexpr inline
+	explicit constexpr inline
 	operator Tptr() const noexcept { return m_pointer; }
 
 	template<typename Idx, typename = typename std::enable_if<is_array<T>>>
@@ -417,7 +417,7 @@ public:
 
 	constexpr inline detail::shared_block* get_block() const noexcept { return m_shared_block.get(); }
 
-	constexpr inline
+	explicit constexpr inline
 	operator Tptr() const noexcept { return m_pointer; }
 
 	constexpr inline
