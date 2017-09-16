@@ -120,22 +120,24 @@ using default_hash = fast64;
 
 
 
-template<typename hasher = hash_type::default_hash>
-struct basic_hash {
-	using type       = basic_hash<hasher>;
-	using value_type = typename hasher::value_type;
-	using state_type = typename hasher::state_type;
+template<typename Hasher = hash_type::default_hash>
+class basic_hash {
+public:
+	using hasher_t     = Hasher;
 
-	value_type hash_value;
+	using self_t       = basic_hash<hasher_t>;
+	using hash_value_t = typename hasher_t::value_type;
+	using state_t      = typename hasher_t::state_type;
 
-	constexpr inline
-	operator value_type() const noexcept { return hash_value; }
+private:
+	hash_value_t m_value;
 
+public:
 	inline
 	basic_hash(const void* data, std::size_t size) :
-		hash_value(hasher::finalize_hash(
-			hasher::increment_hash(
-				hasher::create_state(),
+		m_value(hasher_t::finalize_hash(
+			hasher_t::increment_hash(
+				hasher_t::create_state(),
 				(const char*) data, size
 			)
 		))
@@ -148,28 +150,36 @@ struct basic_hash {
 
 	template<std::size_t len> constexpr
 	basic_hash(const char (&strn)[len]) :
-		hash_value(hasher::constexpr_hash_strn(strn))
+		m_value(hasher_t::constexpr_hash_strn(strn))
 	{}
-
-	constexpr
-	basic_hash() :
-		hash_value(hasher::finalize_hash(hasher::create_state()))
-	{}
-};
-
-template<typename hasher = hash_type::default_hash>
-class basic_symbol {
-	using Tself = basic_symbol<hasher>;
-	using hash_value = typename hasher::value_type;
-
-protected:
-	hash_value  m_hash;
-	const char* m_value;
-	std::size_t m_length;
 
 	constexpr inline
-	basic_symbol(const char* v, std::size_t len, hash_value h) :
-		m_hash(h),
+	basic_hash() :
+		m_value(hasher_t::finalize_hash(hasher_t::create_state()))
+	{}
+
+	constexpr inline
+	hash_value_t hash() const noexcept { return m_value; }
+
+	constexpr inline
+	operator hash_value_t() const noexcept { return hash(); }
+};
+
+template<typename Hasher = hash_type::default_hash>
+class basic_symbol : public basic_hash<Hasher> {
+public:
+	using hasher_t = Hasher;
+	using hash_t   = basic_hash<hasher_t>;
+
+	using self_t = basic_symbol<hasher_t>;
+
+protected:
+	const char*  m_value;
+	std::size_t  m_length;
+
+	constexpr inline
+	basic_symbol(const char* v, std::size_t len) :
+		hash_t(v, len),
 		m_value(v),
 		m_length(len)
 	{}
@@ -177,25 +187,24 @@ protected:
 public:
 	template<std::size_t len> constexpr // implicit
 	basic_symbol(const char (&strn)[len]) :
-		m_hash(hasher::constexpr_hash_strn(strn)),
+		hash_t(strn),
 		m_value(strn),
 		m_length(len)
 	{}
 
 	constexpr
 	basic_symbol() :
-		m_hash(basic_hash<hasher>()),
+		hash_t(),
 		m_value(nullptr),
 		m_length(0)
 	{}
 
 	constexpr
-	static Tself unsafe_construct(const char* data, std::size_t len) {
-		return Tself(data, len, basic_hash<hasher>(data, len));
+	static self_t unsafe_construct(const char* data, std::size_t len) {
+		return self_t(data, len);
 	}
 
 	constexpr const char* value()  const noexcept { return m_value; }
-	constexpr hash_value  hash()   const noexcept { return m_hash; }
 	constexpr std::size_t length() const noexcept { return m_length; }
 
 	// Required to properly convert to bool
@@ -207,19 +216,16 @@ public:
 	constexpr
 	operator const char*() const noexcept { return value(); }
 
-	constexpr
-	operator hash_value() const noexcept { return hash(); }
-
-	bool operator<(const Tself& other) const noexcept {
-		if(m_hash != other.m_hash) return m_hash < other.m_hash;
+	bool operator<(const self_t& other) const noexcept {
+		if(this->hash() != other.hash()) return this->hash() < other.hash();
 		for(std::size_t i = 0; i < (m_length - 1) && i < (other.m_length - 1); i++) {
 			if(m_value[i] != other.m_value[i]) return m_value[i] < other.m_value[i];
 		}
 		return false; // same
 	}
 
-	bool operator==(const Tself& other) const noexcept {
-		if(m_hash != other.m_hash) {
+	bool operator==(const self_t& other) const noexcept {
+		if(this->hash() != other.hash()) {
 			return false;
 		}
 		else if(m_value == other.m_value && m_length == other.m_length) {
@@ -235,8 +241,8 @@ public:
 	};
 };
 
-template<typename hasher = hash_type::default_hash>
-class basic_symstring : public basic_symbol<hasher> {
+template<typename Hasher = hash_type::default_hash>
+class basic_symstring : public basic_symbol<Hasher> {
 	static const char* clone_string(const char* c, std::size_t len) {
 		char* cc = new char[len + 1];
 		memcpy(cc, c, len);
@@ -245,17 +251,21 @@ class basic_symstring : public basic_symbol<hasher> {
 	}
 
 public:
+	using symbol_t = basic_symbol<Hasher>;
+	using self_t   = basic_symstring<Hasher>;
+
+	constexpr
 	basic_symstring() :
-		basic_symbol<hasher>(nullptr, 0, basic_hash<hasher>())
+		symbol_t()
 	{}
 	basic_symstring(const char* str) :
 		basic_symstring(str, strlen(str))
 	{}
 	basic_symstring(const char* str, std::size_t len) :
-		basic_symbol<hasher>(clone_string(str, len), len, basic_hash<hasher>(str, len))
+		symbol_t(clone_string(str, len), len)
 	{}
-	basic_symstring(basic_symbol<hasher> const& s) :
-		basic_symbol<hasher>(clone_string(s.value(), s.length()), s.length(), s.hash())
+	basic_symstring(symbol_t const& s) :
+		symbol_t(clone_string(s.value(), s.length()), s.length(), s.hash())
 	{}
 	~basic_symstring() {
 		if(this->m_value) {
@@ -264,11 +274,11 @@ public:
 	}
 
 	// -- Copy --------------------------------------------------------------
-	basic_symstring(basic_symstring<hasher> const& other) :
-		basic_symbol<hasher>(clone_string(other.value(), other.length()), other.length(), other.hash())
+	basic_symstring(self_t const& other) :
+		symbol_t(clone_string(other.value(), other.length()), other.length(), other.hash())
 	{}
 
-	basic_symstring<hasher>& operator=(basic_symstring<hasher> const& other) {
+	self_t& operator=(self_t const& other) {
 		if(this->m_value) {
 			delete[] this->m_value;
 		}
@@ -278,35 +288,28 @@ public:
 	}
 
 	// -- Move -------------------------------------------------------------
-	basic_symstring(basic_symstring<hasher>&& other) :
-		basic_symbol<hasher>(other.m_value, other.m_length, other.m_hash)
+	basic_symstring(self_t&& other) :
+		symbol_t(other)
 	{
-		other.m_value  = nullptr;
-		other.m_length = 0;
-		other.m_hash   = basic_hash<hasher>();
+		other = self_t();
 	}
 
-	basic_symstring<hasher>& operator=(basic_symstring<hasher>&& other) noexcept {
+	self_t& operator=(self_t&& other) noexcept {
 		if(this->m_value) {
 			delete[] this->m_value;
 		}
 
-		this->m_value  = other.m_value;
-		this->m_length = other.m_length;
-		this->m_hash   = other.m_hash;
+		symbol_t::operator=(std::move(other));
 
-		other.m_value  = nullptr;
-		other.m_length = 0;
-		other.m_hash   = basic_hash<hasher>();
+		other.reset();
+
+		return *this;
 	}
 
 	// -- Functionality -------------------------------------------------------
-
 	void reset() noexcept {
-		if(this->value) {
-			this->value  = nullptr;
-			this->length = 0;
-			this->hash   = basic_hash<hasher>();
+		if(this->value()) {
+			*this = self_t();
 		}
 	}
 
@@ -315,14 +318,10 @@ public:
 	}
 
 	void reset(const char* str, size_t len) noexcept {
-		if(this->value) {
-			delete[] this->value;
-		}
-		this->value  = clone_string(str, len);
-		this->length = len;
-		this->hash   = basic_hash<hasher>(str, len);
+		*this = self_t(str, len);
 	}
 
+	constexpr
 	operator bool() const noexcept {
 		return this->value != nullptr;
 	}
