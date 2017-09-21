@@ -265,7 +265,7 @@ public:
 		symbol_t(clone_string(str, len), len)
 	{}
 	basic_symstring(symbol_t const& s) :
-		symbol_t(clone_string(s.value(), s.length()), s.length(), s.hash())
+		symbol_t(clone_string(s.value(), s.length()), s.length())
 	{}
 	~basic_symstring() {
 		if(this->m_value) {
@@ -366,14 +366,14 @@ struct hash<::stx::basic_symbol<H>> {
 template<typename H>
 struct hash<::stx::basic_symstring<H>> {
 	size_t operator()(::stx::basic_symstring<H> const& sym) const noexcept {
-		return sym.hash;
+		return sym.hash();
 	}
 };
 
 template<typename H>
 struct hash<stx::basic_hash<H>> {
 	size_t operator()(::stx::basic_hash<H> const& h) const noexcept {
-		return h.value;
+		return h.hash();
 	}
 };
 
