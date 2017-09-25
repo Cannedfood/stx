@@ -127,6 +127,16 @@ owned<T, Tdel> own(T* t, Tdel const& del = Tdel()) noexcept { return owned<T, Td
 template<typename T, typename... ARGS>
 owned<T> new_owned(ARGS&&... args) noexcept { return owned<T>(new T(std::forward<ARGS>(args)...)); }
 
+template<typename T, typename... ARGS>
+owned<T> try_owned(ARGS&&... args) noexcept {
+	try {
+		return owned<T>(new T(std::forward<ARGS>(args)...));
+	}
+	catch(std::exception e) {
+		return nullptr;
+	}
+}
+
 
 // == shared<T> ==============================================================
 
@@ -473,6 +483,16 @@ template<typename T, typename... ARGS>
 shared<T> new_shared(ARGS&&... args) noexcept {
 	auto* block = new detail::aligned_shared_block<T>(std::forward<ARGS>(args)...);
 	return shared<T>((detail::shared_block*) block, block->pointer());
+}
+
+template<typename T, typename... ARGS>
+shared<T> try_shared(ARGS&&... args) noexcept {
+	try {
+		return new_shared<T>(std::forward<ARGS>(args)...);
+	}
+	catch(std::exception e) {
+		return nullptr;
+	}
 }
 
 template<typename T, typename C, typename... ARGS>
