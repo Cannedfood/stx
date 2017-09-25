@@ -68,6 +68,12 @@ enum log_target : unsigned {
 	log_error
 };
 
+template<typename... ARGS> static
+void write_formatted(std::ostream& stream, const char* fmt, ARGS&&... args) {
+	detail::write_formatted(stream, fmt, std::forward<ARGS>(args)...);
+	stream << std::endl;
+}
+
 template<unsigned level, typename... ARGS> static
 void writelog(ARGS&&... args) {
 	auto& stream = detail::get_logstream<level>();
