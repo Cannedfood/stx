@@ -17,6 +17,8 @@ public:
 	using value_t       = T;
 	using const_value_t = T const;
 	using ref_t         = T&;
+	using ptr_t         = T*;
+	using const_ptr_t   = T*;
 
 	constexpr
 	interleaved(std::nullptr_t = nullptr) :
@@ -61,6 +63,10 @@ public:
 	operator interleaved<const_value_t>() const noexcept {
 		return interleaved<const_value_t>(m_first, m_byte_stride);
 	}
+
+	constexpr size_t      stride() const { return m_byte_stride; }
+	constexpr const_ptr_t first()  const { return m_first; }
+	constexpr size_t      offset_to(void const* p) { return ((char const*) m_first) - (char const*)p;}
 };
 
 } // namespace stx
