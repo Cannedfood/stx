@@ -98,7 +98,7 @@ public:
 
 template<typename T, typename TParent>
 class child_element : public list_element<T> {
-	TParent* m_parent;
+	mutable TParent* m_parent;
 
 	friend class parent_element<TParent, T>;
 protected:
@@ -123,8 +123,7 @@ public:
 	void remove() noexcept;
 
 	// -- Getters / Setters -------------------------------------------------
-	      TParent* parent()       noexcept { return m_parent; }
-	const TParent* parent() const noexcept { return m_parent; }
+	TParent* parent() const noexcept { return m_parent; }
 };
 
 #ifdef STX_WIP
