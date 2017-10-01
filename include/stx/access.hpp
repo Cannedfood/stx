@@ -19,9 +19,8 @@
 
 // Virtual setter
 #define xsetterv(ACCESSOR, MEMBER)                \
-	virtual auto& ACCESSOR(decltype(MEMBER) const & m) { \
+	virtual void ACCESSOR(decltype(MEMBER) const & m) { \
 		MEMBER = m;                              \
-		return *this;                            \
 	}
 
 #define xaccessv(ACCESSOR, MEMBER) \
