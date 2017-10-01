@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstddef>
-
 #include <utility>
+#include <exception>
 
 #include "type.hpp"
 
