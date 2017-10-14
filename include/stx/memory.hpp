@@ -421,6 +421,12 @@ public:
 		return *this;
 	}
 
+	template<typename Tbase>
+	operator stx::shared<Tbase>() const {
+		static_assert(std::is_base_of<Tbase, T>::value, "Cannot implicitly cast");
+		return cast_static<Tbase>();
+	}
+
 	constexpr inline Tptr get()        const noexcept { return m_pointer; }
 	constexpr inline Tptr operator->() const noexcept { return m_pointer; }
 	constexpr inline Tref operator*()  const noexcept { return *m_pointer; }
