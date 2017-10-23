@@ -1,25 +1,25 @@
 
 namespace stx {
 
-template<typename T, typename TLoadInfo>
-cache<T, TLoadInfo>::cache() {}
-template<typename T, typename TLoadInfo>
-cache<T, TLoadInfo>::~cache() {}
+template<typename T, typename LoadInfo, typename Hash, typename Pred>
+cache<T, LoadInfo, Hash, Pred>::cache() {}
+template<typename T, typename LoadInfo, typename Hash, typename Pred>
+cache<T, LoadInfo, Hash, Pred>::~cache() {}
 
-template<typename T, typename TLoadInfo>
-shared<T> cache<T, TLoadInfo>::add_entry(LoadInfo const& i, owned<T>&& t) {
+template<typename T, typename LoadInfo, typename Hash, typename Pred>
+shared<T> cache<T, LoadInfo, Hash, Pred>::add_entry(LoadInfo const& i, owned<T>&& t) {
 
 }
 
-template<typename T, typename TLoadInfo>
-void cache<T, TLoadInfo>::hot_swap(LoadInfo const& i, T&& t) {
+template<typename T, typename LoadInfo, typename Hash, typename Pred>
+void cache<T, LoadInfo, Hash, Pred>::hot_swap(LoadInfo const& i, T&& t) {
 	if(auto s = m_entries[i].lock()) {
 
 	}
 }
 
-template<typename T, typename TLoadInfo>
-shared<T> cache<T, TLoadInfo>::load(LoadInfo const& i) {
+template<typename T, typename LoadInfo, typename Hash, typename Pred>
+shared<T> cache<T, LoadInfo, Hash, Pred>::load(LoadInfo const& i) {
 	if(auto s = m_entries[i].lock()) {
 		return s;
 	}
@@ -29,9 +29,14 @@ shared<T> cache<T, TLoadInfo>::load(LoadInfo const& i) {
 		return s;
 	}
 }
-template<typename T, typename TLoadInfo>
-owned<T> cache<T, TLoadInfo>::load_uncached(LoadInfo const& i) {
+template<typename T, typename LoadInfo, typename Hash, typename Pred>
+owned<T> cache<T, LoadInfo, Hash, Pred>::load_uncached(LoadInfo const& i) {
 	return new_owned<T>(i);
+}
+
+template<typename T, typename LoadInfo, typename Hash, typename Pred>
+void cache<T, LoadInfo, Hash, Pred>::clear() {
+	m_entries.clear();
 }
 
 } // namespace stx

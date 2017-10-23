@@ -3,14 +3,17 @@
 #include "../hash.hpp"
 #include "../memory.hpp"
 
-#include <map>
+#include <unordered_map>
+#include <functional>
 
 namespace stx {
 
-template<typename T, typename TLoadInfo = symstring>
+template<typename T, typename LoadInfo = symstring, typename Hash = std::hash<LoadInfo>, typename Pred = std::equal_to<LoadInfo>>
 class cache {
 public:
-	using LoadInfo = TLoadInfo;
+	using load_info = LoadInfo;
+	using hash      = Hash;
+	using pred      = Pred;
 
 	static_assert(std::is_copy_constructible<LoadInfo>::value,
 	              "LoadInfo has to be copy constructable");
@@ -18,7 +21,7 @@ public:
 	              "LoadInfo has to be move constructable");
 
 private:
-	std::map<LoadInfo, weak<T>> m_entries;
+	std::unordered_map<LoadInfo, weak<T>, hash, pred> m_entries;
 
 public:
 	cache();
@@ -30,6 +33,8 @@ public:
 
 	shared<T> load(LoadInfo const& i);
 	owned<T>  load_uncached(LoadInfo const& i);
+
+	void      clear();
 };
 
 } // namespace stx
