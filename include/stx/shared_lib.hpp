@@ -1,7 +1,5 @@
 #pragma once
 
-#include "assert.hpp"
-
 namespace stx {
 
 /// A shared library
@@ -22,7 +20,7 @@ public:
 	~shared_lib() noexcept;
 
 	// -- Move & Copy --------------------------------------------------------------
-	shared_lib(shared_lib&&);
+	shared_lib(shared_lib&&) noexcept;
 	shared_lib& operator=(shared_lib&&) noexcept;
 
 	shared_lib(shared_lib const&)            = delete;
@@ -35,15 +33,15 @@ public:
 	/// Close/unload library
 	void close() noexcept;
 	/// Get the pointer to the symbol
-	void* getp(const char* symbol) noexcept;
+	void* getp(const char* symbol) const noexcept;
 
 	/// Get the pointer to a symbol and cast it to the type T
 	template<typename T> inline
-	T get(const char* symbol) noexcept { (T) getp(symbol); }
+	T* get(const char* symbol) const noexcept { return ((T*) getp(symbol)); }
 
 	/// Load a symbol to a variable. Returns whether the symbol was found.
 	template<typename T>
-	important<bool> get(T& to, const char* symbol) noexcept {
+	bool get(T& to, const char* symbol) noexcept {
 		if(void* p = getp(symbol)) {
 			to = (T) p;
 			return true;
@@ -52,7 +50,7 @@ public:
 	}
 
 	/// Whether the library is open (can also be used to check whether the loading was successful)
-	inline bool  is_open() const noexcept { return m_handle != nullptr; }
+	inline bool is_open() const noexcept { return m_handle != nullptr; }
 
 	/// Returns is_open(). @see is_open()
 	inline operator bool() const noexcept { return is_open(); }

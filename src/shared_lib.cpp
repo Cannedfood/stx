@@ -18,7 +18,7 @@ shared_lib::~shared_lib() noexcept {
 	close();
 }
 
-shared_lib::shared_lib(shared_lib&& other) :
+shared_lib::shared_lib(shared_lib&& other) noexcept :
 	m_handle(other.m_handle)
 {
 	other.m_handle = nullptr;
@@ -53,7 +53,7 @@ void shared_lib::close() noexcept {
 	}
 }
 
-void* shared_lib::getp(const char* symbol) noexcept { return GetProcAdress(m_handle, symbol); }
+void* shared_lib::getp(const char* symbol) const noexcept { return GetProcAdress(m_handle, symbol); }
 
 unsigned shared_lib::supported_flags() noexcept { return 0; }
 
@@ -61,7 +61,7 @@ unsigned shared_lib::supported_flags() noexcept { return 0; }
 
 // == Macosx implementation
 #elif STX_OS_MACOSX
-#warning "Not implemented on macos"
+#error "Not implemented on macos"
 
 // == Linux/Unix implementation ==============================================================
 #elif STX_OS_LINUX
@@ -77,7 +77,16 @@ unsigned shared_lib::supported_flags() noexcept { return 0; }
 namespace stx {
 
 bool shared_lib::open(const char* path, unsigned flags) noexcept {
-	std::string name = std::string("lib") + path + ".so";
+	std::string name;
+	{
+		name = path;
+		size_t last_fwd_slash = name.rfind('/');
+		if(last_fwd_slash == std::string::npos)
+			name = "lib" + name;
+		else
+			name.insert(last_fwd_slash + 1, "lib");
+		name += ".so";
+	}
 
 	int mode = 0;
 
@@ -93,7 +102,7 @@ bool shared_lib::open(const char* path, unsigned flags) noexcept {
 	m_handle = dlopen(name.c_str(), mode);
 
 	if(!is_open()) {
-		fprintf(stderr, "Failed shared lib '%s': %s", name.c_str(), ::strerror(errno));
+		fprintf(stderr, "Failed opening shared lib: %s\n", dlerror());
 	}
 
 	return is_open();
@@ -101,14 +110,14 @@ bool shared_lib::open(const char* path, unsigned flags) noexcept {
 
 void shared_lib::close() noexcept {
 	if(m_handle) {
-		if(!dlclose(m_handle)) {
-			fprintf(stderr, "Failed closing lib %p: %s", m_handle, ::strerror(errno));
+		if(dlclose(m_handle)) {
+			fprintf(stderr, "Failed closing lib %p: %s\n", m_handle, dlerror());
 		}
 		m_handle = nullptr;
 	}
 }
 
-void* shared_lib::getp(const char* symbol) noexcept { return dlsym(m_handle, symbol); }
+void* shared_lib::getp(const char* symbol) const noexcept { return dlsym(m_handle, symbol); }
 
 unsigned shared_lib::supported_flags() noexcept {
 	return lazy | nodelete | global | resident_only | custom_symbols;
