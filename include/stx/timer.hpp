@@ -40,6 +40,28 @@ public:
 	double nanos() const noexcept {
 		return duration_cast<duration<double, nano>>(now() - m_begin).count();
 	}
+
+	static double days_now() noexcept {
+		return duration_cast<duration<double, ratio<86400>>>(now().time_since_epoch()).count();
+	}
+	static double hours_now() noexcept {
+		return duration_cast<duration<double, ratio<3600>>>(now().time_since_epoch()).count();
+	}
+	static double minutes_now() noexcept {
+		return duration_cast<duration<double, ratio<60>>>(now().time_since_epoch()).count();
+	}
+	static double seconds_now() noexcept {
+		return duration_cast<duration<double, ratio<1>>>(now().time_since_epoch()).count();
+	}
+	static double millis_now() noexcept {
+		return duration_cast<duration<double, milli>>(now().time_since_epoch()).count();
+	}
+	static double micros_now() noexcept {
+		return duration_cast<duration<double, micro>>(now().time_since_epoch()).count();
+	}
+	static double nanos_now() noexcept {
+		return duration_cast<duration<double, nano>>(now().time_since_epoch()).count();
+	}
 };
 
 } // namespace stx
