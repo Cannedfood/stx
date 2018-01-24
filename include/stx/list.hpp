@@ -1,65 +1,53 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#ifndef STX_HANDLE_HPP_INCLUDED
-#define STX_HANDLE_HPP_INCLUDED
-
-#include "list.hpp"
+#ifndef STX_GRAPH_HPP_INCLUDED
+#define STX_GRAPH_HPP_INCLUDED
 
 #pragma once
 
+#include <type_traits>
+
 namespace stx {
 
-// TODO: Replace list_element with list_element_mt
-class handle_slot : private list_element<handle_slot> {
-	friend list_element_t;
-	friend class handle;
-protected:
-	handle_slot(handle_slot&&) {}
-	handle_slot(handle_slot const&) {}
-	virtual void on_force_remove() {}
+template<class T>
+class list_element {
+	T*  m_next;
+	T** m_to_this;
 public:
-	handle_slot();
+	class iterator;
+	using const_iterator = const iterator;
+	using list_element_t = list_element<T>;
 
-	void force_remove() {
-		if(remove()) { // Try to remove this
-			// !! Don't call on_force_remove when we this was already removed (multithreading) !!
-			on_force_remove();
-		}
-	}
-};
+	constexpr list_element();
+	constexpr list_element(list_element_t const& other);
+	constexpr list_element(list_element_t&& other);
+	constexpr list_element_t& operator=(list_element_t const& other);
+	constexpr list_element_t& operator=(list_element_t&& other);
 
-class handle : public handle_slot {
-	handle_slot* m_handles;
+	T*       const& next()          { return m_next; }
+	T const* const& next()    const { return m_next; }
+	T**             to_this() const { return m_to_this; }
 
-	void on_force_remove() override { clear(); }
-public:
-	handle() : m_handles(nullptr) {}
-	~handle() { clear(); }
+	constexpr bool remove();
+	constexpr void add_to(T*& t);
+	constexpr void add_to(list_element<T>& t);
 
-	handle& operator=(handle_slot& slot) {
-		clear();
-		slot.add_to(m_handles);
-		return *this;
-	}
+	constexpr T* snip();
 
-	handle& operator+=(handle_slot& slot) {
-		slot.add_to(m_handles);
-		return *this;
-	}
+	constexpr T* back(T* end = nullptr);
+	constexpr T* center(T* end = nullptr);
 
-	operator bool() const noexcept {
-		return m_handles;
-	}
-
-	void clear() {
-		while(m_handles)
-			m_handles->force_remove();
-	}
+	iterator       begin()      { return iterator(this); }
+	const_iterator cbegin()     { return iterator(this); }
+	iterator       end()  const { return iterator(); }
+	const_iterator cend() const { return iterator(); }
 };
 
 } // namespace stx
 
-#endif // headguard STX_HANDLE_HPP_INCLUDED
+#include "list.inl"
+
+#endif // STX_GRAPH_HPP_INCLUDED
 
 /*
  Copyright (c) 2017 Benno Straub

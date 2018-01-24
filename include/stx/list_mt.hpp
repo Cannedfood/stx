@@ -1,3 +1,21 @@
+// Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
+
+#ifndef STX_MT_GRAPH_HPP_INCLUDED
+#define STX_MT_GRAPH_HPP_INCLUDED
+
+#pragma once
+
+#include <atomic>
+
+namespace stx {
+
+template<class T>
+class list_element_mt; //<! TODO
+
+} // namespace stx
+
+#endif // STX_MT_GRAPH_HPP_INCLUDED
+
 /*
  Copyright (c) 2017 Benno Straub
 
@@ -7,9 +25,3 @@
 
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
- 
-#include <stx/platform.hpp>
-
-void _testResult(const char* file, int line, const char* fn, const char* test, bool value);
-
-#define test(X) _testResult(__FILE__, __LINE__, STX_FUNCTION, #X, X)

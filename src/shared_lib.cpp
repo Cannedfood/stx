@@ -1,8 +1,33 @@
+// Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
+
 #include "../include/stx/shared_lib.hpp"
 
-#include "../include/stx/platform.hpp"
-
 #include <utility>
+
+#ifdef __GNUC__ // Detecting Compiler (GCC-like)
+#	if defined(__APPLE__) && defined(__MACH__) // Detecting OS (macosx)
+#		define STX_OS_MACOSX 1
+#       define STX_OS_UNIX 1
+#	elif defined(__gnu_linux__) // Detecting OS (some linux)
+#		define STX_OS_LINUX  1
+#       define STX_OS_UNIX 1
+#	elif defined(__MINGW32__)
+#		define STX_OS_UNIX 1
+#	else
+#		error "Unknown OS, is it very similar to Linux? yes -> Just copy the defines around STX_OS_LINUX. no -> you're screwed."
+#	endif // Detecting OS
+#	define STX_COMPILER_GCC 1 // (or clang)
+#   ifdef __clang__
+#	   define STX_COMPILER_CLANG 1
+#	elif defined(__MINGW32__)
+#		define STX_COMPILER_MINGW 1
+#   endif // Detecting clang
+#elif defined(_WIN32) // Detecting Compiler (Windows)
+#	define STX_COMPILER_MSVC 1
+#   define STX_OS_WINDOWS 1
+#else // Detecting Compiler
+#	error "Unknown compiler or OS"
+#endif // Detecting Compiler
 
 namespace stx {
 
@@ -129,3 +154,13 @@ unsigned shared_lib::supported_flags() noexcept {
 #else
 #error Not implemented for this platform
 #endif
+
+/*
+ Copyright (c) 2017 Benno Straub
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */

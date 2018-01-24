@@ -25,36 +25,14 @@ I use it in my own projects, so I'll catch the worst errors there but still.
 See [here](Todo.md)
 
 ## New
-- xaccess
-	- A header which contains makros for getters and setters
-	- `xaccess(fn_name, member)` Read and write access to a member
-	- `xsetter(fn_name, member)` Write-only access to a member (via. `value const& object.fn_name()`)
-	- `xgetter(fn_name, member)` Read-only access to a member (via. `object& object.fn_name(value)`)
-- xtimer
-	- `timer`
+- `timer.hpp`
+	- `stx::timer`
 		- Used to get the duration of stuff:
-			- Restart the timer with `timer.begin()` (Will be automatically called on construction)
+			- Restart the timer with `timer.reset()` (Will be automatically called on construction)
 			- Get the time with `timer.nanos()` ... `timer.days()`
-- xhash
-	- implements various hash algorithms
-	- `symbol<hash_algorithm>` Similar to rubys symbol, this is essentially a compile-time string with a compile-time precomputed hash
-- xevent
-	- `event` attach callbacks get handles back
-- xshared_lib
-	- `shared_lib` Represents a shared library.
-- xlogging
-	- contains printf-styled logging functions for C++
-		- `writelog<level>(format, ...)`
-		- `writelog<level>(...)`
-		- `info(...)` (Can use format string as first argument)
-		- `warn(...)` (Can use format string as first argument)
-		- `perfwarn(...)` (Can use format string as first argument)
-		- `error(...)` (Can use format string as first argument)
-		- format: Like printf but instead of `%s` `%u` etc. You only use `%%` e.g.
-		```C++
-		stx::error("At %% he realized, he %% all along.", that_moment(), "followed the nullptr");
-		```
-- xplatform
+			- Get the time and reset the timer with `timer.poll_<unit>()`
+			- Get the time since epoch with `stx::timer::<unit>s_now()`
+- `plaform.hpp`
 	- A header which will contain various information about the current compiler
 		- `STX_OS_(UNIX|LINUX|WINDOWS|MACOSX)`
 			- `STX_OS_UNIX` is defined on Linux & Macosx
@@ -63,41 +41,40 @@ See [here](Todo.md)
 		- `STX_BYTEORDER_(BIG|LITTLE)_ENDIAN`
 		- `STX_FORCEINLINE`
 		- `STX_CONSTEXPR` (More lax constexpr)
-- xhandles (WIP) `#include <xhandles>` or `#include <stx/handles.hpp>`
-	- list_element<T>
+- `handle.hpp`
+	- `stx::handle_socket`
+		- An interface for attachment to a handle
+	- `stx::handle`
+		- A list of handle_sockets, which are notified if the handle is destroyed
+- `list.hpp` `list_mt.hpp`
+	- `stx::list_element<T>`
 		- Usage: `class my_class : public stx::list_element<my_class>`
-		- Utility to make a class a doubly linked list
-- xsockets (WIP)
-	- sockets and html requests (WIP)
-- xthreadsafe_queue (WIP)
-	- A threadsafe queue
-- xthreadpool (WIP)
-	- A threadpool
-- xassert
-	- `STX_FATAL_IMPORTANT_VALUES`
-
-## Build options
-- `STX_DEBUG_TOOLS=1`
-	- Enables runtime assertions and warnings
-- `STX_DEBUG=1`
-	- Enables internal assertions (to debug the stx libraries)
-- `STX_MODULE_NAME=ModuleName`
-	- Mainly used for logging, prefixes logs from this module with '[ModuleName]'
-- `STX_UNSTABLE`
-	- Enable untested/VERY unstable features
-- `STX_WIP`
-	- Enable totally work in progress, pretty much unusable features
+		- Utility class for single directional lists (Used by handle for example)
+	- `stx::list_element_mt<T>`
+		- A thread-safe version of `list_element<T>`
+- `shared_lib.hpp`
+	- `stx::shared_lib`
+		- A .dll or .so library
+		- Load a library with `lib.load("<path>", stx::shared_lib::flag | ...)`
+		- Get a pointer to a symbol with `lib.get<T>(const char* name)`
+- `string.hpp`
+	- `stx::token`
+		- A non-owning string (Basically a `const char* begin` and a `size_t length`)
+	- `stx::string`
+		- A owning string, which extends stx::token
+- `utf8.hpp`
+	- `unsigned utf32to8(uint32_t codepoint, char* out)`
+		- Convert codepoint to utf8 and write it to out. Returns how many bytes were written (Up to 4)
+	- `unsigned utf8to32(const char* in, uint32_t& out)`
+		- Convert in to UTF32 write it to out and return how many bytes were read
 
 ## License
 The code is licensed under the MIT license, see License.txt
 
 ## Building
 
-Simply compile everything in src with your favorite compiler.<br>
-**If you do not use xsockets or xshared_lib this is currently not necessary**
-```bash
-c++ --std=c++14 src/* -o stx.o
-```
+Just include the headers.
+The only exception currently is shared_lib, which should be trivial to build.
 
 ## Tests
-Run the Makefile to run the tests, although they have horrible coverage.
+Run the Makefile to run the tests (disclaimer: mediocre coverage).

@@ -9,18 +9,24 @@ function relink() {
 		fi
 	fi
 
-	mkdir -p "${scriptdir}/$2"
 
-	for header in "${scriptdir}/$1/"*.hpp
+	src_dir="${scriptdir}/$1/"
+	dst_dir="${scriptdir}/$2/"
+
+	mkdir -p "${dst_dir}"
+
+	relative_prefix="./`realpath --relative-to="${dst_dir}" "${src_dir}"`"
+
+	for header in "${src_dir}/"*.hpp
 	do
-		if [ ! -d "${header}" ]
+		if [ ! -d "${header}" ] # Ignore directories
 		then
 			name=`basename ${header%.*}`
-			outfile="${scriptdir}/$2/$3${name}"
-			printf '#include "%s"' "$(realpath --relative-to="$(dirname "${outfile}")" "${header}")" > "${outfile}"
+			outfile="${dst_dir}/$3${name}"
+			rm "${outfile}"
+			ln -s "${relative_prefix}/${name}.hpp" "${outfile}"
 		fi
 	done
 }
 
 relink "include/stx/" "include/" "x"
-relink "include/stx/wip" "include/xwip"
