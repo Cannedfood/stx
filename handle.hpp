@@ -3,15 +3,16 @@
 #ifndef STX_HANDLE_HPP_INCLUDED
 #define STX_HANDLE_HPP_INCLUDED
 
-#include "list.hpp"
+#include "graph_mt.hpp"
 
 #pragma once
 
 namespace stx {
 
 // TODO: Replace list_element with list_element_mt
-class handle_slot : private list_element<handle_slot> {
+class handle_slot : private list_element_mt<handle_slot> {
 	friend list_element_t;
+	friend list_t;
 	friend class handle;
 protected:
 	handle_slot(handle_slot&&) {}
@@ -38,12 +39,12 @@ public:
 
 	handle& operator=(handle_slot& slot) {
 		clear();
-		slot.add_to(m_handles);
+		slot.insert_to(m_handles);
 		return *this;
 	}
 
 	handle& operator+=(handle_slot& slot) {
-		slot.add_to(m_handles);
+		slot.insert_to(m_handles);
 		return *this;
 	}
 

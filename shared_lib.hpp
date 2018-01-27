@@ -13,7 +13,10 @@ public:
 		nodelete        = 2, //<! Do not actually close the library later. Therefore static objects will not be recreated when reloading.
 		global          = 4, //<! The symbols defined by this shared object will be made available for symbol resolution of subsequently loaded shared objects.
 		resident_only   = 8, //<! Library loading should fail if the library isn't already loaded.
-		custom_symbols  = 16 //<! Prefer the libraries own symbols over already loaded ones
+		custom_symbols  = 16, //<! Prefer the libraries own symbols over already loaded ones
+		no_prefix       = 32,
+		no_postfix      = 64,
+		raw_name        = no_prefix | no_postfix
 	};
 
 	// -- Constructors --------------------------------------------------------------

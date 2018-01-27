@@ -2,23 +2,27 @@
 
 #include "test.hpp"
 
-#include <stx/list.hpp>
-#include <stx/list_mt.hpp>
+#include "../graph.hpp"
+// #include "../graph_mt.hpp"
 
 #include <algorithm>
+#include <vector>
+#include <random>
 
 template<class element> static
-void test_xlist() {
+void test_stxlist() {
 	element* head = nullptr;
 
 	element a, b, c, d;
-	a.add_to(head);
+	printf("head*: %p\na: %p\nb:%p\nc:%p\nd:%p\n", &head, &a, &b, &c, &d);
+
+	a.insert_to(head);
 	test(head == &a);
-	b.add_to(head);
+	b.insert_to(head);
 	test(b.to_this() == &head);
 	test(b.next() == &a);
 
-	c.add_to(head);
+	c.insert_to(head);
 	test(c.to_this() == &head);
 	test(c.next() == &b);
 	c.remove();
@@ -28,7 +32,7 @@ void test_xlist() {
 	test(b.to_this() == &head);
 	test(b.next() == &a);
 
-	a.add_to(head);
+	a.insert_to(head);
 	test(a.to_this() == &head);
 	test(a.next() == &b);
 	test(b.next() == nullptr);
@@ -54,7 +58,7 @@ void test_xlist() {
 	test(b.to_this() == &a.next());
 	test(b.next() == nullptr);
 
-	c.add_to(b);
+	b.insert(&c);
 
 	std::swap(a, b);
 	test(head == &b);
@@ -63,32 +67,48 @@ void test_xlist() {
 	test(a.to_this() == &b.next());
 	test(a.next() == &c);
 	test(c.to_this() == &a.next());
-
-	// Order to a, b, c, d
-	while(head) head->remove();
-	d.add_to(head);
-	c.add_to(head);
-	b.add_to(head);
-	a.add_to(head);
-
-	// Test center with even count
-	test(head->center() == &b);
-
-	// Test center with uneven count
-	test(head->center(&d) == &b);
-
-	while(head) head->remove();
-	d.add_to(head);
-	c.add_to(head);
-	b.add_to(head);
-	a.add_to(head);
-	test(head->back() == &d);
 }
 
-struct single_threaded_element : public stx::list_element<single_threaded_element> {};
+/* TODO
+static
+void test_stxlist_sort() {
+	struct my_element : public stx::list_element<my_element> {
+		unsigned value;
+		bool operator<(my_element const& other) const noexcept {
+			return value < other.value;
+		}
+	};
 
-void test_xlist() {
-	test_xlist<single_threaded_element>();
+	std::vector<my_element> elements(2048);
+	my_element* list = nullptr;
+	{
+		std::mt19937 gen;
+		std::uniform_int_distribution<unsigned> dist;
+		for(auto& e : elements) {
+			e.value = dist(gen);
+			e.insert_to(list);
+		}
+	}
+
+	// stx::merge_sort(list, std::less<>());
+
+	test(std::is_sorted(list->begin(), list->end(), std::less<>()));
+}
+*/
+
+template<class element>
+void test_stxtree() {
+	element r, a, b, c;
+}
+
+// Single threaded list element
+struct st_element : public stx::list_element<st_element> {};
+// struct single_threaded_tree_element : public stx::tree_element<single_threaded_tree_element> {};
+
+void test_xgraph() {
+	test_stxlist<st_element>();
+	// test_stxlist_sort();
+	// test_stxtree<single_threaded_tree_element>();
 	// TODO: Test multi threaded
 }
 

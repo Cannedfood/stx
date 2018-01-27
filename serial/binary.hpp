@@ -1,53 +1,46 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#ifndef STX_GRAPH_HPP_INCLUDED
-#define STX_GRAPH_HPP_INCLUDED
-
 #pragma once
 
+#include <cstdint>
 #include <type_traits>
+#include <utility>
+#include <iosfwd>
 
-namespace stx {
+#include "serial_base.hpp"
 
-template<class T>
-class list_element {
-	T*  m_next;
-	T** m_to_this;
+namespace serial {
+
+class binary_blobstream {
+	uint8_t* data;
+	uint8_t* end;
+	uint8_t* current;
 public:
-	class iterator;
-	using const_iterator = const iterator;
-	using list_element_t = list_element<T>;
-
-	constexpr list_element();
-	constexpr list_element(list_element_t const& other);
-	constexpr list_element(list_element_t&& other);
-	constexpr list_element_t& operator=(list_element_t const& other);
-	constexpr list_element_t& operator=(list_element_t&& other);
-
-	T*       const& next()          { return m_next; }
-	T const* const& next()    const { return m_next; }
-	T**             to_this() const { return m_to_this; }
-
-	constexpr bool remove();
-	constexpr void add_to(T*& t);
-	constexpr void add_to(list_element<T>& t);
-
-	constexpr T* snip();
-
-	constexpr T* back(T* end = nullptr);
-	constexpr T* center(T* end = nullptr);
-
-	iterator       begin()      { return iterator(this); }
-	const_iterator cbegin()     { return iterator(this); }
-	iterator       end()  const { return iterator(); }
-	const_iterator cend() const { return iterator(); }
+	size_t read(size_t n, void* to);
 };
 
-} // namespace stx
+template<class Stream = std::istream&>
+class binary_in : public basic_serial_in<binary_in<Stream>> {
+	Stream mStream;
+public:
+	template<class... StreamArgs>
+	binary_in(StreamArgs&&... args) :
+		mStream(std::forward<StreamArgs>(args)...)
+	{}
+};
 
-#include "list.inl"
+template<class Stream = std::ostream&>
+class binary_out : public basic_serial_out<binary_out<Stream>> {
+	Stream mStream;
+public:
+	template<class... StreamArgs>
+	binary_out(StreamArgs&&... args) :
+		mStream(std::forward<StreamArgs>(args)...)
+	{}
 
-#endif // STX_GRAPH_HPP_INCLUDED
+};
+
+} // namespace serial
 
 /*
  Copyright (c) 2017 Benno Straub

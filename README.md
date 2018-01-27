@@ -9,17 +9,6 @@ Replacements for some stl classes with additional functionality and also new cla
 The tests are very lacking at some points so don't yet rely on this stuff.
 I use it in my own projects, so I'll catch the worst errors there but still.
 
-## Replacements
-- `memory` -> `xmemory`
-	- `std::unique_ptr<T, Tdel>` -> `stx::owned<T, Tdel>`
-	- `std::shared_ptr<T>` -> `stx::shared<T>`
-	- `std::weak_ptr<T>`   -> `stx::weak<T>`
-- `cassert`/`assert.h` -> xassert
-	- `xfatal(MSG)` throws an exception with the current location
-	- `xassert(TEST)` throws and exception if test is false
-	- `xassertmsg(TEST, MSG)` throws and exception if test is false; includes the message in the exception
-	- `important<T>` marks a value as important and gives a warning in debug mode if it is not handled
-
 ## TODO
 
 See [here](Todo.md)

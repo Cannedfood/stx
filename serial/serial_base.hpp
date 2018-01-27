@@ -1,58 +1,63 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#include "test.hpp"
+#pragma once
 
-#include <cstddef>
-#include <iostream>
+#include <type_traits>
+#include <cstdlib>
+#include <cstdint>
 
-#include <mutex>
+namespace serial {
 
-// Test compile only
-#include "../timer.hpp"
+template<class Derived>
+class basic_serial_out {
+private:
+	uint64_t m_mode;
+	Derived& derived() { return *(Derived*) this; }
+protected:
+	using serial_t = basic_serial_out<Derived>;
+public:
+	uint64_t mode() const noexcept { return m_mode; }
+	Derived& mode(uint64_t m) noexcept { m_mode = m; return derived(); }
 
-int tests = 0;
-int fails = 0;
-
-std::mutex lock;
-
-void _testResult(const char* file, int line, const char* fn, const char* test, bool value) {
-	static const char* last_fn = nullptr;
-
-	std::lock_guard<std::mutex> guard(lock);
-	++tests;
-	if(value) {
-		if(last_fn != fn) {
-			std::cout << file << ": " << fn << "'" << std::endl;
-			last_fn = fn;
+	template<class T>
+	void write(T* t, size_t n) {
+		for(size_t i = 0; i < n; i++) {
+			write(t[i]);
 		}
 	}
-	else {
-		std::cerr << file << ":" << line << ": error in '" << fn << "' test(" << test << ")  " << "FAIL" << std::endl;
-		++fails;
+
+	template<class T, size_t n>
+	void write(T (&t)[n]) {
+		for(auto& tt : t)
+			derived().write(tt);
 	}
-}
 
-void test_xgraph();
-void test_xenvironment();
-void test_xevent();
-void test_xstring();
-void test_xdatabase();
+	template<class T> std::enable_if_t<std::is_pod_v<T>,
+	Derived&> write(T& var) {
+		return derived();
+	}
+	template<class T>
+	Derived& write(T& var) {
+		var.save(derived());
+		return derived();
+	}
 
-#include <atomic>
+	template<class T>
+	Derived& operator()(T&& t) {
+		derived().write(t);
+		return derived();
+	}
+};
 
-int main(int argc, char const** argv) {
-	test_xstring();
-	test_xgraph();
-	test_xenvironment();
-	test_xevent();
-	test_xdatabase();
+template<class Derived>
+class basic_serial_in {
+private:
+	Derived* derived() { return (Derived*) this; }
+public:
 
-	std::cout << "tests: "  << tests << std::endl;
-	std::cout << "passed: " << tests - fails << std::endl;
-	std::cout << "FAILED: " << fails << std::endl;
+};
 
-	return fails == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+} // namespace serial
 
 /*
  Copyright (c) 2017 Benno Straub

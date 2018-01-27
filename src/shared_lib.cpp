@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#include "../include/stx/shared_lib.hpp"
+#include "../shared_lib.hpp"
 
 #include <utility>
 
@@ -92,8 +92,6 @@ unsigned shared_lib::supported_flags() noexcept { return 0; }
 #elif STX_OS_LINUX
 
 #include <dlfcn.h>
-#include <errno.h>  // for errno
-#include <string.h> // for strerror
 
 #include <stdio.h>
 
@@ -102,14 +100,16 @@ unsigned shared_lib::supported_flags() noexcept { return 0; }
 namespace stx {
 
 bool shared_lib::open(const char* path, unsigned flags) noexcept {
-	std::string name;
-	{
-		name = path;
+	std::string name = path;
+	if(!(flags & no_prefix)) {
 		size_t last_fwd_slash = name.rfind('/');
 		if(last_fwd_slash == std::string::npos)
 			name = "lib" + name;
 		else
 			name.insert(last_fwd_slash + 1, "lib");
+	}
+
+	if(!(flags & no_postfix)) {
 		name += ".so";
 	}
 
