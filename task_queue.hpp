@@ -11,55 +11,27 @@
 
 namespace stx {
 
-class task_queue {
-	std::mutex                        mMutex;
-	std::deque<std::function<void()>> mTasks;
+class error : public std::exception_ptr {
 public:
-	void defer(std::function<void()> task) {
-		mMutex.lock();
-		mTasks.emplace_back(std::move(task));
-		mMutex.unlock();
-	}
+	error() : exception_ptr(std::current_exception()) {}
 
-	void execute_tasks() {
-		std::deque<std::function<void()>> tasks;
-		while(mTasks.size()) {
-			mMutex.lock();
-			std::swap(mTasks, tasks);
-			mMutex.unlock();
-			for(auto& t : tasks) {
-				if(t) t();
-			}
-			tasks.clear();
-		}
-	}
+	error(std::nullptr_t) : exception_ptr(nullptr) {}
+};
+
+class task_queue {
+	std::mutex                        m_mutex;
+	std::deque<std::function<void()>> m_tasks;
+public:
+	void defer(std::function<void()> task);
+	void execute_tasks();
 };
 
 class advanced_task_queue {
-	std::mutex                                  mMutex;
-	std::multimap<float, std::function<void()>> mTasks;
+	std::mutex                                  m_mutex;
+	std::multimap<float, std::function<void()>> m_tasks;
 public:
-	void defer(std::function<void()> task, float priority = 0) {
-
-	}
-
-	void execute_tasks() {
-		mMutex.lock();
-		while(!mTasks.empty()) {
-			auto node = mTasks.extract(mTasks.begin());
-			mMutex.unlock();
-			try {
-				node.mapped()(); // Execute task
-			}
-			catch(...) {
-				mMutex.unlock();
-				throw;
-			}
-			mMutex.lock();
-			// Node destroyed
-		}
-		mMutex.unlock();
-	}
+	void defer(std::function<void()> task, float priority = 0);
+	void execute_tasks();
 };
 
 } // namespace stx

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "graph.hpp"
+#include "list.hpp"
 
 #include <utility>
 
@@ -39,9 +39,13 @@ public:
 	using event_t = event<Args...>;
 	using listener_t = listener<Args...>;
 
-	constexpr
-	event() noexcept;
+	constexpr event() noexcept;
+	constexpr event(event_t&& other) = default;
+	constexpr event(event_t const& other) = delete;
 	~event();
+
+	event_t& operator=(event_t const& other) = default;
+	event_t& operator=(event_t&& other) = default;
 
 	constexpr
 	void clear() noexcept;

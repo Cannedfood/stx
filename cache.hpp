@@ -23,6 +23,14 @@ public:
 		}
 		return result;
 	}
+
+	void overload(LoadInfo const& li, std::shared_ptr<Value> v) {
+		mCache[li] = v;
+	}
+
+	std::shared_ptr<Value> get(LoadInfo const& li) {
+		return mCache[li].lock();
+	}
 };
 
 } // namespace stx

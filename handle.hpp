@@ -3,7 +3,7 @@
 #ifndef STX_HANDLE_HPP_INCLUDED
 #define STX_HANDLE_HPP_INCLUDED
 
-#include "graph_mt.hpp"
+#include "list_mt.hpp"
 
 #pragma once
 
@@ -17,9 +17,10 @@ class handle_slot : private list_element_mt<handle_slot> {
 protected:
 	handle_slot(handle_slot&&) {}
 	handle_slot(handle_slot const&) {}
+	void invalidate() { list_element_t::remove(); }
 	virtual void on_force_remove() {}
 public:
-	handle_slot();
+	handle_slot() {}
 
 	void force_remove() {
 		if(remove()) { // Try to remove this
@@ -30,31 +31,33 @@ public:
 };
 
 class handle : public handle_slot {
-	handle_slot* m_handles;
+	list<handle_slot> m_handles;
 
 	void on_force_remove() override { clear(); }
 public:
-	handle() : m_handles(nullptr) {}
+	handle() {}
+	handle(handle_slot& slot) { m_handles.add(&slot); }
+	handle(std::initializer_list<handle_slot*> const& slots) { m_handles.add(slots); }
 	~handle() { clear(); }
 
 	handle& operator=(handle_slot& slot) {
 		clear();
-		slot.insert_to(m_handles);
+		m_handles.add(&slot);
 		return *this;
 	}
 
 	handle& operator+=(handle_slot& slot) {
-		slot.insert_to(m_handles);
+		m_handles.add(&slot);
 		return *this;
 	}
 
 	operator bool() const noexcept {
-		return m_handles;
+		return !m_handles.empty();
 	}
 
 	void clear() {
-		while(m_handles)
-			m_handles->force_remove();
+		while(!m_handles.empty())
+			m_handles.begin()->force_remove();
 	}
 };
 

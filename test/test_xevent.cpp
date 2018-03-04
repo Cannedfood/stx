@@ -29,4 +29,6 @@ void test_xevent() {
 	test(a.val == 2);
 	test(b.val == 1);
 	test(c.val == 115); // left; Predicate returns 0
+
+	stx::event<int> e2 = std::move(e);
 }

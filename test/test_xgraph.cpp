@@ -2,8 +2,8 @@
 
 #include "test.hpp"
 
-#include "../graph.hpp"
-// #include "../graph_mt.hpp"
+#include "../list.hpp"
+// #include "../list_mt.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -11,62 +11,90 @@
 
 template<class element> static
 void test_stxlist() {
-	element* head = nullptr;
+	{
+		element* head = nullptr;
+		element a, b, c, d;
 
-	element a, b, c, d;
-	printf("head*: %p\na: %p\nb:%p\nc:%p\nd:%p\n", &head, &a, &b, &c, &d);
+		a.insert_to(head);
+		test(head == &a);
+		b.insert_to(head);
+		test(b.to_this() == &head);
+		test(b.next() == &a);
 
-	a.insert_to(head);
-	test(head == &a);
-	b.insert_to(head);
-	test(b.to_this() == &head);
-	test(b.next() == &a);
+		c.insert_to(head);
+		test(c.to_this() == &head);
+		test(c.next() == &b);
+		c.remove();
+		test(c.to_this() == nullptr);
+		test(c.next() == nullptr);
+		test(head == &b);
+		test(b.to_this() == &head);
+		test(b.next() == &a);
 
-	c.insert_to(head);
-	test(c.to_this() == &head);
-	test(c.next() == &b);
-	c.remove();
-	test(c.to_this() == nullptr);
-	test(c.next() == nullptr);
-	test(head == &b);
-	test(b.to_this() == &head);
-	test(b.next() == &a);
+		a.insert_to(head);
+		test(a.to_this() == &head);
+		test(a.next() == &b);
+		test(b.next() == nullptr);
 
-	a.insert_to(head);
-	test(a.to_this() == &head);
-	test(a.next() == &b);
-	test(b.next() == nullptr);
+		// Test move
+		test(head == &a);
+		test(a.to_this() == &head);
+		test(a.next() == &b);
+		test(b.to_this() == &a.next());
+		test(b.next() == nullptr);
 
-	// Test move
-	test(head == &a);
-	test(a.to_this() == &head);
-	test(a.next() == &b);
-	test(b.to_this() == &a.next());
-	test(b.next() == nullptr);
+		c = std::move(a);
+		test(head == &c);
+		test(c.to_this() == &head);
+		test(c.next() == &b);
+		test(b.to_this() == &c.next());
+		test(b.next() == nullptr);
 
-	c = std::move(a);
-	test(head == &c);
-	test(c.to_this() == &head);
-	test(c.next() == &b);
-	test(b.to_this() == &c.next());
-	test(b.next() == nullptr);
+		std::swap(a, c);
+		test(head == &a);
+		test(a.to_this() == &head);
+		test(a.next() == &b);
+		test(b.to_this() == &a.next());
+		test(b.next() == nullptr);
 
-	std::swap(a, c);
-	test(head == &a);
-	test(a.to_this() == &head);
-	test(a.next() == &b);
-	test(b.to_this() == &a.next());
-	test(b.next() == nullptr);
+		b.insert(&c);
 
-	b.insert(&c);
+		std::swap(a, b);
+		test(head == &b);
+		test(b.to_this() == &head);
+		test(b.next() == &a);
+		test(a.to_this() == &b.next());
+		test(a.next() == &c);
+		test(c.to_this() == &a.next());
+	}
 
-	std::swap(a, b);
-	test(head == &b);
-	test(b.to_this() == &head);
-	test(b.next() == &a);
-	test(a.to_this() == &b.next());
-	test(a.next() == &c);
-	test(c.to_this() == &a.next());
+	// Test predicate insert
+	{
+		element a = 1, b = 2, c = 3, d = 4, e = 5;
+
+		element* head = nullptr;
+		e.insert_to(head, std::less<>());
+		a.insert_to(head, std::less<>());
+		d.insert_to(head, std::less<>());
+		b.insert_to(head, std::less<>());
+		c.insert_to(head, std::less<>());
+
+		printf(
+			"head*: %p\na: %p\nb: %p\nc: %p\nd: %p\ne: %p\n",
+			&head, &a, &b, &c, &d, &e
+		);
+		printf(
+			"head: %p\na.next(): %p\nb.next(): %p\nc.next(): %p\nd.next(): %p\ne.next(): %p\n",
+			head, a.next(), b.next(), c.next(), d.next(), e.next()
+		);
+
+		test(head == &a);
+		test(a.next() == &b);
+		test(b.next() == &c);
+		test(c.next() == &d);
+		test(d.next() == &e);
+		test(e.next() == nullptr);
+	}
 }
 
 /* TODO
@@ -102,7 +130,15 @@ void test_stxtree() {
 }
 
 // Single threaded list element
-struct st_element : public stx::list_element<st_element> {};
+struct st_element : public stx::list_element<st_element> {
+	int value;
+	st_element() : value(0) {}
+	st_element(int val) : value(val) {}
+
+	bool operator<(st_element const& other) const noexcept {
+		return value < other.value;
+	}
+};
 // struct single_threaded_tree_element : public stx::tree_element<single_threaded_tree_element> {};
 
 void test_xgraph() {

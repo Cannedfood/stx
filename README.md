@@ -56,9 +56,12 @@ See [here](Todo.md)
 		- Convert codepoint to utf8 and write it to out. Returns how many bytes were written (Up to 4)
 	- `unsigned utf8to32(const char* in, uint32_t& out)`
 		- Convert in to UTF32 write it to out and return how many bytes were read
+- `class_registry.hpp`
+	- Implements a way to register implementations of classes as well as factories
 
 ## License
-The code is licensed under the MIT license, see License.txt
+All files in this repository are either licensed under the MIT or CC0 license.
+If not stated otherwise they are licensed under MIT. (see LICENSE.txt)
 
 ## Building
 

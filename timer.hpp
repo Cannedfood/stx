@@ -65,6 +65,28 @@ public:
 		double result = nanos(); reset(); return result;
 	}
 
+	bool passed_days(double d) {
+		bool b = days() >= d; if(b) reset(); return b;
+	}
+	bool passed_hours(double d) {
+		bool b = hours() >= d; if(b) reset(); return b;
+	}
+	bool passed_minutes(double d) {
+		bool b = minutes() >= d; if(b) reset(); return b;
+	}
+	bool passed_seconds(double d) {
+		bool b = seconds() >= d; if(b) reset(); return b;
+	}
+	bool passed_millis(double d) {
+		bool b = millis() >= d; if(b) reset(); return b;
+	}
+	bool passed_micros(double d) {
+		bool b = micros() >= d; if(b) reset(); return b;
+	}
+	bool passed_nanos(double d) {
+		bool b = nanos() >= d; if(b) reset(); return b;
+	}
+
 	static double days_now() noexcept {
 		return duration_cast<duration<double, ratio<86400>>>(now().time_since_epoch()).count();
 	}

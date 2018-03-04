@@ -1,46 +1,42 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#pragma once
+#include "../class_registry.hpp"
 
-#include <cstdint>
-#include <type_traits>
-#include <utility>
-#include <iosfwd>
+#include <iostream>
+#include <string>
 
-#include "serial_base.hpp"
+namespace stx {
 
-namespace serial {
+class TestBase0 {};
+class TestBase1 {};
+class TestImpl : public TestBase0, public TestBase1 {};
 
-class binary_blobstream {
-	uint8_t* data;
-	uint8_t* end;
-	uint8_t* current;
-public:
-	size_t read(size_t n, void* to);
-};
+void classes::print(std::ostream& s) {
+	// TODO: Print as tree structure
 
-template<class Stream = std::istream&>
-class binary_in : public basic_serial_in<binary_in<Stream>> {
-	Stream mStream;
-public:
-	template<class... StreamArgs>
-	binary_in(StreamArgs&&... args) :
-		mStream(std::forward<StreamArgs>(args)...)
-	{}
-};
+	for(auto& e : entries()) {
+		s << e.name() << std::endl;
+		if(!e.implements().empty()) {
+			s << "  Implements:" << std::endl;
+			for(entry& ee : e.implements()) {
+				s << "\t" << ee.name() << std::endl;
+			}
+		}
+		if(!e.implementations().empty()) {
+			s << "  Implementations:" << std::endl;
+			for(entry& ee : e.implementations()) {
+				s << "\t" << ee.name() << std::endl;
+			}
+		}
+	}
+}
 
-template<class Stream = std::ostream&>
-class binary_out : public basic_serial_out<binary_out<Stream>> {
-	Stream mStream;
-public:
-	template<class... StreamArgs>
-	binary_out(StreamArgs&&... args) :
-		mStream(std::forward<StreamArgs>(args)...)
-	{}
+list<classes::entry>& classes::entries() noexcept {
+	static list<entry> entries;
+	return entries;
+}
 
-};
-
-} // namespace serial
+} // namespace stx
 
 /*
  Copyright (c) 2017 Benno Straub

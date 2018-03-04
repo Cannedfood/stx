@@ -37,6 +37,7 @@ void test_xenvironment();
 void test_xevent();
 void test_xstring();
 void test_xdatabase();
+void test_xclass_registry();
 
 #include <atomic>
 
@@ -46,6 +47,7 @@ int main(int argc, char const** argv) {
 	test_xenvironment();
 	test_xevent();
 	test_xdatabase();
+	test_xclass_registry();
 
 	std::cout << "tests: "  << tests << std::endl;
 	std::cout << "passed: " << tests - fails << std::endl;

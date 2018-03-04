@@ -1,23 +1,23 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
 
-#ifndef STX_MT_GRAPH_HPP_INCLUDED
-#define STX_MT_GRAPH_HPP_INCLUDED
+#ifndef STX_LIST_MT_HPP_INCLUDED
+#define STX_LIST_MT_HPP_INCLUDED
 
 #pragma once
 
-#include "graph.hpp"
+#include "list.hpp"
 
 namespace stx {
 
 template<class T>
 using list_element_mt = list_element<T>; //<! TODO
 template<class T>
-using tree_element_mt = tree_element<T>; //<! TODO
+using list_mt = list<T>;
 
 } // namespace stx
 
-#endif // STX_MT_GRAPH_HPP_INCLUDED
+#endif // STX_LIST_MT_HPP_INCLUDED
 
 /*
  Copyright (c) 2017 Benno Straub

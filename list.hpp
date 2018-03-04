@@ -1,5 +1,5 @@
-#ifndef STX_GRAPH_HPP_INCLUDED
-#define STX_GRAPH_HPP_INCLUDED
+#ifndef STX_LIST_HPP_INCLUDED
+#define STX_LIST_HPP_INCLUDED
 
 #pragma once
 
@@ -25,6 +25,8 @@ struct list_element {
 	using iterator       = detail::list_element_iterator<T>;
 	using const_iterator = const iterator;
 
+	friend detail::list_element_iterator<T>;
+
 	constexpr list_element() noexcept;
 	constexpr list_element(list_element&& l) noexcept;
 
@@ -46,6 +48,35 @@ struct list_element {
 	constexpr iterator end() noexcept;
 	constexpr const_iterator cbegin() const noexcept;
 	constexpr const_iterator cend() const noexcept;
+
+	template<class Pred>
+	void insert_to(T*& to, Pred&& pred) {
+		T* at = to;
+		if(!to || !pred(*at, *to)) {
+			insert_to(to);
+			return;
+		}
+
+		while(_elem(at)->next()) {
+			if(!pred(*_elem(at)->next(), *to)) {
+				insert_to(_elem(at)->m_next);
+				return;
+			}
+			at = _elem(at)->next();
+		}
+
+		insert_to(((list_element_t*)at)->m_next);
+	}
+
+	template<class Pred = bool(*)(T const& a, T const& b)>
+	bool bubble(Pred&& pred = [](auto& a, auto& b) -> bool { return a < b; }) {
+		if(!m_next) return false;
+		if(pred(*next(), *_this())) {
+			_next()->insert(_this());
+			return true;
+		}
+		return false;
+	}
 private:
 	T*  m_next;
 	T** m_to_this;
@@ -54,6 +85,10 @@ private:
 	T const* _this() const noexcept { return static_cast<T const*>(this); }
 	constexpr list_element_t* _next() noexcept { return m_next; }
 	constexpr list_element_t const* _next() const noexcept { return m_next; }
+
+	static list_element_t*       _elem(T* t)       { return t;}
+	static list_element_t const* _elem(T const* t) { return t;}
+
 
 	constexpr void _reset(T** toThis, T* next) noexcept;
 
@@ -71,8 +106,11 @@ struct list {
 
 	constexpr list() noexcept;
 	constexpr list(list_t&& l) noexcept;
-	constexpr list_t& operator=(list_t&& l);
+	constexpr list_t& operator=(list_t&& l) noexcept;
 	~list() noexcept;
+
+	explicit /// Constructs list, BUT DOESN'T TAKE OWNERSHIP
+	constexpr list(T* l);
 
 	constexpr void add(T* t) noexcept;
 	constexpr void add(std::initializer_list<T*> t) noexcept;
@@ -80,17 +118,19 @@ struct list {
 
 	constexpr T* back(T* end = nullptr) noexcept;
 
-	constexpr iterator begin() noexcept;
-	constexpr iterator end() noexcept;
+	constexpr bool empty() const noexcept { return m_elements == nullptr; }
+
+	constexpr iterator begin() const noexcept;
+	constexpr iterator end() const noexcept;
 	constexpr const_iterator cbegin() const noexcept;
 	constexpr const_iterator cend() const noexcept;
-private:
-	T* m_elements;
-};
 
-template<class T>
-struct tree_element : public list_element<T>, public list<T> {
-	using tree_element_t = tree_element<T>;
+protected:
+	constexpr list(list_t const& l) noexcept;
+	constexpr list_t& operator=(list_t const& l) noexcept;
+
+private:
+	T* m_elements = nullptr;
 };
 
 // =============================================================
@@ -104,8 +144,13 @@ template<class T>
 class list_element_iterator {
 	mutable list_element<T>* m_element;
 public:
-	list_element_iterator() : m_element(nullptr) {}
+	list_element_iterator() :
+		m_element(nullptr)
+	{}
 	list_element_iterator(list_element<T>* t) : m_element(t) {}
+	list_element_iterator(T* t) :
+		list_element_iterator(list_element<T>::_elem(t))
+	{}
 
 	constexpr
 	bool operator==(list_element_iterator<T> const& t) const noexcept {
@@ -191,7 +236,7 @@ bool list_element<T>::remove() noexcept {
 
 template<class T> constexpr
 void list_element<T>::insert(T* new_next) noexcept {
-	new_next->_reset(&m_next, m_next);
+	((list_element<T>*)new_next)->_reset(&m_next, m_next);
 }
 
 template<class T> constexpr
@@ -231,19 +276,20 @@ void list_element<T>::_reset(T** toThis, T* next) noexcept {
 // ** list<T> *******************************************************
 
 template<class T> constexpr
-list<T>::list() noexcept :
-	m_elements(nullptr)
-{}
+list<T>::list() noexcept {}
+
+template<class T> constexpr
+list<T>::list(T* l) : m_elements(l) {}
 
 template<class T> constexpr
 list<T>::list(list_t&& l) noexcept :
 	list()
 {
-	*this = (list_t&&)(l);
+	*this = (list_t&&)l;
 }
 
 template<class T> constexpr
-list<T>& list<T>::operator=(list_t&& l) {
+list<T>& list<T>::operator=(list_t&& l) noexcept {
 	clear();
 	if((m_elements = l.m_elements)) {
 		l.m_elements = nullptr;
@@ -251,6 +297,11 @@ list<T>& list<T>::operator=(list_t&& l) {
 	}
 	return *this;
 }
+
+template<class T> constexpr
+list<T>::list(list_t const& l) noexcept : list() {}
+template<class T>
+constexpr list<T>& list<T>::operator=(list_t const& l) noexcept {}
 
 template<class T>
 list<T>::~list() noexcept {
@@ -275,9 +326,9 @@ void list<T>::clear() noexcept {
 }
 
 template<class T> constexpr
-typename list<T>::iterator list<T>::begin() noexcept { return iterator(m_elements); }
+typename list<T>::iterator list<T>::begin() const noexcept { return iterator(m_elements); }
 template<class T> constexpr
-typename list<T>::iterator list<T>::end() noexcept { return iterator(); }
+typename list<T>::iterator list<T>::end() const noexcept { return iterator(); }
 template<class T> constexpr
 typename list<T>::const_iterator list<T>::cbegin() const noexcept { return const_iterator(m_elements); }
 template<class T> constexpr
@@ -285,4 +336,4 @@ typename list<T>::const_iterator list<T>::cend() const noexcept { return const_i
 
 } // namespace stx
 
-#endif // header guard STX_GRAPH_HPP_INCLUDED
+#endif // header guard STX_LIST_HPP_INCLUDED

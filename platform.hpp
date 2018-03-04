@@ -116,6 +116,38 @@
 #	error "Couldn't detect byte order"
 #endif
 
+/* Program initializer. Aka. a something called before main() (or when the dll is loaded) */
+
+// Based on [this](https://stackoverflow.com/a/2390626/3841944) answer
+#if defined(_MSC_VER)
+    #pragma section(".CRT$XCU",read)
+    #define _STX_INITIALIZER2(f,p) \
+        static void f(void); \
+        __declspec(allocate(".CRT$XCU")) void (*f##_)(void) = f; \
+        __pragma(comment(linker,"/include:" p #f "_")) \
+        static void f(void)
+    #ifdef _WIN64
+        #define STX_CALL_ON_LOAD(f) _STX_INITIALIZER2(f,"")
+    #else
+        #define STX_CALL_ON_LOAD(f) _STX_INITIALIZER2(f,"_")
+    #endif
+#else
+    #define STX_INITIALIZER(f) \
+        static void f(void) __attribute__((constructor)); \
+        static void f(void)
+#endif
+
+/// Generate a (in this file) unique name for a variable
+/// int STX_APPEND_COUNTER(var), STX_APPEND_COUNTER(var), STX_APPEND_COUNTER(var) -> int var1, var2, var3
+#define STX_CONCAT(a, b) a##b
+#define STX_CONCAT3(a, b, c) a##b##c
+#define STX_CONCAT4(a, b, c, d) a##b##c##d
+#define STX_CONCAT5(a, b, c, d, e) a##b##c##d##e
+#define STX_UNQ_NAME(name) STX_CONCAT(name, __COUNTER__)
+
+/// Forces the linker to not strip a symbol
+# define STX_KEEP_SYMBOL(SYM) void* STX_CONCAT(__forced_symbol_, SYM) = (void*)&SYM;
+
 #endif // headguard STX_PLATFORM_INCLUDED
 
 /*

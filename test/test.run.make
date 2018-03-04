@@ -60,12 +60,14 @@ endef
 
 OBJECTS :=
 
+OBJECTS += $(OBJDIR)/class_registry.o
 OBJECTS += $(OBJDIR)/database_sqlite.o
 OBJECTS += $(OBJDIR)/ownership.o
 OBJECTS += $(OBJDIR)/shared_lib.o
 OBJECTS += $(OBJDIR)/string.o
 OBJECTS += $(OBJDIR)/task_queue.o
 OBJECTS += $(OBJDIR)/test.o
+OBJECTS += $(OBJDIR)/test_xclass_registry.o
 OBJECTS += $(OBJDIR)/test_xdatabase.o
 OBJECTS += $(OBJDIR)/test_xdatabase_sqlite.o
 OBJECTS += $(OBJDIR)/test_xenvironment.o
@@ -136,6 +138,9 @@ endif
 # File Rules
 # #############################################
 
+$(OBJDIR)/class_registry.o: ../src/class_registry.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/database_sqlite.o: ../src/database_sqlite.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -155,6 +160,9 @@ $(OBJDIR)/type.o: ../src/type.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test.o: test.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_xclass_registry.o: test_xclass_registry.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_xdatabase.o: test_xdatabase.cpp
