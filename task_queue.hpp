@@ -6,7 +6,9 @@
 #include <functional>
 #include <mutex>
 #include <atomic>
+#include <condition_variable>
 #include <deque>
+#include <thread>
 #include <map>
 
 namespace stx {
@@ -27,11 +29,24 @@ public:
 };
 
 class advanced_task_queue {
-	std::mutex                                  m_mutex;
-	std::multimap<float, std::function<void()>> m_tasks;
+	using container_t = std::multimap<double, std::function<void()>>;
+
+	bool                    m_quitting;
+	container_t             m_tasks;
+	std::mutex              m_mutex;
+	std::condition_variable m_signal;
+
+	std::vector<std::thread> m_threads;
 public:
-	void defer(std::function<void()> task, float priority = 0);
+	advanced_task_queue();
+	~advanced_task_queue();
+
+	void defer(std::function<void()> task, double priority = 0);
 	void execute_tasks();
+	void keep_executing_tasks();
+
+	void run(size_t count);
+	void stop();
 };
 
 } // namespace stx
