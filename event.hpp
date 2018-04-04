@@ -35,6 +35,7 @@ private:
 
 template<class... Args>
 class event : public list<listener<Args...>> {
+	using list_t = list<listener<Args...>>;
 public:
 	using event_t = event<Args...>;
 	using listener_t = listener<Args...>;
@@ -57,8 +58,6 @@ public:
 			l.on(args...);
 		}
 	}
-private:
-	listener_t* m_listeners;
 };
 
 } // namespace stx
@@ -70,18 +69,14 @@ private:
 namespace stx {
 
 template<class... Args> constexpr
-event<Args...>::event() noexcept :
-	m_listeners(nullptr)
-{}
+event<Args...>::event() noexcept {}
 template<class... Args>
-event<Args...>::~event() {
-	clear();
-}
+event<Args...>::~event() { clear(); }
 
 template<class... Args> constexpr
 void event<Args...>::clear() noexcept {
-	while(m_listeners) {
-		auto* l = m_listeners;
+	while(!list_t::empty()) {
+		listener_t* l = list_t::begin();
 		l->remove();
 		l->onEventCleared();
 	}

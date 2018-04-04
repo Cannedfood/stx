@@ -156,6 +156,10 @@ public:
 	bool operator==(list_element_iterator<T> const& t) const noexcept {
 		return m_element == t.m_element;
 	}
+	constexpr
+	bool operator!=(list_element_iterator<T> const& t) const noexcept {
+		return m_element != t.m_element;
+	}
 
 	T* operator->() noexcept { return m_element->_this(); }
 	T& operator*() noexcept { return *m_element->_this(); }
@@ -163,6 +167,7 @@ public:
 	T const& operator*() const noexcept { return *m_element->_this(); }
 
 	operator bool() const noexcept { return m_element; }
+	operator T*() const noexcept { return (T*) m_element; }
 
 	list_element_iterator<T> const& operator++() const noexcept {
 		m_element = m_element->_next();

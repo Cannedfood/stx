@@ -208,7 +208,7 @@ class mutable_token : public token {
 public:
 	using token::token; // Inherit constructors
 
-	explicit
+	constexpr explicit
 	mutable_token(token t) :
 		token(t)
 	{}
