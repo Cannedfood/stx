@@ -1,0 +1,33 @@
+# Maintainer: Benno Straub <benno DOTTT straub ATTT outlook.de>
+pkgname=stx-git
+pkgver='0.2.0'
+pkgrel=1
+pkgdesc="A utilities library (mostly header-only)"
+arch=('x86_64' 'x64' 'ARM')
+url="https://github.com/Cannedfood/stx"
+license=('GPL')
+groups=()
+depends=()
+makedepends=('git') # 'bzr', 'git', 'mercurial' or 'subversion'
+provides=("${pkgname%-VCS}")
+conflicts=("${pkgname%-VCS}")
+replaces=()
+backup=()
+options=()
+install=
+source=('stx::git+https://github.com/Cannedfood/stx.git')
+noextract=()
+md5sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/stx"
+# Git, no tags available
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+package() {
+	cd "$srcdir/stx"
+	mkdir -p "$pkgdir/usr/include/stx"
+	cp *.hpp "$pkgdir/usr/include/stx"
+	cp -r src/ "$pkgdir/usr/include/stx"
+}
