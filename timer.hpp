@@ -10,17 +10,21 @@ using namespace std;
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-class timer {
-	high_resolution_clock::time_point m_begin;
+template<class Clock>
+class basic_timer {
+	using clock      = Clock;
+	using time_point = typename clock::time_point;
+
+	time_point m_begin;
 
 	static inline
-	high_resolution_clock::time_point now() noexcept { return high_resolution_clock::now(); }
-
+	time_point now() noexcept { return clock::now(); }
 public:
-	timer() { reset(); }
+	basic_timer() { reset(); }
 
 	void reset() noexcept { m_begin = now(); }
 
+	// Get time passe since timer construction or the last timer reset
 	double days() const noexcept {
 		return duration_cast<duration<double, ratio<86400>>>(now() - m_begin).count();
 	}
@@ -43,6 +47,7 @@ public:
 		return duration_cast<duration<double, nano>>(now() - m_begin).count();
 	}
 
+	// Get time passed and reset the timer
 	double poll_days() noexcept {
 		double result = days(); reset(); return result;
 	}
@@ -65,28 +70,31 @@ public:
 		double result = nanos(); reset(); return result;
 	}
 
-	bool passed_days(double d) {
+	// Returns whether d time has passed, if it returns true also resets the timer
+	// For use in something like void update() { if(mTimer.passed_seconds(1)) update_once_a_seconds(); }
+	bool passed_days(double d) noexcept {
 		bool b = days() >= d; if(b) reset(); return b;
 	}
-	bool passed_hours(double d) {
+	bool passed_hours(double d) noexcept {
 		bool b = hours() >= d; if(b) reset(); return b;
 	}
-	bool passed_minutes(double d) {
+	bool passed_minutes(double d) noexcept {
 		bool b = minutes() >= d; if(b) reset(); return b;
 	}
-	bool passed_seconds(double d) {
+	bool passed_seconds(double d) noexcept {
 		bool b = seconds() >= d; if(b) reset(); return b;
 	}
-	bool passed_millis(double d) {
+	bool passed_millis(double d) noexcept {
 		bool b = millis() >= d; if(b) reset(); return b;
 	}
-	bool passed_micros(double d) {
+	bool passed_micros(double d) noexcept {
 		bool b = micros() >= d; if(b) reset(); return b;
 	}
-	bool passed_nanos(double d) {
+	bool passed_nanos(double d) noexcept {
 		bool b = nanos() >= d; if(b) reset(); return b;
 	}
 
+	// Static functions to get the time since epoch
 	static double days_now() noexcept {
 		return duration_cast<duration<double, ratio<86400>>>(now().time_since_epoch()).count();
 	}
@@ -109,6 +117,10 @@ public:
 		return duration_cast<duration<double, nano>>(now().time_since_epoch()).count();
 	}
 };
+
+using highres_timer = basic_timer<std::chrono::high_resolution_clock>;
+using steady_timer  = basic_timer<std::chrono::steady_clock>;
+using timer         = highres_timer;
 
 } // namespace stx
 
