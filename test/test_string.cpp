@@ -2,7 +2,7 @@
 
 #include "../string.hpp"
 
-void test_xstring() {
+void test_string() {
 	// TODO:
 
 	using stx::string;

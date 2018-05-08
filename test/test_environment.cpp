@@ -5,7 +5,7 @@
 #include "../environment.hpp"
 
 static
-void test_xenvironment_set_unset_get() {
+void test_environment_set_unset_get() {
 	stx::env::set("foobar", "barfoo", false);
 	test(!strcmp(stx::env::get("foobar"), "barfoo"));
 	stx::env::set("foobar", "barfoo2000", false);
@@ -17,7 +17,7 @@ void test_xenvironment_set_unset_get() {
 }
 
 static
-void test_xenvironment_replace() {
+void test_environment_replace() {
 	// wo/ replacement
 	test(stx::env::replace("Heyho") == "Heyho");
 	test(stx::env::replace("H") == "H");
@@ -91,9 +91,9 @@ void test_xenvironment_replace() {
 	}
 }
 
-void test_xenvironment() {
-	test_xenvironment_set_unset_get();
-	test_xenvironment_replace();
+void test_environment() {
+	test_environment_set_unset_get();
+	test_environment_replace();
 }
 
 /*

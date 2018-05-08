@@ -9,7 +9,7 @@ struct example_listener : stx::listener<int> {
 	}
 };
 
-void test_xevent() {
+void test_event() {
 	stx::event<int> e;
 
 	example_listener a, b, c;

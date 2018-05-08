@@ -12,14 +12,14 @@
 
 #include <iostream>
 
-void _testResult(const char* file, int line, const char* fn, const char* test, bool value);
+bool _testResult(const char* file, int line, const char* fn, const char* test, bool value);
 
 #define test(X) \
 	do { \
 		try { \
-			_testResult(__FILE__, __LINE__, STX_FUNCTION, #X, X); \
+			if(!_testResult(__FILE__, __LINE__, STX_FUNCTION, #X, X)) return; \
 		} catch(std::exception& e) { \
 			_testResult(__FILE__, __LINE__, STX_FUNCTION, #X, false); \
-			std::cerr << '\t' << e.what() << std::endl; \
+			std::cerr << '\t' << e.what() << std::endl; return; \
 		} \
 	} while(false)

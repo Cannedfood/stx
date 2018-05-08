@@ -141,7 +141,7 @@ struct st_element : public stx::list_element<st_element> {
 };
 // struct single_threaded_tree_element : public stx::tree_element<single_threaded_tree_element> {};
 
-void test_xgraph() {
+void test_graph() {
 	test_stxlist<st_element>();
 	// test_stxlist_sort();
 	// test_stxtree<single_threaded_tree_element>();

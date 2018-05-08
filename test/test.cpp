@@ -15,39 +15,46 @@ int fails = 0;
 
 std::mutex lock;
 
-void _testResult(const char* file, int line, const char* fn, const char* test, bool value) {
+bool _testResult(const char* file, int line, const char* fn, const char* test, bool value) {
 	static const char* last_fn = nullptr;
+	static const char* last_file = nullptr;
 
 	std::lock_guard<std::mutex> guard(lock);
 	++tests;
-	if(value) {
-		if(last_fn != fn) {
-			std::cout << file << ": " << fn << "'" << std::endl;
-			last_fn = fn;
-		}
+
+	if(last_file != file) {
+		std::cout << "[" << file << "]" << std::endl;
+		last_file = file;
 	}
-	else {
-		std::cerr << file << ":" << line << ": error in '" << fn << "' test(" << test << ")  " << "FAIL" << std::endl;
+
+	if(last_fn != fn) {
+		std::cout << " " << fn << std::endl;
+		last_fn = fn;
+	}
+
+	if(!value) {
+		std::cerr << "\t" << file << ":" << line << ": error in '" << fn << "' test(" << test << ")  " << "FAIL" << std::endl;
 		++fails;
 	}
+	return value;
 }
 
-void test_xgraph();
-void test_xenvironment();
-void test_xevent();
-void test_xstring();
-void test_xdatabase();
-void test_xclass_registry();
+void test_graph();
+void test_environment();
+void test_event();
+void test_string();
+void test_xml();
+void test_class_registry();
 
 #include <atomic>
 
 int main(int argc, char const** argv) {
-	test_xstring();
-	test_xgraph();
-	test_xenvironment();
-	test_xevent();
-	test_xdatabase();
-	test_xclass_registry();
+	test_string();
+	test_graph();
+	test_environment();
+	test_event();
+	test_xml();
+	test_class_registry();
 
 	std::cout << "tests: "  << tests << std::endl;
 	std::cout << "passed: " << tests - fails << std::endl;

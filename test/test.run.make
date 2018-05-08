@@ -8,7 +8,7 @@ ifndef verbose
   SILENT = @
 endif
 
-.PHONY: clean prebuild prelink
+.PHONY: clean prebuild
 
 SHELLTYPE := msdos
 ifeq (,$(ComSpec)$(COMSPEC))
@@ -60,29 +60,31 @@ endef
 
 OBJECTS :=
 
+OBJECTS += $(OBJDIR)/allocator.o
 OBJECTS += $(OBJDIR)/class_registry.o
-OBJECTS += $(OBJDIR)/database_sqlite.o
 OBJECTS += $(OBJDIR)/ownership.o
 OBJECTS += $(OBJDIR)/shared_lib.o
 OBJECTS += $(OBJDIR)/string.o
 OBJECTS += $(OBJDIR)/task_queue.o
 OBJECTS += $(OBJDIR)/test.o
-OBJECTS += $(OBJDIR)/test_xclass_registry.o
-OBJECTS += $(OBJDIR)/test_xdatabase.o
-OBJECTS += $(OBJDIR)/test_xdatabase_sqlite.o
-OBJECTS += $(OBJDIR)/test_xenvironment.o
-OBJECTS += $(OBJDIR)/test_xevent.o
-OBJECTS += $(OBJDIR)/test_xgraph.o
-OBJECTS += $(OBJDIR)/test_xstring.o
+OBJECTS += $(OBJDIR)/test_class_registry.o
+OBJECTS += $(OBJDIR)/test_database.o
+OBJECTS += $(OBJDIR)/test_database_sqlite.o
+OBJECTS += $(OBJDIR)/test_environment.o
+OBJECTS += $(OBJDIR)/test_event.o
+OBJECTS += $(OBJDIR)/test_graph.o
+OBJECTS += $(OBJDIR)/test_string.o
 OBJECTS += $(OBJDIR)/type.o
+OBJECTS += $(OBJDIR)/xml.o
 
 # Rules
 # #############################################
 
-all: prebuild prelink $(TARGET) | $(TARGETDIR) $(OBJDIR)
+all: $(TARGET)
 	@:
 
-$(TARGET): $(GCH) $(OBJECTS) $(LDDEPS) | $(TARGETDIR)
+$(TARGET): $(OBJECTS) $(LDDEPS) | $(TARGETDIR)
+	$(PRELINKCMDS)
 	@echo Linking test.run
 	$(SILENT) $(LINKCMD)
 	$(POSTBUILDCMDS)
@@ -113,15 +115,12 @@ else
 	$(SILENT) if exist $(subst /,\\,$(OBJDIR)) rmdir /s /q $(subst /,\\,$(OBJDIR))
 endif
 
-prebuild:
+prebuild: | $(OBJDIR)
 	$(PREBUILDCMDS)
 
-prelink:
-	$(PRELINKCMDS)
-
 ifneq (,$(PCH))
-$(OBJECTS): $(GCH) $(PCH) | $(OBJDIR) $(PCH_PLACEHOLDER)
-$(GCH): $(PCH) | $(OBJDIR)
+$(OBJECTS): $(GCH) | $(PCH_PLACEHOLDER)
+$(GCH): $(PCH) | prebuild
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) -x c++-header $(ALL_CXXFLAGS) -o "$@" -MF "$(@:%.gch=%.d)" -c "$<"
 $(PCH_PLACEHOLDER): $(GCH) | $(OBJDIR)
@@ -131,17 +130,17 @@ else
 	$(SILENT) echo $null >> "$@"
 endif
 else
-$(OBJECTS): | $(OBJDIR)
+$(OBJECTS): | prebuild
 endif
 
 
 # File Rules
 # #############################################
 
-$(OBJDIR)/class_registry.o: ../src/class_registry.cpp
+$(OBJDIR)/allocator.o: ../src/allocator.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/database_sqlite.o: ../src/database_sqlite.cpp
+$(OBJDIR)/class_registry.o: ../src/class_registry.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/ownership.o: ../src/ownership.cpp
@@ -159,28 +158,31 @@ $(OBJDIR)/task_queue.o: ../src/task_queue.cpp
 $(OBJDIR)/type.o: ../src/type.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/xml.o: ../src/xml.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test.o: test.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_xclass_registry.o: test_xclass_registry.cpp
+$(OBJDIR)/test_class_registry.o: test_class_registry.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_xdatabase.o: test_xdatabase.cpp
+$(OBJDIR)/test_database.o: test_database.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_xdatabase_sqlite.o: test_xdatabase_sqlite.cpp
+$(OBJDIR)/test_database_sqlite.o: test_database_sqlite.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_xenvironment.o: test_xenvironment.cpp
+$(OBJDIR)/test_environment.o: test_environment.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_xevent.o: test_xevent.cpp
+$(OBJDIR)/test_event.o: test_event.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_xgraph.o: test_xgraph.cpp
+$(OBJDIR)/test_graph.o: test_graph.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_xstring.o: test_xstring.cpp
+$(OBJDIR)/test_string.o: test_string.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
