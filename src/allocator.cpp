@@ -64,13 +64,13 @@ char* arena_allocator::alloc(size_t bytes) {
 
 	if(STX_UNLIKELY(new_top > m_arena_end)) {
 		if(bytes > m_arena_size) {
-			// Bigger than our usual arena size, insert a new arena just for this one
-			char* result = _create_arena(bytes, _old_arena(m_arena), nullptr, nullptr);
-			_old_arena(m_arena) = result;
-			return result;
+			// Bigger than our usual arena size:
+			//  Create a new arena just for this allocation, and append it between the current one and its predecessor
+			return _old_arena(m_arena) = _create_arena(bytes, _old_arena(m_arena), nullptr, nullptr);
 		}
 		else {
 			m_arena = _create_arena(m_arena_size, m_arena, &m_top, &m_arena_end);
+			new_top = m_top + bytes;
 		}
 	}
 
