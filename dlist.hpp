@@ -17,7 +17,7 @@ public:
 	}
 
 	void insert_next(Derived* d) {
-		d->m_prev = this;
+		d->m_prev = (Derived*)this;
 		d->m_next = m_next;
 		if(m_next)
 			m_next->m_prev = d;
@@ -25,14 +25,14 @@ public:
 	}
 
 	void insert_prev(Derived* d) {
-		d->m_next = this;
+		d->m_next = (Derived*)this;
 		d->m_prev = m_prev;
 		if(m_prev)
 			m_prev->m_next = d;
 		m_prev = d;
 	}
 
-	bool remove() {
+	void remove() {
 		if(m_next)
 			m_next->m_prev = m_prev;
 		if(m_prev)
