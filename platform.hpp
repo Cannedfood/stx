@@ -78,11 +78,15 @@
 /* Platform dependent defines */
 
 #if STX_COMPILER_GCC
+# define STX_LIKELY(x) (__builtin_expect((x), 1))
+# define STX_UNLIKELY(x) (__builtin_expect((x), 0))
 #	define STX_CONSTEXPR constexpr
 #	define STX_FORCEINLINE __attribute__((always_inline))
 #	define STX_API
 #	define STX_FUNCTION __PRETTY_FUNCTION__
 #elif STX_COMPILER_MSVC
+# define STX_LIKELY(x) (x)
+# define STX_UNLIKELY(x) (x)
 #	define STX_CONSTEXPR
 #	define STX_FORCEINLINE __forceinline
 #   if !defined(STX_DLL)
