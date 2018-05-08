@@ -12,7 +12,7 @@ std::string demangle(const char* n);
 template<class T>
 std::string nameof(T const* t) { return demangle(typeid(*t).name()); }
 template<class T>
-std::string nameof(T const& t) { return demangle(typeid(*t).name()); }
+std::string nameof(T const& t) { return demangle(typeid(t).name()); }
 
 } // namespace stx
 
