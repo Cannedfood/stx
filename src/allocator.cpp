@@ -36,6 +36,10 @@ arena_allocator::arena_allocator(size_t block_size) :
 	m_arena_end(nullptr)
 {}
 
+arena_allocator::~arena_allocator() {
+	reset();
+}
+
 arena_allocator::arena_allocator(arena_allocator&& other) noexcept {
 	m_arena = other.m_arena; other.m_arena = nullptr;
 	m_top = other.m_top; other.m_top = nullptr;
