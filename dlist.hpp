@@ -8,6 +8,8 @@ namespace stx {
 template<class Derived>
 class dlist {
 public:
+	using dlist_t = dlist<Derived>;
+
 	dlist() :
 		m_next(nullptr),
 		m_prev(nullptr)
@@ -16,7 +18,16 @@ public:
 		remove();
 	}
 
+	void push_tail(Derived** d) {
+		if(*d)
+			static_cast<dlist_t*>(*d)->insert_next((Derived*) this);
+		else
+			remove();
+		*d = static_cast<Derived*>(this);
+	}
+
 	void insert_next(Derived* d) {
+		d->remove();
 		d->m_prev = (Derived*)this;
 		d->m_next = m_next;
 		if(m_next)
@@ -25,6 +36,7 @@ public:
 	}
 
 	void insert_prev(Derived* d) {
+		d->remove();
 		d->m_next = (Derived*)this;
 		d->m_prev = m_prev;
 		if(m_prev)
