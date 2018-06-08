@@ -14,12 +14,15 @@
 
 bool _testResult(const char* file, int line, const char* fn, const char* test, bool value);
 
-#define test(X) \
+#define test_binop(OP, A, B) \
 	do { \
 		try { \
-			if(!_testResult(__FILE__, __LINE__, STX_FUNCTION, #X, X)) return; \
+			if(!_testResult(__FILE__, __LINE__, STX_FUNCTION, #A #OP #B, (A) OP (B))) return; \
 		} catch(std::exception& e) { \
-			_testResult(__FILE__, __LINE__, STX_FUNCTION, #X, false); \
+			_testResult(__FILE__, __LINE__, STX_FUNCTION, #A #OP #B, false); \
 			std::cerr << '\t' << e.what() << std::endl; return; \
 		} \
 	} while(false)
+
+#define test_eq(A, B) test_binop(==, A, B)
+#define test(X) test_eq(bool(X), true)
