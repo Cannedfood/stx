@@ -62,18 +62,19 @@ OBJECTS :=
 
 OBJECTS += $(OBJDIR)/allocator.o
 OBJECTS += $(OBJDIR)/class_registry.o
+OBJECTS += $(OBJDIR)/job.o
 OBJECTS += $(OBJDIR)/ownership.o
 OBJECTS += $(OBJDIR)/shared_lib.o
 OBJECTS += $(OBJDIR)/string.o
 OBJECTS += $(OBJDIR)/task_queue.o
 OBJECTS += $(OBJDIR)/test.o
+OBJECTS += $(OBJDIR)/test_allocator.o
 OBJECTS += $(OBJDIR)/test_class_registry.o
-OBJECTS += $(OBJDIR)/test_database.o
-OBJECTS += $(OBJDIR)/test_database_sqlite.o
 OBJECTS += $(OBJDIR)/test_environment.o
 OBJECTS += $(OBJDIR)/test_event.o
 OBJECTS += $(OBJDIR)/test_graph.o
 OBJECTS += $(OBJDIR)/test_string.o
+OBJECTS += $(OBJDIR)/test_xml.o
 OBJECTS += $(OBJDIR)/type.o
 OBJECTS += $(OBJDIR)/xml.o
 
@@ -143,6 +144,9 @@ $(OBJDIR)/allocator.o: ../src/allocator.cpp
 $(OBJDIR)/class_registry.o: ../src/class_registry.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/job.o: ../src/job.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/ownership.o: ../src/ownership.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -164,13 +168,10 @@ $(OBJDIR)/xml.o: ../src/xml.cpp
 $(OBJDIR)/test.o: test.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_allocator.o: test_allocator.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_class_registry.o: test_class_registry.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_database.o: test_database.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/test_database_sqlite.o: test_database_sqlite.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_environment.o: test_environment.cpp
@@ -185,8 +186,11 @@ $(OBJDIR)/test_graph.o: test_graph.cpp
 $(OBJDIR)/test_string.o: test_string.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_xml.o: test_xml.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
 -include $(OBJECTS:%.o=%.d)
 ifneq (,$(PCH))
-  -include "$(PCH_PLACEHOLDER).d"
+  -include $(PCH_PLACEHOLDER).d
 endif
