@@ -4,6 +4,7 @@
 #pragma once
 
 #include <initializer_list>
+#include <iterator>
 
 namespace stx {
 
@@ -81,10 +82,10 @@ private:
 	T*  m_next;
 	T** m_to_this;
 
-	T*       _this()       noexcept { return static_cast<T*>(this); }
-	T const* _this() const noexcept { return static_cast<T const*>(this); }
+	constexpr T*       _this()       noexcept { return static_cast<T*>(this); }
+	constexpr T const* _this() const noexcept { return static_cast<T const*>(this); }
 	constexpr list_element_t* _next() noexcept { return m_next; }
-	constexpr list_element_t const* _next() const noexcept { return m_next; }
+	// constexpr list_element_t const* _next() const noexcept { return m_next; }
 
 	static list_element_t*       _elem(T* t)       { return t;}
 	static list_element_t const* _elem(T const* t) { return t;}
@@ -141,7 +142,8 @@ private:
 namespace detail {
 
 template<class T>
-class list_element_iterator {
+class list_element_iterator : public std::iterator<std::forward_iterator_tag, T>
+{
 	mutable list_element<T>* m_element;
 public:
 	list_element_iterator() :
