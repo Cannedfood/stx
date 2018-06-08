@@ -40,6 +40,7 @@ bool _testResult(const char* file, int line, const char* fn, const char* test, b
 }
 
 void test_graph();
+void test_dlist();
 void test_environment();
 void test_event();
 void test_string();
@@ -51,6 +52,7 @@ void test_class_registry();
 int main(int argc, char const** argv) {
 	test_string();
 	test_graph();
+	test_dlist();
 	test_environment();
 	test_event();
 	test_xml();

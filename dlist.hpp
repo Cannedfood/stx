@@ -67,6 +67,10 @@ public:
 	Derived* next() noexcept { return m_next; }
 	Derived* prev() noexcept { return m_prev; }
 
+protected:
+	friend class dlist<Derived>;
+	friend class dlist_iterator<Derived>;
+
 	static Derived* next(Derived* d) noexcept {
 		return ((element_t*)d)->next();
 	}
@@ -123,8 +127,8 @@ public:
 
 	bool empty() const noexcept { return m_sentinel.m_next == &m_sentinel; }
 
-	T* push_back(T* t)  noexcept { m_sentinel.insert_prev(t); }
-	T* push_front(T* t) noexcept { m_sentinel.insert_next(t); }
+	T* push_back(T* t)  noexcept { m_sentinel.insert_prev(t); return t; }
+	T* push_front(T* t) noexcept { m_sentinel.insert_next(t); return t; }
 
 	T*       front()       noexcept { return m_sentinel->next(); }
 	T*       back()        noexcept { return m_sentinel->prev(); }

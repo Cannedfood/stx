@@ -70,6 +70,7 @@ OBJECTS += $(OBJDIR)/task_queue.o
 OBJECTS += $(OBJDIR)/test.o
 OBJECTS += $(OBJDIR)/test_allocator.o
 OBJECTS += $(OBJDIR)/test_class_registry.o
+OBJECTS += $(OBJDIR)/test_dlist.o
 OBJECTS += $(OBJDIR)/test_environment.o
 OBJECTS += $(OBJDIR)/test_event.o
 OBJECTS += $(OBJDIR)/test_graph.o
@@ -172,6 +173,9 @@ $(OBJDIR)/test_allocator.o: test_allocator.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_class_registry.o: test_class_registry.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_dlist.o: test_dlist.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_environment.o: test_environment.cpp
