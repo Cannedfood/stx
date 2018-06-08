@@ -24,11 +24,8 @@ void next_token(const char*& s) {
 
 static
 bool is_name_inner(char c) {
-	return
-		(c >= '0' && c <= '9') ||
-		(c >= 'a' && c <= 'z') ||
-		(c >= 'A' && c <= 'Z') ||
-		c == '_';
+	bool isnt_ws = (c >= '!' && c <= '~') || c > '\b';
+	return isnt_ws && c != '/';
 }
 
 static
@@ -97,6 +94,26 @@ attribute* attribute::prev(std::string_view const& name) noexcept {
 	}
 	return nullptr;
 }
+attribute& attribute::req_next(std::string_view const& name) {
+	attribute* result = next(name);
+	if(!result) {
+		throw errors::attribute_not_found(
+			"Expected attribute '" + std::string(name) + "' after that one",
+			m_name.data()
+		);
+	}
+	return *result;
+}
+attribute& attribute::req_prev(std::string_view const& name) {
+	attribute* result = prev(name);
+	if(!result) {
+		throw errors::attribute_not_found(
+			"Expected attribute '" + std::string(name) + "' before this one",
+			m_name.data()
+		);
+	}
+	return *result;
+}
 
 const char* attribute::parse(arena_allocator& alloc, const char* s) {
 	m_name = parse_name(s);
@@ -159,6 +176,27 @@ node* node::child(std::string_view const& name) noexcept {
 	}
 	return nullptr;
 }
+node* node::child(node::node_type type) noexcept {
+	node* n = children();
+	while(n) {
+		if(n->type() == type)
+			return n;
+		n = n->next();
+	}
+	return nullptr;
+}
+
+node& node::req_child(node::node_type type) {
+	auto* result = child(type);
+	if(!result) {
+		throw errors::node_not_found(
+			"Node doesn't have required child of type " + std::to_string(type) + "",
+			m_name.data()
+		);
+	}
+	return *result;
+}
+
 node& node::req_child(std::string_view const& name) {
 	auto* result = child(name);
 	if(!result) {
@@ -363,11 +401,11 @@ void node::print(std::ostream& stream, unsigned indent) {
 	}
 }
 
-std::string load_document(const char* path) {
+std::string load_document(std::string_view path) {
 	std::string result;
 
 	// Open file
-	auto file = std::ifstream(path);
+	auto file = std::ifstream(std::string(path));
 	if(!file) throw std::runtime_error("Couldn't open file");
 
 	// Get size of file and resize string
