@@ -25,7 +25,7 @@ void next_token(const char*& s) {
 static
 bool is_name_inner(char c) {
 	bool isnt_ws = (c >= '!' && c <= '~') || c > '\b';
-	return isnt_ws && c != '/';
+	return isnt_ws && c != '/' && c != '>';
 }
 
 static
