@@ -4,23 +4,30 @@
 
 namespace stx {
 
+template<class T>
+class dlist;
+
+template<class Derived>
+class dlist_element;
+
 /// A doubly-linked list using curiously recurring templates
 template<class Derived>
-class dlist {
+class dlist_element {
 public:
 	using dlist_t = dlist<Derived>;
+	using dlist_element_t = dlist_element<Derived>;
 
-	dlist() :
+	dlist_element() :
 		m_next(nullptr),
 		m_prev(nullptr)
 	{}
-	~dlist() {
+	~dlist_element() {
 		remove();
 	}
 
 	void push_tail(Derived** d) {
 		if(*d)
-			static_cast<dlist_t*>(*d)->insert_next((Derived*) this);
+			static_cast<dlist_element_t*>(*d)->insert_next((Derived*) this);
 		else
 			remove();
 		*d = static_cast<Derived*>(this);
@@ -58,6 +65,22 @@ public:
 private:
 	Derived* m_next;
 	Derived* m_prev;
+};
+
+template<class T>
+class dlist {
+public:
+	using dlist_element_t = dlist_element<T>;
+	using dlist_t         = dlist<T>;
+
+	dlist() {
+		m_sentinel.m_next = static_cast<T*>(&m_sentinel);
+		m_sentinel.m_prev = static_cast<T*>(&m_sentinel);
+	}
+
+	bool empty() const noexcept { return m_sentinel.m_next == &m_sentinel; }
+private:
+	dlist_element_t m_sentinel;
 };
 
 } // namespace stx

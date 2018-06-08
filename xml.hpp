@@ -24,17 +24,22 @@ class node;
 
 class node_iterator;
 
-class attribute : public dlist<attribute> {
+constexpr inline
+size_t name_hash(std::string_view sv) noexcept;
+
+class attribute : public dlist_element<attribute> {
 public:
 	std::string_view const& name() const noexcept { return m_name; }
 
 	template<class T = std::string_view>
 	T value() const { return m_value; }
 
-	using dlist::next;
-	using dlist::prev;
+	using dlist_element::next;
+	using dlist_element::prev;
 	attribute* next(std::string_view const& name) noexcept;
 	attribute* prev(std::string_view const& name) noexcept;
+	attribute& req_next(std::string_view const& name);
+	attribute& req_prev(std::string_view const& name);
 
 	const char* parse(arena_allocator& alloc, const char* s);
 private:
@@ -42,12 +47,12 @@ private:
 	std::string_view m_value;
 };
 
-class node : public dlist<node> {
+class node : public dlist_element<node> {
 public:
 	enum node_type {
 		unassigned_node,
 		doctype_node,
-		cdata_node,
+		cdata_node, // TODO: should those be regular content nodes? (Annoying for serialization)
 		regular_node,
 		content_node,
 		comment_node
@@ -55,19 +60,36 @@ public:
 
 	node_type               type() const noexcept { return m_type; }
 	std::string_view const& name() const noexcept { return m_name; }
-	std::string_view const& value() const noexcept { return m_name; }
+	std::string_view const& cdata_value() const noexcept { return m_name; }
+	std::string_view const& comment_value() const noexcept { return m_name; }
+	std::string_view const& content_value() const noexcept { return m_name; }
 
 	node* parent() const noexcept { return m_parent; }
-	node* children() const noexcept { return m_children; }
 
-	using dlist::next;
-	using dlist::prev;
+	// Sibling accessors
+	using dlist_element::next;
+	using dlist_element::prev;
+
 	node* next(std::string_view const& name) noexcept;
 	node* prev(std::string_view const& name) noexcept;
+	node& req_next(std::string_view const& name);
+	node& req_prev(std::string_view const& name);
+
+	node* next(node_type type) noexcept;
+	node* prev(node_type type) noexcept;
+	node& req_next(node_type type);
+	node& req_prev(node_type type);
+
+	// Child accessors
+	node* children() const noexcept { return m_children; }
 
 	node* child(std::string_view const& name) noexcept;
-	node& req_child(std::string_view const& name);
+	node* child(node_type type) noexcept;
 
+	node& req_child(std::string_view const& name);
+	node& req_child(node_type type);
+
+	// Attribute accessors
 	attribute* attributes() const noexcept { return m_attributes; }
 	attribute* attrib(std::string_view const& name) noexcept;
 	attribute& req_attrib(std::string_view const& name);
@@ -76,12 +98,22 @@ public:
 	template<class T>
 	T req_attrib(std::string_view const& name);
 
+	// Iterator
 	using iterator = node_iterator;
 	iterator begin();
 	iterator end();
 
+	// Name hash for switch(node) { case stx::xml::name_hash("thing"): break; }
+	constexpr inline operator size_t() const noexcept { return name_hash(m_name); }
+
+	// Comparisons
+	constexpr inline bool operator==(std::string_view const& other) const noexcept { return m_name == other; }
+	constexpr inline bool operator!=(std::string_view const& other) const noexcept { return m_name != other; }
+
+	// ostream
 	void print(std::ostream& stream, unsigned indent = 0);
 
+	// Parsing
 	const char* parse_document(arena_allocator&, const char* cstr);
 	const char* parse_regular(arena_allocator&, const char*);
 	const char* parse_doctype(arena_allocator&, const char*);
@@ -98,7 +130,7 @@ private:
 	node*            m_children   = nullptr;
 };
 
-std::string load_document(const char* path);
+std::string load_document(std::string_view path);
 
 struct cursor_location {
 	unsigned         line;
@@ -155,6 +187,27 @@ namespace errors {
 
 namespace stx {
 namespace xml {
+
+constexpr inline
+size_t name_hash(std::string_view sv) noexcept {
+	// FNV 1a hash
+	if constexpr(sizeof(size_t) == 4) {
+		size_t result = 2166136261ul;
+		for(auto& c : sv) {
+			result ^= c;
+			result *= 16777619ul;
+		}
+		return result;
+	}
+	else if constexpr(sizeof(size_t) == 8) {
+		size_t result = 14695981039346656037ul;
+		for(auto& c : sv) {
+			result ^= c;
+			result *= 1099511628211ul;
+		}
+		return result;
+	}
+}
 
 // ** attribute *******************************************************
 
