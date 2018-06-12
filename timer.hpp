@@ -12,8 +12,9 @@ using namespace std::chrono_literals;
 
 template<class Clock>
 class basic_timer {
-	using clock      = Clock;
-	using time_point = typename clock::time_point;
+	using clock          = Clock;
+	using time_point     = typename clock::time_point;
+	using clock_duration = typename clock::duration;
 
 	time_point m_begin;
 
@@ -23,6 +24,30 @@ public:
 	basic_timer() { reset(); }
 
 	void reset() noexcept { m_begin = now(); }
+
+	std::string to_string() {
+		auto dif = now() - m_begin;
+		if(dif >= 1min) {
+			auto hours = duration_cast<duration<unsigned, ratio<3600>>>(dif);
+			dif -= hours;
+			auto minutes = duration_cast<duration<unsigned, ratio<60>>>(dif);
+			dif -= minutes;
+			auto seconds = duration_cast<duration<double>>(dif);
+			std::string result;
+			if(hours.count() > 0)
+				result += std::to_string(hours.count()) + "h ";
+			result += std::to_string(minutes.count()) + "min " + std::to_string(seconds.count()) + "s";
+			return result;
+		}
+		else if(dif > 500ms)
+			return std::to_string(duration_cast<duration<double, ratio<1>>>(dif).count()) + "s";
+		else if(dif > 3ms)
+			return std::to_string(duration_cast<duration<double, milli>>(dif).count()) + "ms";
+		else if(dif > 3us)
+			return std::to_string(duration_cast<duration<double, micro>>(dif).count()) + "us";
+		else
+			return std::to_string(duration_cast<duration<double, nano>>(dif).count()) + "ns";
+	}
 
 	// Get time passe since timer construction or the last timer reset
 	double days() const noexcept {
