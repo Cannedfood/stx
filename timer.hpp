@@ -17,16 +17,19 @@ class basic_timer {
 	using clock_duration = typename clock::duration;
 
 	time_point m_begin;
-
-	static inline
-	time_point now() noexcept { return clock::now(); }
 public:
 	basic_timer() { reset(); }
 
 	void reset() noexcept { m_begin = now(); }
 
+	static inline
+	time_point now() noexcept { return clock::now(); }
+
+	template<class Duration = clock_duration>
+	Duration time() const noexcept { return duration_cast<Duration>(now() - m_begin); }
+
 	std::string to_string() {
-		auto dif = now() - m_begin;
+		auto dif = time<>();
 		if(dif >= 1min) {
 			auto hours = duration_cast<duration<unsigned, ratio<3600>>>(dif);
 			dif -= hours;
@@ -51,25 +54,25 @@ public:
 
 	// Get time passe since timer construction or the last timer reset
 	double days() const noexcept {
-		return duration_cast<duration<double, ratio<86400>>>(now() - m_begin).count();
+		return time<duration<double, ratio<86400>>>().count();
 	}
 	double hours() const noexcept {
-		return duration_cast<duration<double, ratio<3600>>>(now() - m_begin).count();
+		return time<duration<double, ratio<3600>>>().count();
 	}
 	double minutes() const noexcept {
-		return duration_cast<duration<double, ratio<60>>>(now() - m_begin).count();
+		return time<duration<double, ratio<60>>>().count();
 	}
 	double seconds() const noexcept {
-		return duration_cast<duration<double, ratio<1>>>(now() - m_begin).count();
+		return time<duration<double, ratio<1>>>().count();
 	}
 	double millis() const noexcept {
-		return duration_cast<duration<double, milli>>(now() - m_begin).count();
+		return time<duration<double, milli>>().count();
 	}
 	double micros() const noexcept {
-		return duration_cast<duration<double, micro>>(now() - m_begin).count();
+		return time<duration<double, micro>>().count();
 	}
 	double nanos() const noexcept {
-		return duration_cast<duration<double, nano>>(now() - m_begin).count();
+		return time<duration<double, nano>>().count();
 	}
 
 	// Get time passed and reset the timer
