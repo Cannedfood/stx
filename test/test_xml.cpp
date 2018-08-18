@@ -1,11 +1,11 @@
-#include "test.hpp"
+#include "catch.hpp"
+
 #include "../xml.hpp"
 
 using namespace stx;
 using namespace stx::xml;
 
-static
-void test_xml_simple() {
+TEST_CASE("Simple xml parser test", "[xml]") {
 	const char* source = R"(
 		<outer>
 			<!-- comment -->
@@ -14,6 +14,8 @@ void test_xml_simple() {
 			</inner2>
 			<inner3 name='nice name' type="awesome type"/>
 			<inner4 name='nice name' type="awesome type">
+				I am content
+				<!-- I am comment -->
 			</inner4>
 		</outer>
 	)";
@@ -24,26 +26,39 @@ void test_xml_simple() {
 
 	node
 		*outer,
-		*comment,
+		*commentA,
 		*inner1,
 		*inner2,
 		*inner3,
 		*inner4;
 
-	test(outer = doc.children());
-	test(!outer->next());
-	test(!outer->prev());
-	test(outer->type() == node::regular_node);
-	test(!outer->attributes());
+	outer = doc.children();
+	CHECK(outer);
+	CHECK(!outer->next());
+	CHECK(!outer->prev());
+	CHECK(outer->type() == node::regular_node);
+	CHECK(!outer->attributes());
 
-	test(comment = outer->children());
-	test(inner1 = comment->next());
-	test(inner2 = inner1->next());
-	test(inner3 = inner2->next());
-	test(inner4 = inner3->next());
-	test(!inner4->next());
-}
+	commentA = outer->children();
+	CHECK(commentA);
+	inner1 = commentA->next();
+	CHECK(inner1);
+	inner2 = inner1->next();
+	CHECK(inner2);
+	inner3 = inner2->next();
+	CHECK(inner3);
+	inner4 = inner3->next();
+	CHECK(inner4);
+	CHECK(!inner4->next());
 
-void test_xml() {
-	test_xml_simple();
+	node* content = inner4->children();
+	REQUIRE(content);
+	node* comment = content->next();
+	REQUIRE(comment);
+
+	CHECK(content->type() == node::content_node);
+	CHECK(comment->type() == node::comment_node);
+	printf("%.*s\n", (int) content->content_value().size(), content->content_value().data());
+	CHECK(content->content_value() == "I am content");
+	CHECK(comment->comment_value() == "I am comment");
 }

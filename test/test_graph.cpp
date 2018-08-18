@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#include "test.hpp"
+#include "catch.hpp"
 
 #include "../list.hpp"
 // #include "../list_mt.hpp"
@@ -9,63 +9,73 @@
 #include <vector>
 #include <random>
 
-template<class element> static
-void test_stxlist() {
+TEST_CASE("Test stx list - single threaded", "[graph]") {
+	// Single threaded list element
+	struct element : public stx::list_element<element> {
+		int value;
+		element() : value(0) {}
+		element(int val) : value(val) {}
+
+		bool operator<(element const& other) const noexcept {
+			return value < other.value;
+		}
+	};
+
 	{
 		element* head = nullptr;
 		element a, b, c, d;
 
 		a.insert_to(head);
-		test(head == &a);
+		CHECK(head == &a);
 		b.insert_to(head);
-		test(b.to_this() == &head);
-		test(b.next() == &a);
+		CHECK(b.to_this() == &head);
+		CHECK(b.next()    == &a);
 
 		c.insert_to(head);
-		test(c.to_this() == &head);
-		test(c.next() == &b);
+		CHECK(c.to_this() == &head);
+		CHECK(c.next()    == &b);
 		c.remove();
-		test(c.to_this() == nullptr);
-		test(c.next() == nullptr);
-		test(head == &b);
-		test(b.to_this() == &head);
-		test(b.next() == &a);
+		CHECK(c.to_this() == nullptr);
+		CHECK(c.next()    == nullptr);
+		CHECK(head        == &b);
+		CHECK(b.to_this() == &head);
+		CHECK(b.next()    == &a);
 
 		a.insert_to(head);
-		test(a.to_this() == &head);
-		test(a.next() == &b);
-		test(b.next() == nullptr);
+		CHECK(a.to_this() == &head);
+		CHECK(a.next()    == &b);
+		CHECK(b.next()    == nullptr);
 
 		// Test move
-		test(head == &a);
-		test(a.to_this() == &head);
-		test(a.next() == &b);
-		test(b.to_this() == &a.next());
-		test(b.next() == nullptr);
+		CHECK(head        == &a);
+		CHECK(a.to_this() == &head);
+		CHECK(a.next()    == &b);
+		CHECK(b.to_this() == &a.next());
+		CHECK(b.next()    == nullptr);
 
 		c = std::move(a);
-		test(head == &c);
-		test(c.to_this() == &head);
-		test(c.next() == &b);
-		test(b.to_this() == &c.next());
-		test(b.next() == nullptr);
+		CHECK(head        == &c);
+		CHECK(c.to_this() == &head);
+		CHECK(c.next()    == &b);
+		CHECK(b.to_this() == &c.next());
+		CHECK(b.next()    == nullptr);
 
 		std::swap(a, c);
-		test(head == &a);
-		test(a.to_this() == &head);
-		test(a.next() == &b);
-		test(b.to_this() == &a.next());
-		test(b.next() == nullptr);
+		CHECK(head        == &a);
+		CHECK(a.to_this() == &head);
+		CHECK(a.next()    == &b);
+		CHECK(b.to_this() == &a.next());
+		CHECK(b.next()    == nullptr);
 
 		b.insert(&c);
 
 		std::swap(a, b);
-		test(head == &b);
-		test(b.to_this() == &head);
-		test(b.next() == &a);
-		test(a.to_this() == &b.next());
-		test(a.next() == &c);
-		test(c.to_this() == &a.next());
+		CHECK(head        == &b);
+		CHECK(b.to_this() == &head);
+		CHECK(b.next()    == &a);
+		CHECK(a.to_this() == &b.next());
+		CHECK(a.next()    == &c);
+		CHECK(c.to_this() == &a.next());
 	}
 
 	// Test predicate insert
@@ -79,6 +89,7 @@ void test_stxlist() {
 		b.insert_to(head, std::less<>());
 		c.insert_to(head, std::less<>());
 
+		/*
 		printf(
 			"head*: %p\na: %p\nb: %p\nc: %p\nd: %p\ne: %p\n",
 			&head, &a, &b, &c, &d, &e
@@ -87,17 +98,18 @@ void test_stxlist() {
 			"head: %p\na.next(): %p\nb.next(): %p\nc.next(): %p\nd.next(): %p\ne.next(): %p\n",
 			head, a.next(), b.next(), c.next(), d.next(), e.next()
 		);
+		*/
 
-		test(head == &a);
-		test(a.next() == &b);
-		test(b.next() == &c);
-		test(c.next() == &d);
-		test(d.next() == &e);
-		test(e.next() == nullptr);
+		CHECK(head     == &a);
+		CHECK(a.next() == &b);
+		CHECK(b.next() == &c);
+		CHECK(c.next() == &d);
+		CHECK(d.next() == &e);
+		CHECK(e.next() == nullptr);
 	}
 }
 
-/* TODO
+/* TODO: Fails
 static
 void test_stxlist_sort() {
 	struct my_element : public stx::list_element<my_element> {
@@ -124,29 +136,7 @@ void test_stxlist_sort() {
 }
 */
 
-template<class element>
-void test_stxtree() {
-	element r, a, b, c;
-}
-
-// Single threaded list element
-struct st_element : public stx::list_element<st_element> {
-	int value;
-	st_element() : value(0) {}
-	st_element(int val) : value(val) {}
-
-	bool operator<(st_element const& other) const noexcept {
-		return value < other.value;
-	}
-};
 // struct single_threaded_tree_element : public stx::tree_element<single_threaded_tree_element> {};
-
-void test_graph() {
-	test_stxlist<st_element>();
-	// test_stxlist_sort();
-	// test_stxtree<single_threaded_tree_element>();
-	// TODO: Test multi threaded
-}
 
 /*
  Copyright (c) 2017 Benno Straub

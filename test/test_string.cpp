@@ -1,14 +1,14 @@
-#include "test.hpp"
+#include "catch.hpp"
 
 #include "../string.hpp"
 
-void test_string() {
+TEST_CASE("Test string", "[string]") {
 	// TODO:
 
 	using stx::string;
 	using stx::token;
 
 	string s = "  hello  ";
-	test(token("hello") == "hello");
-	test(token("  hello  ").trim() == "hello");
+	CHECK(token("hello") == "hello");
+	CHECK(token("  hello  ").trim() == "hello");
 }

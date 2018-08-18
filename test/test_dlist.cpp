@@ -1,14 +1,14 @@
-#include "test.hpp"
+#include "catch.hpp"
 
 #include "../dlist.hpp"
 
-struct test_elem : public stx::dlist_element<test_elem> {
-	char c;
+TEST_CASE("Test dlist", "[dlist]") {
+	struct test_elem : public stx::dlist_element<test_elem> {
+		char c;
 
-	test_elem(char c) : c(c) {}
-};
+		test_elem(char c) : c(c) {}
+	};
 
-void test_dlist() {
 	test_elem
 		a = {'a'},
 		b = {'b'},
@@ -21,20 +21,20 @@ void test_dlist() {
 	elem.push_back(&c);
 	elem.push_back(&d);
 
-	test_eq(a.next(), &b);
-	test_eq(b.next(), &c);
-	test_eq(c.next(), &d);
-	test_eq(d.prev(), &c);
-	test_eq(c.prev(), &b);
-	test_eq(b.prev(), &a);
+	CHECK(a.next() == &b);
+	CHECK(b.next() == &c);
+	CHECK(c.next() == &d);
+	CHECK(d.prev() == &c);
+	CHECK(c.prev() == &b);
+	CHECK(b.prev() == &a);
 
 	b.remove();
 
-	test_eq(b.next(), nullptr);
-	test_eq(b.prev(), nullptr);
+	CHECK(b.next() == nullptr);
+	CHECK(b.prev() == nullptr);
 
-	test_eq(a.next(), &c);
-	test_eq(c.next(), &d);
-	test_eq(d.prev(), &c);
-	test_eq(c.prev(), &a);
+	CHECK(a.next() == &c);
+	CHECK(c.next() == &d);
+	CHECK(d.prev() == &c);
+	CHECK(c.prev() == &a);
 }

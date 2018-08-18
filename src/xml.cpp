@@ -288,11 +288,13 @@ const char* node::parse_comment(arena_allocator& alloc, const char* s) {
 	throw errors::parsing_error("Expected closing greater-than sign", s);
 }
 const char* node::parse_content(arena_allocator& alloc, const char* s) {
+	while(*s <= ' ') s++; // Skipws
 	m_type = content_node;
 	const char* start = s;
-	while(*s && *s != '<') // HACK, actually parse the thing
-		s++;
-	m_name = std::string_view(start, s - start);
+	while(*s && *s != '<') s++;
+	const char* last = std::max(start, s - 1);
+	while(last > start && *last <= ' ') --last;
+	m_name = std::string_view(start, (s - last) + 1);
 	return s;
 }
 const char* node::parse_attributes(arena_allocator& alloc, const char* s) {

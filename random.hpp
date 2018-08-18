@@ -15,7 +15,14 @@ class random {
 	Generator mGenerator;
 public:
 	random() {}
+	random(uint64_t seed) {
+		mGenerator.seed(seed);
+	}
 	random(Generator&& g) : mGenerator(g) {}
+
+	void seed(uint64_t value = std::random_device()()) {
+		mGenerator.seed(value);
+	}
 
 	template<class T> std::enable_if_t<std::is_integral_v<T>,
 	T> get(T min, T max) { return std::uniform_int_distribution<T>(min, max)(mGenerator); }

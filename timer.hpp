@@ -28,7 +28,7 @@ public:
 	template<class Duration = clock_duration>
 	Duration time() const noexcept { return duration_cast<Duration>(now() - m_begin); }
 
-	std::string to_string() {
+	std::string to_string() const {
 		auto dif = time<>();
 		if(dif >= 1min) {
 			auto hours = duration_cast<duration<unsigned, ratio<3600>>>(dif);
@@ -44,9 +44,9 @@ public:
 		}
 		else if(dif > 500ms)
 			return std::to_string(duration_cast<duration<double, ratio<1>>>(dif).count()) + "s";
-		else if(dif > 3ms)
+		else if(dif > 1ms)
 			return std::to_string(duration_cast<duration<double, milli>>(dif).count()) + "ms";
-		else if(dif > 3us)
+		else if(dif > 1us)
 			return std::to_string(duration_cast<duration<double, micro>>(dif).count()) + "us";
 		else
 			return std::to_string(duration_cast<duration<double, nano>>(dif).count()) + "ns";

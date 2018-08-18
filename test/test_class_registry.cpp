@@ -1,4 +1,4 @@
-#include "test.hpp"
+#include "catch.hpp"
 
 #include "../class_registry.hpp"
 
@@ -15,26 +15,11 @@ size_t count(Container&& c) {
 	return std::distance(c.begin(), c.end());
 }
 
-void test_class_registry() {
-	test_eq(
-		count(stx::classes::entries()),
-		3 // class_registry_testA, class_registry_testB, class_registry_testC
-	);
+TEST_CASE("Test class registry", "[class_registry]") {
+	CHECK(count(stx::classes::entries()) == 3); // class_registry_testA, class_registry_testB, class_registry_testC
 
-	test_eq(
-		count(stx::classes::get<class_registry_testA>().implementations()),
-		1
-	);
-	test_eq(
-		count(stx::classes::get<class_registry_testB>().implementations()),
-		1
-	);
-	test_eq(
-		count(stx::classes::get<class_registry_testC>().implementations()),
-		0
-	);
-	test_eq(
-		count(stx::classes::get<class_registry_testC>().implements()),
-		2 // class_registry_testA, class_registry_testB
-	);
+	CHECK(count(stx::classes::get<class_registry_testA>().implementations())   == 1);
+	CHECK(count(stx::classes::get<class_registry_testB>().implementations())   == 1);
+	CHECK(count(stx::classes::get<class_registry_testC>().implementations()) == 0);
+	CHECK(count(stx::classes::get<class_registry_testC>().implements()) == 2); // class_registry_testA, class_registry_testB
 }

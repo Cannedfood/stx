@@ -15,8 +15,8 @@ class handle_slot : private list_element_mt<handle_slot> {
 	friend list_t;
 	friend class handle;
 protected:
-	handle_slot(handle_slot&&) {}
-	handle_slot(handle_slot const&) {}
+	handle_slot(handle_slot&&) : list_element_t() {}
+	handle_slot(handle_slot const&) : list_element_t() {}
 	void invalidate() { list_element_t::remove(); }
 	virtual void on_force_remove() {}
 public:

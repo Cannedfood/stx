@@ -1,99 +1,74 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#include "test.hpp"
+#include "catch.hpp"
 
 #include "../environment.hpp"
 
-static
-void test_environment_set_unset_get() {
+TEST_CASE("Test environment set unset & get", "[environment]") {
 	stx::env::set("foobar", "barfoo", false);
-	test(!strcmp(stx::env::get("foobar"), "barfoo"));
+	CHECK(!strcmp(stx::env::get("foobar"), "barfoo"));
 	stx::env::set("foobar", "barfoo2000", false);
-	test(strcmp(stx::env::get("foobar"), "barfoo2000"));
+	CHECK(strcmp(stx::env::get("foobar"), "barfoo2000"));
 	stx::env::set("foobar", "barfoo2000", true);
-	test(!strcmp(stx::env::get("foobar"), "barfoo2000"));
+	CHECK(!strcmp(stx::env::get("foobar"), "barfoo2000"));
 	stx::env::unset("foobar");
-	test(!stx::env::get("foobar"));
+	CHECK(!stx::env::get("foobar"));
 }
 
-static
-void test_environment_replace() {
+TEST_CASE("Test environment replace", "[environment]") {
 	// wo/ replacement
-	test(stx::env::replace("Heyho") == "Heyho");
-	test(stx::env::replace("H") == "H");
-	test(stx::env::replace("") == "");
+	CHECK(stx::env::replace("Heyho") == "Heyho");
+	CHECK(stx::env::replace("H") == "H");
+	CHECK(stx::env::replace("") == "");
 	// Multi character replacements ${HOME}
 
-	test(
+	CHECK(
 		stx::env::replace("Foo${HOME}bar") ==
 		"Foo" + std::string(stx::env::get("HOME")) + "bar"
 	);
-	test(
+	CHECK(
 		stx::env::replace("Foo${HOME}bar${HOME}power") ==
 		"Foo" + std::string(stx::env::get("HOME")) + "bar" + stx::env::get("HOME") + "power"
 	);
-	test(
+	CHECK(
 		stx::env::replace("${HOME}bar") ==
 		std::string(stx::env::get("HOME")) + "bar"
 	);
-	test(
+	CHECK(
 		stx::env::replace("Foo${HOME}") ==
 		"Foo" + std::string(stx::env::get("HOME"))
 	);
-	test(
+	CHECK(
 		stx::env::replace("${HOME}") == std::string(stx::env::get("HOME"))
 	);
-	test(
+	CHECK(
 		stx::env::replace("${ThisDoesNotExist}") == std::string("")
 	);
 
 	// Multi character replacements $a
 	stx::env::set("a", "-ducking-");
-	test(
+	CHECK(
 		stx::env::replace("$a") == std::string(stx::env::get("a"))
 	);
-	test(
+	CHECK(
 		stx::env::replace("Foo$a") == "Foo" + std::string(stx::env::get("a"))
 	);
-	test(
+	CHECK(
 		stx::env::replace("Foo$abar") == "Foo" + std::string(stx::env::get("a")) + "bar"
 	);
-	test(
+	CHECK(
 		stx::env::replace("$abar") == std::string(stx::env::get("a")) + "bar"
 	);
-	test(
+	CHECK(
 		stx::env::replace("Foo$abar$apower") ==
 			"Foo" + std::string(stx::env::get("a")) +
 			"bar" + std::string(stx::env::get("a")) + "power"
 	);
 
 	// Test all the exceptions
-	try {
-		stx::env::replace("Foo$");
-		test(!"Didn't throw an exception");
-	}
-	catch(std::runtime_error& e) {
-		test("Succesfully caught an exception");
-	}
-	try {
-		stx::env::replace("Foo${");
-		test(!"Didn't throw an exception");
-	}
-	catch(std::runtime_error& e) {
-		test("Succesfully caught an exception");
-	}
-	try {
-		stx::env::replace("Foo${bar");
-		test(!"Didn't throw an exception");
-	}
-	catch(std::runtime_error& e) {
-		test("Succesfully caught an exception");
-	}
-}
-
-void test_environment() {
-	test_environment_set_unset_get();
-	test_environment_replace();
+	CHECK_THROWS_AS(stx::env::replace("Foo$"), std::runtime_error);
+	CHECK_THROWS_AS(stx::env::replace("Foo${"), std::runtime_error);
+	CHECK_THROWS_AS(stx::env::replace("Foo${bar"), std::runtime_error);
 }
 
 /*
