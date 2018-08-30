@@ -58,7 +58,6 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 
 	CHECK(content->type() == node::content_node);
 	CHECK(comment->type() == node::comment_node);
-	printf("%.*s\n", (int) content->content_value().size(), content->content_value().data());
 	CHECK(content->content_value() == "I am content");
 	CHECK(comment->comment_value() == "I am comment");
 }

@@ -29,6 +29,13 @@ bool is_name_inner(char c) {
 }
 
 static
+std::string_view trim_whitespace(std::string_view s) {
+	while(s.size() && std::iswspace(s.front())) s.remove_prefix(1);
+	while(s.size() && std::iswspace(s.back())) s.remove_suffix(1);
+	return s;
+}
+
+static
 std::string_view parse_name(const char*& s) {
 	// TODO: conformance
 	const char* beg = s;
@@ -280,7 +287,7 @@ const char* node::parse_comment(arena_allocator& alloc, const char* s) {
 	const char* start = s;
 	while(*s) {
 		if(s[0] == '-' && s[1] == '-' && s[2] == '>') {
-			m_name = {start, size_t(s - start)};
+			m_name = trim_whitespace({start, size_t(s - start)});
 			return s + 3;
 		}
 		s++;
