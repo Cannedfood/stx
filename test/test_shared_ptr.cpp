@@ -60,6 +60,10 @@ TEST_CASE("Shared pointer move", "[shared_ptr]") {
 			{
 				auto tmp = std::move(c);
 				c = std::move(b);
+				REQUIRE(!b.get());
+				REQUIRE(!b);
+				REQUIRE(c);
+				REQUIRE(c.get());
 				b = std::move(tmp);
 			}
 			REQUIRE(b.get() == a.get());
@@ -71,23 +75,60 @@ TEST_CASE("Shared pointer move", "[shared_ptr]") {
 	REQUIRE(count == 0);
 }
 
+TEST_CASE("Shared pointer override", "[shared_ptr]") {
+	int count = 0;
+	shared<Counted> a = make_shared<Counted>(count);
+	shared<Counted> b = make_shared<Counted>(count);
+	REQUIRE(count == 2);
+	a = b;
+	REQUIRE(count == 1);
+	b = make_shared<Counted>(count);
+	REQUIRE(count == 2);
+	a = std::move(b);
+	REQUIRE(count == 1);
+}
+
 TEST_CASE("Basic weak pointer", "[shared_ptr]") {
+	int count = 0;
+
+	shared<Counted> a = make_shared<Counted>(count);
+	REQUIRE(count == 1);
+	{
+		weak<Counted> b = a;
+		REQUIRE(a.refcount() == 1);
+		REQUIRE(a.weak_refcount() == 1);
+
+		weak<Counted> c = b;
+		REQUIRE(a.weak_refcount() == 2);
+
+		shared<Counted> d = c.lock();
+		REQUIRE(a.refcount() == 2);
+	}
+}
+
+TEST_CASE("Weak pointer destroyed after last shared", "[shared_ptr]") {
 	int count = 0;
 	{
 		shared<Counted> a = make_shared<Counted>(count);
-		REQUIRE(count == 1);
 		{
 			weak<Counted> b = a;
-			REQUIRE(a.refcount() == 1);
-			REQUIRE(a.weak_refcount() == 1);
-
-			weak<Counted> c = b;
-			REQUIRE(a.weak_refcount() == 2);
-
-			shared<Counted> d = c.lock();
-			REQUIRE(a.refcount() == 2);
+			a.reset();
+			REQUIRE(b.refcount() == 0);
+			REQUIRE(b.weak_refcount() == 1);
 		}
 	}
+}
+
+TEST_CASE("Weak pointer locked after last shared was destroyed", "[shared_ptr]") {
+	int count = 0;
+	weak<Counted> a;
+	{
+		shared<Counted> b = make_shared<Counted>(count);
+		a = b;
+	}
+	REQUIRE(a.refcount() == 0);
+	REQUIRE(a.weak_refcount() == 1);
+	REQUIRE(a.lock() == nullptr);
 }
 
 struct Refcounted : public Counted, public stx::enable_shared_from_this<Refcounted> {
@@ -95,14 +136,24 @@ struct Refcounted : public Counted, public stx::enable_shared_from_this<Refcount
 };
 
 TEST_CASE("Test enable_shared_from_this", "[shared_ptr]") {
-	/*
 	int count = 0;
 
 	shared<Refcounted> a = make_shared<Refcounted>(count);
 	{
 		shared<Refcounted> b = make_shared<Refcounted>(count);
 	}
-	*/
+}
+
+TEST_CASE("Test weak to self", "[shared_ptr]") {
+	// If a weak pointer is destroyed while in the destructor the object, the shared_block may be deleted after we leave, this checks if this is prevented.
+	struct FooBar {
+		weak<FooBar> self;
+	};
+
+	shared<FooBar> bar = make_shared<FooBar>();
+	bar->self = bar;
+
+	bar.reset(); // This should SEGFAULT otherwise
 }
 
 TEST_CASE("Test enable_shared_from_this on the stack", "[shared_ptr]") {
@@ -112,20 +163,15 @@ TEST_CASE("Test enable_shared_from_this on the stack", "[shared_ptr]") {
 	{
 		shared<Refcounted> r = a.shared_from_this();
 		REQUIRE(r.get() == &a);
-		REQUIRE(r.refcount() == 2);
 	}
 	{
 		shared<Refcounted> r = a.shared_from_this();
 		REQUIRE(r.get() == &a);
-		REQUIRE(r.refcount() == 2);
 		weak<Refcounted> w = a.weak_from_this();
-		REQUIRE(r.weak_refcount() == 1);
 	}
 	{
 		shared<Refcounted> r = a.shared_from_this();
 		REQUIRE(r.get() == &a);
-		REQUIRE(r.refcount() == 2);
 		weak<Refcounted> w = a.weak_from_this();
-		REQUIRE(r.weak_refcount() == 1);
 	}
 }
