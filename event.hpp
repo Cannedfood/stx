@@ -52,11 +52,16 @@ public:
 	void clear() noexcept;
 
 	template<class Pred = bool(*)(Args...)>
-	void operator()(Args... args, Pred&& pred = [](Args...) { return true; }) {
+	void send(Args... args, Pred&& pred = [](Args...) { return true; }) {
 		for(auto& l : *this) {
 			if(!pred(args...)) break;
 			l.on(args...);
 		}
+	}
+
+	template<class Pred = bool(*)(Args...)>
+	void operator()(Args... args, Pred&& pred = [](Args...) { return true; }) {
+		send(args..., std::forward<Pred>(pred));
 	}
 };
 
