@@ -6,6 +6,8 @@
 namespace stx {
 
 template<size_t Nbits = 64, bool SizeOptimized = true>
+// You can test if things were added to this container. There are false positivies but no false negatives.
+// https://en.wikipedia.org/wiki/Bloom_filter
 class bloom_filter {
 	using filter_t = std::conditional_t<SizeOptimized, std::bitset<Nbits>, std::array<bool, Nbits>>;
 
