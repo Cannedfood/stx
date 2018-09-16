@@ -2,5 +2,6 @@ test.run
 install/stx/
 install/src/
 
-/Makefile
-/*.make
+Makefile
+*.make
+obj/
