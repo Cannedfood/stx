@@ -33,17 +33,40 @@ private:
 	friend event_t;
 };
 
+template<class C, bool autodelete = true, class... Args>
+class callback_listener final : public listener<Args...> {
+	C m_callback;
+public:
+	template<class... CArgs>
+	callback_listener(CArgs&&... cargs) :
+		m_callback(std::forward<CArgs>(cargs)...)
+	{}
+
+	void onEventCleared() { if constexpr(autodelete) delete this; }
+	void on(Args... args) { m_callback(args...); }
+};
+
 template<class... Args>
 class event : public list<listener<Args...>> {
 	using list_t = list<listener<Args...>>;
 public:
 	using event_t = event<Args...>;
 	using listener_t = listener<Args...>;
+	template<class Callback, bool autodelete>
+	using callback_listener_t = callback_listener<std::remove_reference_t<Callback>, autodelete, Args...>;
 
 	constexpr event() noexcept;
 	constexpr event(event_t&& other) = default;
 	constexpr event(event_t const& other) = delete;
 	~event();
+
+	using list_t::add;
+	template<class C> std::enable_if_t<std::is_invocable_v<C, Args...>,
+	callback_listener_t<C, true>*> add(C&& c) {
+		auto listener = new callback_listener_t<C, true>(std::forward<C>(c));
+		add(listener);
+		return listener;
+	}
 
 	event_t& operator=(event_t const& other) = default;
 	event_t& operator=(event_t&& other) = default;
