@@ -99,7 +99,6 @@ private:
 		return true;
 	}
 
-	constexpr
 	bool _destruction_in_progress() const noexcept {
 		return m_strong_refs.load() == 0;
 	}
