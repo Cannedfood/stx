@@ -308,7 +308,7 @@ list<T>& list<T>::operator=(list_t&& l) noexcept {
 template<class T> constexpr
 list<T>::list(list_t const& l) noexcept : list() {}
 template<class T>
-constexpr list<T>& list<T>::operator=(list_t const& l) noexcept {}
+constexpr list<T>& list<T>::operator=(list_t const& l) noexcept { return *this; }
 
 template<class T>
 list<T>::~list() noexcept {
