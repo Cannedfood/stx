@@ -88,6 +88,23 @@ TEST_CASE("Shared pointer override", "[shared_ptr]") {
 	REQUIRE(count == 1);
 }
 
+TEST_CASE("Shared pointer self-assign", "[shared_ptr]") {
+	int count = 0;
+	shared<Counted> a = make_shared<Counted>(count);
+	REQUIRE(count == 1);
+	a = a;
+	REQUIRE(count == 1);
+	a = std::move(a);
+	REQUIRE(count == 1);
+}
+
+TEST_CASE("Weak pointer self-assign", "[shared_ptr]") {
+	weak<int> w = make_shared<int>(0);
+	REQUIRE(w.weak_refcount() == 1);
+	w = w;
+	REQUIRE(w.weak_refcount() == 0); // Shouldn't increment, no strong refs left
+}
+
 TEST_CASE("Basic weak pointer", "[shared_ptr]") {
 	int count = 0;
 
