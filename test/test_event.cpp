@@ -10,25 +10,20 @@ TEST_CASE("Test event", "[event]") {
 		}
 	};
 
-	stx::event<int> e;
+	stx::event<int> event;
 
 	example_listener a, b, c;
 
-	e.add({a, b, c});
+	event.add({a, b, c});
 
-	int my_val = 1;
-	e(my_val, [](int v) { return v; });
+	event(42);
+	REQUIRE(a.val == 42);
+	REQUIRE(b.val == 42);
+	REQUIRE(c.val == 42);
 
-	CHECK(a.val == my_val);
-	CHECK(b.val == my_val);
-	CHECK(c.val == my_val);
-
-	my_val = 2;
-	c.val = 115;
-	e(my_val, [&](int v) { return --my_val > 0; });
-	CHECK(a.val == 2);
-	CHECK(b.val == 1);
-	CHECK(c.val == 115); // left; Predicate returns 0
-
-	stx::event<int> e2 = std::move(e);
+	stx::event<int> event2 = std::move(event);
+	event2(1337);
+	REQUIRE(a.val == 1337);
+	REQUIRE(b.val == 1337);
+	REQUIRE(c.val == 1337);
 }
