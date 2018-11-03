@@ -15,7 +15,7 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 			<inner3 name='nice name' type="awesome type"/>
 			<inner4 name='nice name' type="awesome type">
 				I am content
-				<!-- I am comment -->
+				<!-- I am a comment -->
 			</inner4>
 		</outer>
 	)";
@@ -36,7 +36,7 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 	CHECK(outer);
 	CHECK(!outer->next());
 	CHECK(!outer->prev());
-	CHECK(outer->type() == node::regular_node);
+	CHECK(outer->type() == node::regular);
 	CHECK(!outer->attributes());
 
 	commentA = outer->children();
@@ -56,8 +56,8 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 	node* comment = content->next();
 	REQUIRE(comment);
 
-	CHECK(content->type() == node::content_node);
-	CHECK(comment->type() == node::comment_node);
+	CHECK(content->type() == node::content);
+	CHECK(comment->type() == node::comment);
 	CHECK(content->content_value() == "I am content");
-	CHECK(comment->comment_value() == "I am comment");
+	CHECK(comment->comment_value() == "I am a comment");
 }

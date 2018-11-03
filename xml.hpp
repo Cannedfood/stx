@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-// TODO: xml::node::m_name also contains the content of comments etc. how do we make this clear to library users?
+// TODO: xml::node::m_value also contains the content of comments etc. how do we make this clear to library users?
 
 #ifndef STX_XML_HPP_INCLUDED
 #define STX_XML_HPP_INCLUDED
@@ -15,6 +15,8 @@
 #include <string>
 
 #include <iosfwd>
+
+#include <cassert>
 
 namespace stx {
 namespace xml {
@@ -50,19 +52,19 @@ private:
 class node : public dlist_element<node> {
 public:
 	enum node_type {
-		unassigned_node,
-		doctype_node,
-		cdata_node, // TODO: should those be regular content nodes? (Annoying for serialization)
-		regular_node,
-		content_node,
-		comment_node
+		unassigned,
+		doctype,
+		cdata, // TODO: should those be regular content nodes? (Annoying for serialization)
+		regular,
+		content,
+		comment
 	};
 
 	node_type               type() const noexcept { return m_type; }
-	std::string_view const& name() const noexcept { return m_name; }
-	std::string_view const& cdata_value() const noexcept { return m_name; }
-	std::string_view const& comment_value() const noexcept { return m_name; }
-	std::string_view const& content_value() const noexcept { return m_name; }
+	std::string_view const& name()          const noexcept { assert(type() == node_type::regular);return m_value; }
+	std::string_view const& cdata_value()   const noexcept { assert(type() == node_type::cdata);  return m_value; }
+	std::string_view const& comment_value() const noexcept { assert(type() == node_type::comment);return m_value; }
+	std::string_view const& content_value() const noexcept { assert(type() == node_type::content);return m_value; }
 
 	node* parent() const noexcept { return m_parent; }
 
@@ -104,11 +106,11 @@ public:
 	iterator end();
 
 	// Name hash for switch(node) { case stx::xml::name_hash("thing"): break; }
-	constexpr inline operator size_t() const noexcept { return name_hash(m_name); }
+	constexpr inline operator size_t() const noexcept { return name_hash(m_value); }
 
 	// Comparisons
-	constexpr inline bool operator==(std::string_view const& other) const noexcept { return m_name == other; }
-	constexpr inline bool operator!=(std::string_view const& other) const noexcept { return m_name != other; }
+	constexpr inline bool operator==(std::string_view const& other) const noexcept { return m_value == other; }
+	constexpr inline bool operator!=(std::string_view const& other) const noexcept { return m_value != other; }
 
 	// ostream
 	void print(std::ostream& stream, unsigned indent = 0);
@@ -123,8 +125,8 @@ public:
 	const char* parse_children(arena_allocator&, const char*);
 	const char* parse_node(arena_allocator&, const char*);
 private:
-	node_type        m_type = unassigned_node;
-	std::string_view m_name;
+	node_type        m_type = node_type::unassigned;
+	std::string_view m_value;
 	attribute*       m_attributes = nullptr;
 	node*            m_parent     = nullptr;
 	node*            m_children   = nullptr;

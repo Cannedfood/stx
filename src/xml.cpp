@@ -106,7 +106,7 @@ attribute& attribute::req_next(std::string_view const& name) {
 	if(!result) {
 		throw errors::attribute_not_found(
 			"Expected attribute '" + std::string(name) + "' after that one",
-			m_name.data()
+			m_value.data()
 		);
 	}
 	return *result;
@@ -116,16 +116,16 @@ attribute& attribute::req_prev(std::string_view const& name) {
 	if(!result) {
 		throw errors::attribute_not_found(
 			"Expected attribute '" + std::string(name) + "' before this one",
-			m_name.data()
+			m_value.data()
 		);
 	}
 	return *result;
 }
 
 const char* attribute::parse(arena_allocator& alloc, const char* s) {
-	m_name = parse_name(s);
+	m_value = parse_name(s);
 	if(*s != '=')
-		throw errors::parsing_error("Expected equals sign =", s, m_name);
+		throw errors::parsing_error("Expected equals sign =", s, m_value);
 	s++;
 	m_value = parse_literal(s);
 	return s;
@@ -140,7 +140,7 @@ int attribute::value<int>() const {
 	int result;
 	std::from_chars_result error = std::from_chars(m_value.data(), m_value.data() + m_value.length(), result);
 	if(error.ec != std::errc()) {
-		throw errors::parsing_error("Expected a valid number value", m_value.data(), m_name);
+		throw errors::parsing_error("Expected a valid number value", m_value.data(), m_value);
 	}
 	return result;
 }
@@ -151,7 +151,7 @@ float attribute::value<float>() const {
 	float result;
 	std::from_chars_result error = std::from_chars(m_value.data(), m_value.data() + m_value.length(), result);
 	if(error.ec != std::errc()) {
-		throw errors::parsing_error("Expected a valid number value", m_value.data(), m_name);
+		throw errors::parsing_error("Expected a valid number value", m_value.data(), m_value);
 	}
 	return result;
 	*/
@@ -198,7 +198,7 @@ node& node::req_child(node::node_type type) {
 	if(!result) {
 		throw errors::node_not_found(
 			"Node doesn't have required child of type " + std::to_string(type) + "",
-			m_name.data()
+			m_value.data()
 		);
 	}
 	return *result;
@@ -209,7 +209,7 @@ node& node::req_child(std::string_view const& name) {
 	if(!result) {
 		throw errors::node_not_found(
 			"Node doesn't have required child '" + std::string(name) + "'",
-			m_name.data()
+			m_value.data()
 		);
 	}
 	return *result;
@@ -229,7 +229,7 @@ attribute& node::req_attrib(std::string_view const& name) {
 	if(!result) {
 		throw errors::attribute_not_found(
 			"Node doesn't have required attribute '" + std::string(name) + "'",
-			m_name.data()
+			m_value.data()
 		);
 	}
 	return *result;
@@ -240,20 +240,20 @@ const char* node::parse_regular(arena_allocator& alloc, const char* s) {
 		throw errors::parsing_error("Expected opening less-than sign <", s);
 	s++;
 
-	m_name = parse_name(s);
-	m_type = regular_node;
+	m_value = parse_name(s);
+	m_type = regular;
 
 	next_token(s);
 	s = parse_attributes(alloc, s);
 	if(*s == '/') {
 		s++;
 		if(STX_UNLIKELY(*s != '>')) {
-			throw errors::parsing_error("Expected closing greater-than sign >", s, m_name);
+			throw errors::parsing_error("Expected closing greater-than sign >", s, m_value);
 		}
 		return ++s; // No body
 	}
 	if(STX_UNLIKELY(*s != '>')) {
-		throw errors::parsing_error("Expected closing greater-than sign >", s, m_name);
+		throw errors::parsing_error("Expected closing greater-than sign >", s, m_value);
 	}
 	s++;
 
@@ -263,8 +263,8 @@ const char* node::parse_regular(arena_allocator& alloc, const char* s) {
 
 	s += 2;
 
-	if(auto closing_name = parse_name(s); closing_name != m_name)
-		errors::parsing_error("Closing tag doesn't match opening tag", closing_name.data(), m_name.data());
+	if(auto closing_name = parse_name(s); closing_name != m_value)
+		errors::parsing_error("Closing tag doesn't match opening tag", closing_name.data(), m_value.data());
 
 	next_token(s);
 	if(*s != '>')
@@ -273,7 +273,7 @@ const char* node::parse_regular(arena_allocator& alloc, const char* s) {
 	return ++s;
 }
 const char* node::parse_doctype(arena_allocator& alloc, const char* s) {
-	m_type = doctype_node;
+	m_type = doctype;
 	while(*s && *s != '>') // HACK, actually parse the thing
 		s++;
 	if(*s != '>')
@@ -282,12 +282,12 @@ const char* node::parse_doctype(arena_allocator& alloc, const char* s) {
 	return s;
 }
 const char* node::parse_comment(arena_allocator& alloc, const char* s) {
-	m_type = comment_node;
+	m_type = comment;
 	s += 4;
 	const char* start = s;
 	while(*s) {
 		if(s[0] == '-' && s[1] == '-' && s[2] == '>') {
-			m_name = trim_whitespace({start, size_t(s - start)});
+			m_value = trim_whitespace({start, size_t(s - start)});
 			return s + 3;
 		}
 		s++;
@@ -296,12 +296,11 @@ const char* node::parse_comment(arena_allocator& alloc, const char* s) {
 }
 const char* node::parse_content(arena_allocator& alloc, const char* s) {
 	while(*s <= ' ') s++; // Skipws
-	m_type = content_node;
+	m_type = content;
 	const char* start = s;
 	while(*s && *s != '<') s++;
-	const char* last = std::max(start, s - 1);
-	while(last > start && *last <= ' ') --last;
-	m_name = std::string_view(start, (s - last) + 1);
+	m_value = std::string_view(start, std::max(start, s - 1) - start);
+	while(!m_value.empty() && m_value.back() <= ' ') m_value.remove_suffix(1);
 	return s;
 }
 const char* node::parse_attributes(arena_allocator& alloc, const char* s) {
@@ -376,20 +375,20 @@ const char* node::parse_document(arena_allocator& alloc, const char* s) {
 
 void node::print(std::ostream& stream, unsigned indent) {
 	switch(type()) {
-		case comment_node: {
+		case node_type::comment: {
 			stream
 			<< std::string(indent * 2, ' ')
-			<< "<!--" << m_name << "-->" << std::endl;
+			<< "<!--" << m_value << "-->" << std::endl;
 		} return;
-		case content_node: {
+		case node_type::content: {
 			stream
 			<< std::string(indent * 2, ' ')
-			<< m_name << std::endl;
+			<< m_value << std::endl;
 		} return;
 		default: {
 			stream
 			<< std::string(indent * 2, ' ')
-			<< '<' << m_name;
+			<< '<' << m_value;
 			for(auto* atb = attributes(); atb; atb = atb->next()) {
 				stream
 				<< '\n' << std::string(indent * 2 + 2, ' ')
@@ -401,7 +400,7 @@ void node::print(std::ostream& stream, unsigned indent) {
 					child->print(stream, indent + 1);
 				stream
 				<< std::string(indent * 2, ' ')
-				<< "</" << m_name << ">\n";
+				<< "</" << m_value << ">\n";
 			}
 			else {
 				stream << "/>\n";
