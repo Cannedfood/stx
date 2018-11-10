@@ -104,13 +104,13 @@ TEST_CASE("Test sparse_memory", "[entities]") { ////////////////////////////////
 		for(auto idx : indices) vec.create(idx, count);
 
 		REQUIRE(count == indices.size());
-		REQUIRE(vec.used_slots() == indices.size());
+		REQUIRE(vec.statistics().used_slots == indices.size());
 		std::shuffle(indices.begin(), indices.end(), std::mt19937(rand()));
 
 		for(auto idx : indices) vec.destroy(idx);
 		REQUIRE(count == 0);
-		REQUIRE(vec.used_slots() == 0);
-		REQUIRE(vec.used_memory() == 0);
+		REQUIRE(vec.statistics().used_slots == 0);
+		REQUIRE(vec.statistics().used_memory == 0);
 	}
 }
 

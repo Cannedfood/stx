@@ -19,7 +19,12 @@ namespace stx {
 // == Settings =================================================
 // =============================================================
 
+namespace options {
+
 constexpr inline size_t MaxNumComponents = 64;
+
+} // namespace options
+
 
 // =============================================================
 // == Component id =============================================
@@ -162,9 +167,19 @@ private:
 
 class sparse_vector_interface {
 public:
-	virtual void* getTypeErased    (size_t index) = 0;
-	virtual void  destroyTypeErased(size_t index) = 0;
 	virtual ~sparse_vector_interface() {}
+
+
+	virtual void*        getTypeErased    (size_t index) = 0;
+	virtual void         destroyTypeErased(size_t index) = 0;
+
+	struct statistics_t {
+		size_t total_slots  = 0;
+		size_t used_slots   = 0;
+		size_t total_memory = 0;
+		size_t used_memory  = 0;
+	};
+	virtual statistics_t statistics() = 0;
 };
 
 template<class T, size_t ElementsPerBlock = 524288 / sizeof(T)>
@@ -206,23 +221,19 @@ public:
 	}
 
 	// Statistics
-	size_t total_slots() {
-		size_t result = 0;
-		for(auto& b : m_blocks) {
-			if(b) result += ElementsPerBlock;
-		}
-		return result;
-	}
-	size_t used_slots() {
-		size_t result = 0;
-		for(auto u : m_usages) result += u;
-		return result;
-	}
-	size_t unused_slots() { return total_slots() - used_slots(); }
+	statistics_t statistics() override {
+		statistics_t result {};
 
-	size_t total_memory()  { return total_slots() * aligned_size(); }
-	size_t used_memory()   { return used_slots() * aligned_size(); }
-	size_t unused_memory() { return unused_slots() * aligned_size(); }
+		for(auto& b : m_blocks) {
+			if(b) result.total_slots += ElementsPerBlock;
+		}
+		for(auto u : m_usages) result.used_slots += u;
+
+		result.total_memory = result.total_slots * aligned_size();
+		result.used_memory  = result.used_slots  * aligned_size();
+
+		return result;
+	}
 
 private:
 	uint8_t* _increment_usage(size_t index) {
@@ -256,23 +267,24 @@ private:
 // == Entity System =============================================
 // ==============================================================
 
-using component_mask = std::bitset<MaxNumComponents>;
+using component_mask = std::bitset<options::MaxNumComponents>;
 
 class entities {
 public:
 	entities();
 	~entities();
 
-	// Create/Destroy entities
+	// -- Create/Destroy entities ------------------------------------------
 	entity create();
 	void   destroy(entity e);
 	bool   valid(entity e);
 
-	// Attach/Remove components
+	// -- Attach/Remove components (For C API) -----------------------------
 	void* getUnchecked(entity e, size_t component_id);
 	void* get(entity e, size_t component_id);
 	void  remove(entity e, size_t component_id);
 
+	// -- Attach/Remove components (Template based) ------------------------
 	template<class T, class... Args>
 	T* attachNew(entity e, Args&&... args) {
 		assert(m_ids.valid(e));
@@ -294,13 +306,20 @@ public:
 		componentMask.set(componentId);
 		return storage->create(e.index(), std::forward<Args>(args)...);
 	}
-
 	template<class T>
-	T* attach(entity e, T&& t) { return attachNew<T>(e, std::forward<T>(t)); }
-
+	T* attach(entity e, T&& t) {
+		return attachNew<T>(e, std::forward<T>(t));
+	}
+	template<class T, class... Args>
+	T* getOrAttach(entity e, Args&&... args) {
+		if(!m_component_masks[e.index()].test(component_id<T>))
+			return attachNew(e, std::forward<Args>(args)...);
+		else
+			return getUnchecked<T>(e);
+	}
 	template<class T>
 	T* get(entity e) {
-		if(!m_component_masks[e.id()].test(component_id<T>)) return nullptr;
+		if(!m_component_masks[e.index()].test(component_id<T>)) return nullptr;
 		return getUnchecked<T>(e);
 	}
 	template<class T>
@@ -311,12 +330,27 @@ public:
 		return storage->get(e.index());
 	}
 
-	// Filter entities by component
+	// -- Filter entities by component -------------------------------------
 	entity first(component_mask m);
 	entity next(entity e, component_mask m);
+
+	using statistics_t = sparse_vector_interface::statistics_t;
+	statistics_t statistics() {
+		statistics_t stats;
+		for(auto& v : m_component_storage) {
+			if(v) {
+				auto s = v->statistics();
+				stats.total_memory += s.total_memory;
+				stats.used_memory  += s.used_memory;
+				stats.total_slots  += s.total_slots;
+				stats.used_slots   += s.used_slots;
+			}
+		}
+		return stats;
+	}
 private:
 	detail::id_manager          m_ids;
-	std::array<std::unique_ptr<sparse_vector_interface>, MaxNumComponents> m_component_storage;
+	std::array<std::unique_ptr<sparse_vector_interface>, options::MaxNumComponents> m_component_storage;
 	std::vector<component_mask> m_component_masks;
 };
 
@@ -342,7 +376,9 @@ public:
 		entity            m_entity;
 		component_mask    m_mask;
 	public:
-		constexpr iterator() noexcept : m_entities(nullptr), m_entity(), m_mask() {}
+		constexpr iterator() noexcept
+			: m_entities(nullptr), m_entity(), m_mask()
+		{}
 
 		constexpr iterator(entities* ecs, entity e, component_mask mask) noexcept
 			: m_entities(ecs), m_entity(e), m_mask(mask)

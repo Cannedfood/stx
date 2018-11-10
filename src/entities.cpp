@@ -12,8 +12,8 @@ namespace stx {
 size_t detail::new_component_id() noexcept {
 	static std::atomic<size_t> value = 0;
 	size_t result = value++;
-	if(result > MaxNumComponents) {
-		fprintf(stderr, "Exceeded MaxNumComponents (= %zu)\n", MaxNumComponents);
+	if(result > options::MaxNumComponents) {
+		fprintf(stderr, "Exceeded MaxNumComponents (= %zu)\n", options::MaxNumComponents);
 		std::terminate();
 	}
 	return result;
