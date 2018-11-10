@@ -16,30 +16,33 @@ TEST_CASE("Test environment set unset & get", "[environment]") {
 }
 
 TEST_CASE("Test environment replace", "[environment]") {
+	// Setup
+	stx::env::set("ENV_TEST_VAR", "I'm A F\\unky \"string'");
+
 	// wo/ replacement
 	CHECK(stx::env::replace("Heyho") == "Heyho");
 	CHECK(stx::env::replace("H") == "H");
 	CHECK(stx::env::replace("") == "");
-	// Multi character replacements ${HOME}
+	// Multi character replacements ${ENV_TEST_VAR}
 
 	CHECK(
-		stx::env::replace("Foo${HOME}bar") ==
-		"Foo" + std::string(stx::env::get("HOME")) + "bar"
+		stx::env::replace("Foo${ENV_TEST_VAR}bar") ==
+		"Foo" + std::string(stx::env::get("ENV_TEST_VAR")) + "bar"
 	);
 	CHECK(
-		stx::env::replace("Foo${HOME}bar${HOME}power") ==
-		"Foo" + std::string(stx::env::get("HOME")) + "bar" + stx::env::get("HOME") + "power"
+		stx::env::replace("Foo${ENV_TEST_VAR}bar${ENV_TEST_VAR}power") ==
+		"Foo" + std::string(stx::env::get("ENV_TEST_VAR")) + "bar" + stx::env::get("ENV_TEST_VAR") + "power"
 	);
 	CHECK(
-		stx::env::replace("${HOME}bar") ==
-		std::string(stx::env::get("HOME")) + "bar"
+		stx::env::replace("${ENV_TEST_VAR}bar") ==
+		std::string(stx::env::get("ENV_TEST_VAR")) + "bar"
 	);
 	CHECK(
-		stx::env::replace("Foo${HOME}") ==
-		"Foo" + std::string(stx::env::get("HOME"))
+		stx::env::replace("Foo${ENV_TEST_VAR}") ==
+		"Foo" + std::string(stx::env::get("ENV_TEST_VAR"))
 	);
 	CHECK(
-		stx::env::replace("${HOME}") == std::string(stx::env::get("HOME"))
+		stx::env::replace("${ENV_TEST_VAR}") == std::string(stx::env::get("ENV_TEST_VAR"))
 	);
 	CHECK(
 		stx::env::replace("${ThisDoesNotExist}") == std::string("")
