@@ -5,23 +5,19 @@
 
 namespace stx {
 
-template<class T>
-class scoped_action {
-	std::remove_reference_t<T> m_execute;
-public:
-	scoped_action(T&& t) : m_execute(t) {}
-	~scoped_action() { m_execute(); }
-};
+template<class B>
+class scope {
+	std::remove_reference_t<B> m_whenOutOfScope;
 
-template<class T>
-class scoped_action<std::function<T>> : public std::function<T> {
 public:
-	using std::function<T>::function;
-	~scoped_action() {
-		if(*this) {
-			(*this)();
-		}
+	scope(B&& b) : m_whenOutOfScope(std::forward<B>(b)) {}
+
+	template<class A>
+	scope(A&& a, B&& b) : m_whenOutOfScope(std::forward<B>(b)) {
+		a();
 	}
+
+	~scope() { m_whenOutOfScope(); }
 };
 
 } // namespace stx
