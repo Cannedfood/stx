@@ -181,7 +181,7 @@ public:
 // == shared_block implementations =============================
 // =============================================================
 
-// ** default_shared_block *******************************************************
+// ** default_shared_block *****************************************************
 
 template<class T>
 class default_shared_block final : public shared_block {
@@ -203,7 +203,7 @@ public:
 	void shared_block_free() noexcept override { delete this; }
 };
 
-// ** pointer_shared_block *******************************************************
+// ** pointer_shared_block *****************************************************
 
 template<class T, class Deleter = std::default_delete<T>>
 class pointer_shared_block final : public shared_block {
@@ -225,6 +225,8 @@ public:
 	void shared_block_free() noexcept override { delete this; }
 };
 
+// ** fake_shared_block ********************************************************
+
 // =============================================================
 // == shared<T> =============================================
 // =============================================================
@@ -241,6 +243,10 @@ class shared {
 	template<class>
 	friend class shared;
 public:
+	using pointer_t  = Tptr;
+	using template_t = T;
+	using base_t     = std::remove_all_extents_t<T>;
+
 	~shared() noexcept { reset(); }
 
 	shared(std::nullptr_t = nullptr) noexcept {}
