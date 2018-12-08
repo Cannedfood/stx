@@ -42,6 +42,7 @@ struct bitmap3d {
 	}
 
 	constexpr i32 index(i32 x, i32 y, i32 z) const noexcept { return x + y * elements_per_scanline + z * elements_per_slice; }
+	constexpr T&  operator()(i32 x, i32 y, i32 z) const noexcept { return data[index(x, y, z)]; }
 
 	constexpr u32 volume() const noexcept { return w * h * d; }
 };
@@ -50,9 +51,16 @@ struct bitmap3d {
 // == Blitting =================================================
 
 /// Copies one bitmap to another
-// The destination bitmap may not overlap with the source bitmap! (use blit_in_place for that)
+// The destination bitmap should not overlap with the source bitmap! (use blit_in_place for that)
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit(
+	bitmap3d<Src> src, bitmap3d<Dst> dst,
+	Assigner assign = [](auto&a,auto&b){a=std::move(b);}) noexcept;
+
+/// Copies one bitmap to another
+// The destination bitmap should not overlap with the source bitmap! (use blit_in_place for that)
+template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
+void blit_backwards(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
 	Assigner assign = [](auto&a,auto&b){a=std::move(b);}) noexcept;
 
@@ -77,8 +85,7 @@ namespace stx {
 // -- bitmap3d -------------------------------------------------------
 
 template<class T> constexpr
-bitmap3d<T>::bitmap3d(
-	T* data, u32 w, u32 h, u32 d) noexcept
+bitmap3d<T>::bitmap3d(T* data, u32 w, u32 h, u32 d) noexcept
 	: data(data), w(w), h(h), d(d), elements_per_scanline(w), elements_per_slice(w * h)
 {}
 
@@ -125,26 +132,37 @@ void blit(bitmap3d<Src> src, bitmap3d<Dst> dst, Assigner assign) noexcept
 }
 
 template<class Src, class Dst, class Assigner>
-void blit_in_place(bitmap3d<Src> src, bitmap3d<Dst> dst, Assigner assign) noexcept
+void blit_backwards(bitmap3d<Src> src, bitmap3d<Dst> dst, Assigner assign) noexcept
 {
-	using u32 = unsigned;
+	using i32 = int;
 
 	Src* src_slice = src.data;
 	Dst* dst_slice = dst.data;
-	for(u32 z=0;z<src.d;z++) {
-		src_slice -= src.elements_per_slice;
-		dst_slice -= dst.elements_per_slice;
-
+	for(i32 z=src.d-1;z>=0;z--) {
 		Src* src_scanline = src_slice;
 		Dst* dst_scanline = dst_slice;
-		for(u32 y=0;y<src.h;y++) {
-			src_scanline -= src.elements_per_scanline;
-			dst_scanline -= dst.elements_per_scanline;
-
-			for(u32 x=src.w-1;x<src.w;x++) {
-				assign(dst_scanline[src.w - x], src_scanline[src.w - x]);
+		for(i32 y=src.h-1;y>=0;y--) {
+			for(i32 x=src.w-1;x>=0;x--) {
+				assign(dst_scanline[x], src_scanline[x]);
 			}
+			src_scanline += src.elements_per_scanline;
+			dst_scanline += dst.elements_per_scanline;
 		}
+		src_slice += src.elements_per_slice;
+		dst_slice += dst.elements_per_slice;
+	}
+}
+
+template<class Src, class Dst, class Assigner>
+void blit_in_place(bitmap3d<Src> src, bitmap3d<Dst> dst, Assigner assign) noexcept
+{
+	using i32 = int;
+
+	if(src.data >= dst.data) {
+		blit<Src, Dst, Assigner>(src, dst, assign);
+	}
+	else {
+		blit_backwards<Src, Dst, Assigner>(src, dst, assign);
 	}
 }
 

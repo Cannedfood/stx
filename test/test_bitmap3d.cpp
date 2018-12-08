@@ -6,7 +6,7 @@ TEST_CASE("Test bitmap3d", "[bitmap3d]") {
 	unsigned w = 5, h = 7, d = 11;
 
 	std::vector<int> data(w*h*d);
-	std::generate(data.begin(), data.end(), []() { return stx::rand<int>(); });
+	std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
 
 	stx::bitmap3d<int> a = { data.data(), w, h, d };
 
@@ -47,17 +47,42 @@ TEST_CASE("Test bitmap3d", "[bitmap3d]") {
 		REQUIRE(no_80085_outside_of_cube);
 	}
 
-	SECTION("bitmap::blit works") {
+	SECTION("blit works") {
 		std::vector<int> data2(data.size());
 		stx::bitmap3d<int> b = { data2.data(), w, h, d };
 		stx::blit(a, b);
 		REQUIRE(data == data2);
 	}
 
-	SECTION("bitmap::blit_in_place works") {
+	SECTION("blit_backwards works like bitmap::blit") {
 		std::vector<int> data2(data.size());
 		stx::bitmap3d<int> b = { data2.data(), w, h, d };
-		stx::blit_in_place(a, b);
+		stx::blit_backwards(a, b);
 		REQUIRE(data == data2);
+	}
+
+	SECTION("bitmap::blit_in_place handles blitting overlapping sections") {
+		stx::bitmap3d<int> b = a.subimage(0, 0, 0, a.w-1, a.h, a.d);
+		stx::bitmap3d<int> c = a.subimage(1, 0, 0, a.w-1, a.h, a.d);
+
+		int overwritten_voxels;
+
+		// Test l.data < r.data case
+		overwritten_voxels = 0;
+		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
+		stx::blit_in_place(b, c, [&](int& a, int& b) {
+			if(b == 0) overwritten_voxels++;
+			a = 0;
+		});
+		REQUIRE(overwritten_voxels == 0);
+
+		// Test l.data > r.data case
+		overwritten_voxels = 0;
+		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
+		stx::blit_in_place(c, b, [&](int& a, int& b) {
+			if(b == 0) overwritten_voxels++;
+			a = 0;
+		});
+		REQUIRE(overwritten_voxels == 0);
 	}
 }
