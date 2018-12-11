@@ -23,6 +23,21 @@ filter { 'configurations:dev or debug', 'toolset:gcc or clang' }
 	buildoptions { '-Wall', '-Wextra', '-Wno-unused-parameter' }
 filter {}
 
+platforms {
+	'x64',
+	'x86',
+	'ARM',
+}
+defaultplatform 'x64'
+
+filter 'platforms:x64'
+	architecture 'x86_64'
+filter 'platforms:x86'
+	architecture 'x86'
+filter 'platforms:ARM'
+	architecture 'ARM'
+filter {}
+
 flags { 'MultiProcessorCompile', 'NoIncrementalLink' }
 vectorextensions 'SSE2'
 floatingpoint 'Fast'
