@@ -281,9 +281,9 @@ public:
 	bool   valid(entity e) const noexcept;
 
 	template<class... Components>
-	entity create(Components... components) noexcept {
+	entity create(Components&&... components) noexcept {
 		entity e = create(make_mask<Components...>());
-		(attach(e, components), ...);
+		(attach(e, std::forward<Components>(components)), ...);
 		return e;
 	}
 
@@ -315,8 +315,8 @@ public:
 		return storage->create(e.index(), std::forward<Args>(args)...);
 	}
 	template<class T>
-	T* attach(entity e, T&& t) {
-		return attachNew<T>(e, std::forward<T>(t));
+	std::remove_reference_t<T>* attach(entity e, T&& t) {
+		return attachNew<std::remove_reference_t<T>>(e, std::forward<T>(t));
 	}
 	template<class T, class... Args>
 	T* getOrAttach(entity e, Args&&... args) {
