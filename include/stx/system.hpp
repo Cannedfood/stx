@@ -99,7 +99,7 @@ public:
 private:
 	struct entry {
 		group_mask enabledBy, disabledBy;
-		std::shared_ptr<system> system;
+		std::shared_ptr<system> sys;
 
 		struct profiling_info {
 			using clock = std::chrono::high_resolution_clock;
