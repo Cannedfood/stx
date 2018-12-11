@@ -275,9 +275,17 @@ public:
 	~entities();
 
 	// -- Create/Destroy entities ------------------------------------------
-	entity create();
+	entity create() noexcept;
+	entity create(component_mask hint) noexcept;
 	void   destroy(entity e);
-	bool   valid(entity e);
+	bool   valid(entity e) const noexcept;
+
+	template<class... Components>
+	entity create(Components... components) noexcept {
+		entity e = create(make_mask<Components...>());
+		(attach(e, components), ...);
+		return e;
+	}
 
 	// -- Attach/Remove components (For C API) -----------------------------
 	void* getUnchecked(entity e, size_t component_id);
@@ -328,6 +336,18 @@ public:
 			m_component_storage[component_id<T>].get()
 		);
 		return storage->get(e.index());
+	}
+
+	// -- Helpers -------------------------------------------------------
+	template<class... Components>
+	static component_mask make_mask() {
+		using namespace std;
+
+		component_mask mask;
+		for(unsigned id : std::array{ component_id<remove_cv_t<remove_reference_t<Components>>>... }) { // I <3 C++17
+			mask.set(id);
+		}
+		return mask;
 	}
 
 	// -- Filter entities by component -------------------------------------

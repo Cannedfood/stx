@@ -67,13 +67,17 @@ entities::~entities() {
 	}
 }
 
-entity entities::create() {
+entity entities::create() noexcept {
 	entity result = m_ids.create();
 	m_component_masks.resize(std::max<size_t>(
 		m_component_masks.size(),
 		result.index() + 1
 	));
 	return result;
+}
+
+entity entities::create(component_mask hint) noexcept {
+	return create();
 }
 
 void entities::destroy(entity e) {

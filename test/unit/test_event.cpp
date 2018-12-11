@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../event.hpp"
+#include <stx/event.hpp>
 
 TEST_CASE("Test event", "[event]") {
 	struct example_listener : stx::listener<int> {

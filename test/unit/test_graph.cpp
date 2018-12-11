@@ -2,7 +2,7 @@
 
 #include "catch.hpp"
 
-#include "../list.hpp"
+#include <stx/list.hpp>
 // #include "../list_mt.hpp"
 
 #include <algorithm>

@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../entities.hpp"
+#include <stx/entities.hpp>
 
 #include <random>
 

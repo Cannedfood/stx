@@ -1,6 +1,6 @@
 #include "catch.hpp"
-#include "../bitmap.hpp"
-#include "../random.hpp"
+#include <stx/bitmap.hpp>
+#include <stx/random.hpp>
 
 TEST_CASE("Test bitmap", "[bitmap]") {
 	unsigned w = 5, h = 7;

@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../xml.hpp"
+#include <stx/xml.hpp>
 
 using namespace stx;
 using namespace stx::xml;

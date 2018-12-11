@@ -1,11 +1,12 @@
 #pragma once
 
-#include <memory>
 #include <vector>
 #include <deque>
 #include <bitset>
 #include <unordered_map>
 #include <chrono>
+
+#include "shared_ptr.hpp"
 
 namespace stx {
 
@@ -21,21 +22,12 @@ class system_configuration;
 class system_configuration {
 public:
 	// Execution
-	virtual void parallel(bool b = true)      noexcept = 0;
-	virtual void asynchronous(bool b = true)  noexcept = 0;
-	virtual void threadsafe(bool b = true)    noexcept = 0;
+	virtual void parallel(bool b = true)     noexcept = 0;
+	virtual void asynchronous(bool b = true) noexcept = 0;
+	virtual void threadsafe(bool b = true)   noexcept = 0;
 
 	/// Sets update repetition
-	virtual void target_dt(float seconds)     noexcept = 0;
-
-	// Dependencies
-	virtual void depends(std::string_view)    noexcept = 0;
-	virtual void writes(size_t ressourceType) noexcept = 0;
-	virtual void reads (size_t ressourceType) noexcept = 0;
-
-	// Injection
-	virtual std::shared_ptr<void> require(size_t resourceType, bool read, bool write) noexcept = 0;
-	virtual std::shared_ptr<void> request(size_t resourceType, bool read, bool write) noexcept = 0;
+	virtual void target_dt(float seconds)    noexcept = 0;
 };
 
 class system {

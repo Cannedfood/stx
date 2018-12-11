@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../string.hpp"
+#include <stx/string.hpp>
 
 TEST_CASE("Test string", "[string]") {
 	// TODO:

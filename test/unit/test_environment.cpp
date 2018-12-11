@@ -2,7 +2,7 @@
 
 #include "catch.hpp"
 
-#include "../environment.hpp"
+#include <stx/environment.hpp>
 
 TEST_CASE("Test environment set unset & get", "[environment]") {
 	stx::env::set("foobar", "barfoo", false);

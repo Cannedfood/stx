@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../dlist.hpp"
+#include <stx/dlist.hpp>
 
 TEST_CASE("Test dlist", "[dlist]") {
 	struct test_elem : public stx::dlist_element<test_elem> {

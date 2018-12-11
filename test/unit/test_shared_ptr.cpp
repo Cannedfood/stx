@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../shared_ptr.hpp"
+#include <stx/shared_ptr.hpp>
 
 using namespace stx;
 

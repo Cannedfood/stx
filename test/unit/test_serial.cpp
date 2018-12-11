@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../serial.hpp"
+#include <stx/serial.hpp>
 #include <sstream>
 
 TEST_CASE("Test serial varlen writing and parsing", "[serial]") {

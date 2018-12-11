@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../bloom_filter.hpp"
+#include <stx/bloom_filter.hpp>
 
 TEST_CASE("Test bloom filter (size optimized)", "[bloom_filter]") {
 	constexpr bool SizeOptimized = true;

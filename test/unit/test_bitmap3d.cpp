@@ -1,6 +1,6 @@
 #include "catch.hpp"
-#include "../bitmap3d.hpp"
-#include "../random.hpp"
+#include <stx/bitmap3d.hpp>
+#include <stx/random.hpp>
 
 TEST_CASE("Test bitmap3d", "[bitmap3d]") {
 	unsigned w = 5, h = 7, d = 11;
