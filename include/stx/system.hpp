@@ -23,17 +23,9 @@ class system_configuration {
 public:
 	virtual system_manager& manager() noexcept = 0;
 
-	// Injection // TODO
-
 	// Groups
-
-	// Execution
-	virtual void parallel(bool b = true)     noexcept = 0;
-	virtual void asynchronous(bool b = true) noexcept = 0;
-	virtual void threadsafe(bool b = true)   noexcept = 0;
-
-	/// Sets update repetition
-	virtual void target_dt(float seconds)    noexcept = 0;
+	virtual void enabledBy(std::initializer_list<std::string_view> groups) noexcept = 0;
+	virtual void disabledBy(std::initializer_list<std::string_view> groups) noexcept = 0;
 };
 
 class system {
@@ -51,12 +43,12 @@ public:
 	using group_mask  = std::bitset<options::MaxNumSystemGroups>;
 	using group_names = std::initializer_list<std::string_view>;
 
-	system_manager();
-	~system_manager();
+	system_manager() noexcept;
+	~system_manager() noexcept;
 
 	// Manage groups
-	unsigned   groupId(std::string_view s);
-	group_mask groupMask(group_names);
+	unsigned   groupId(std::string_view s) noexcept;
+	group_mask groupMask(group_names) noexcept;
 
 	// Enable/Disable
 	void enable (std::string_view group);
@@ -71,7 +63,7 @@ public:
 	void disable(group_mask groups);
 	void set    (group_mask groups);
 
-	void push(); //<! Push enabled state
+	void push() noexcept; //<! Push enabled state
 	void pop();  //<! Restore last pushed enabled state
 
 	// Manage systems
@@ -111,12 +103,13 @@ public:
 	bool   debugRandomize();
 	void   maxProfileMeasurements(size_t maxNumMeasurements); //<! Whether/How much performance data should be recorded
 	size_t maxProfileMeasurements();
-
 private:
 	struct entry {
 		std::string name;
 		std::shared_ptr<system> sys;
 		group_mask enabledBy, disabledBy;
+		bool forceDisable = false;
+		bool enabled = false;
 
 		struct profiling_info {
 			using clock = std::chrono::high_resolution_clock;
@@ -128,8 +121,7 @@ private:
 			struct data_point {
 				EventType         type;
 				int               thread;
-				clock::time_point start;
-				clock::time_point end;
+				clock::time_point start, end;
 			};
 
 			std::deque<data_point> infos;
@@ -138,7 +130,7 @@ private:
 	};
 
 	std::deque<entry> m_systems;
-	group_mask         m_enabled_groups;
+	group_mask        m_enabled_groups;
 
 	std::unordered_map<std::string, unsigned> m_group_ids;
 

@@ -15,26 +15,37 @@ public:
 	void sysRemoved  () { added = false; configured = false; }
 };
 
-TEST_CASE("System enable and disable", "[system]") {
-	stx::system_manager systems;
+TEST_CASE("System manager", "[system]") {
+	system_manager systems;
 
-	auto a = std::make_shared<test_system>();
+	SECTION("Group ids count up") {
+		REQUIRE(systems.groupMask({}).none());
+		REQUIRE(systems.groupMask({"a"}).any());
+		REQUIRE(systems.groupId("a") != systems.groupId("not_a"));
+		REQUIRE(systems.groupMask({"a"}) != systems.groupMask({"not_a"}));
+	}
 
-	systems.add("a", {"a"}, {"not_a"}, a);
+	SECTION("Enable and disable works") {
+		auto a = std::make_shared<test_system>();
 
-	CHECK(a->added);
-	CHECK(a->configured);
-	CHECK(!a->enabled);
+		systems.add("a", {"a"}, {"not_a"}, a);
 
-	systems.enable("a");
-	CHECK(a->enabled);
+		// TODO: disable by name
 
-	systems.enable("not_a");
-	CHECK(!a->enabled);
+		CHECK(a->added);
+		CHECK(a->configured);
+		CHECK(!a->enabled);
 
-	systems.disable("not_a");
-	CHECK(a->enabled);
+		systems.enable("a");
+		CHECK(a->enabled);
 
-	systems.disable("a");
-	CHECK(!a->enabled);
+		systems.enable("not_a");
+		CHECK(!a->enabled);
+
+		systems.disable("not_a");
+		CHECK(a->enabled);
+
+		systems.disable("a");
+		CHECK(!a->enabled);
+	}
 }
