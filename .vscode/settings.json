@@ -1,5 +1,5 @@
 {
 	"catch2TestExplorer.executables": [
-		"test/test.run"
+		"bin/*/*/*test*"
 	]
 }
