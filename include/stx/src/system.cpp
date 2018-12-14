@@ -1,7 +1,5 @@
 #include "../system.hpp"
 
-#include <iostream>
-
 namespace stx {
 
 using group_mask = system_manager::group_mask;
@@ -49,18 +47,12 @@ void system_manager::disable(unsigned group) {
 void system_manager::enable (group_mask groups) { set(m_enabled_groups | groups); }
 void system_manager::disable(group_mask groups) { set(m_enabled_groups & ~groups); }
 void system_manager::set(group_mask groups) {
-	std::cout << "Set " << groups << std::endl;
-
 	m_enabled_groups = groups;
 	for(auto& e : m_systems) {
 		bool should_be_enabled =
 			(e.enabledBy  & m_enabled_groups).any() &&
 			(e.disabledBy & m_enabled_groups).none() &&
 			!e.forceDisable;
-
-		std::cout << e.name << " " << should_be_enabled << " " << e.enabledBy << "  " << e.disabledBy << std::endl;
-
-		// printf("%s: %i| %s %s\n", e.name.c_str(), should_be_enabled);
 
 		if(e.enabled != should_be_enabled) {
 			e.enabled = should_be_enabled;
@@ -110,8 +102,6 @@ void system_manager::add(
 			m_entry.disabledBy |= m_manager.groupMask(groups);
 		}
 	};
-
-	std::cout << "Add '" << e.name << "' {"<<e.enabledBy<<"} | {"<<e.disabledBy<<"}" << std::endl;
 
 	auto add_config = add_configurator{*this, e};
 	sys->sysAdded(add_config);
