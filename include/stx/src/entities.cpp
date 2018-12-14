@@ -9,7 +9,7 @@ namespace stx {
 
 // -- component id -------------------------------------------------------
 
-size_t detail::new_component_id() noexcept {
+size_t detail::ecs::new_component_id() noexcept {
 	static std::atomic<size_t> value = 0;
 	size_t result = value++;
 	if(result > options::MaxNumComponents) {
@@ -20,7 +20,7 @@ size_t detail::new_component_id() noexcept {
 }
 
 // -- id_manager -------------------------------------------------------
-namespace detail {
+namespace detail::ecs {
 
 entity id_manager::create() noexcept {
 	if(!m_free.empty()) {

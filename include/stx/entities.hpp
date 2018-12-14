@@ -30,7 +30,7 @@ constexpr inline size_t MaxNumComponents = 64;
 // == Component id =============================================
 // =============================================================
 
-namespace detail {
+namespace detail::ecs {
 
 size_t new_component_id() noexcept;
 
@@ -54,64 +54,11 @@ struct component_id_holder {
 };
 template<class T> size_t component_id_holder<T>::value = new_component_id();
 
-} // namespace detail
+} // namespace detail::ecs
 
 template<class T>
-inline           unsigned component_id = detail::component_id_holder<T>::value;
+inline           unsigned component_id         = detail::ecs::component_id_holder<T>::value;
 constexpr inline unsigned invalid_component_id = ~unsigned(0);
-
-// =====================================================================
-// == Component allocation =============================================
-// =====================================================================
-
-class type_operations {
-public:
-	type_operations() {}
-
-	template<class T>
-	type_operations() :
-		type_operations()
-	{
-		static_assert(std::is_move_constructible_v<T>, "T has to be move constructable");
-		static_assert(std::is_move_assignable_v<T>,    "T has to be move assignable");
-		m_size = sizeof(T);
-		m_alignment = alignof(T);
-
-		m_pfnDestroy = [](void* a, void* b) { *static_cast<T*>(a)->~T(); };
-
-		m_pfnMoveAssign = [](void* a, void* b) { *static_cast<T*>(a) = std::move(*static_cast<T*>(b)); };
-		m_pfnMoveConstruct = [](void* at, void* b) { new(at) T(std::move(*static_cast<T*>(b))); };
-
-		if constexpr(std::is_copy_constructible_v<T>) {
-			m_pfnCopyConstruct = [](void* a, void* b) { *static_cast<T*>(a) = *static_cast<T*>(b); };
-		}
-
-		if constexpr(std::is_default_constructible_v<T>) {
-			m_pfnDefaultConstruct =  [](void* at) { new(at) T(); };
-		}
-	}
-
-	size_t size() const noexcept { return m_size; }
-	size_t alignment() const noexcept { return m_alignment; }
-
-	void moveAssign      (void* from, void* to) { m_pfnMoveAssign(from, to); }
-	void moveConstruct   (void* from, void* to) { m_pfnMoveConstruct(from, to); }
-	void copyConstruct   (void* from, void* to) { m_pfnCopyConstruct(from, to); }
-	void copyAssign      (void* from, void* to) { m_pfnCopyAssign(from, to); }
-	void destroy         (void* at) { m_pfnDestroy(at); }
-	void defaultConstruct(void* at) { m_pfnDefaultConstruct(at); }
-
-private:
-	size_t m_size;
-	size_t m_alignment;
-
-	void (*m_pfnMoveAssign)       (void* from, void* to) = nullptr;
-	void (*m_pfnMoveConstruct)    (void* from, void* to) = nullptr;
-	void (*m_pfnCopyAssign)       (void* from, void* to) = nullptr;
-	void (*m_pfnCopyConstruct)    (void* from, void* to) = nullptr;
-	void (*m_pfnDestroy)          (void* at) = nullptr;
-	void (*m_pfnDefaultConstruct) (void* at) = nullptr;
-};
 
 // ================================================================
 // == Entity/EntityID =============================================
@@ -145,7 +92,7 @@ public:
 	constexpr bool operator> (entity const& other) const noexcept { return id() >  other.id(); }
 };
 
-namespace detail {
+namespace detail::ecs {
 
 class id_manager {
 public:
@@ -158,8 +105,6 @@ private:
 	std::vector<uint32_t> m_versions;
 	std::vector<uint32_t> m_free;
 };
-
-} // namespace detail
 
 // =====================================================================
 // == Component Allocation =============================================
@@ -263,6 +208,8 @@ private:
 	std::vector<uint32_t>                   m_usages;
 };
 
+} // namespace detail::ecs
+
 // ==============================================================
 // == Entity System =============================================
 // ==============================================================
@@ -270,6 +217,10 @@ private:
 using component_mask = std::bitset<options::MaxNumComponents>;
 
 class entities {
+	using sparse_vector_interface = detail::ecs::sparse_vector_interface;
+	template<class T>
+	using sparse_vector = detail::ecs::sparse_vector<T>;
+	using id_manager    = detail::ecs::id_manager;
 public:
 	entities();
 	~entities();
@@ -354,7 +305,7 @@ public:
 	entity first(component_mask m);
 	entity next(entity e, component_mask m);
 
-	using statistics_t = sparse_vector_interface::statistics_t;
+	using statistics_t = detail::ecs::sparse_vector_interface::statistics_t;
 	statistics_t statistics() {
 		statistics_t stats;
 		for(auto& v : m_component_storage) {
@@ -369,7 +320,7 @@ public:
 		return stats;
 	}
 private:
-	detail::id_manager          m_ids;
+	id_manager          m_ids;
 	std::array<std::unique_ptr<sparse_vector_interface>, options::MaxNumComponents> m_component_storage;
 	std::vector<component_mask> m_component_masks;
 };

@@ -52,7 +52,7 @@ TEST_CASE("entity id works", "[entities]") { ///////////////////////////////////
 TEST_CASE("id_manager works", "[entities]") { //////////////////////////////////
 	using namespace stx;
 
-	detail::id_manager manager;
+	detail::ecs::id_manager manager;
 	int count = 5;
 
 	std::mt19937 rgen {(unsigned long)rand()};
@@ -81,7 +81,7 @@ TEST_CASE("id_manager works", "[entities]") { //////////////////////////////////
 }
 
 TEST_CASE("Test sparse_memory", "[entities]") { ////////////////////////////////
-	stx::sparse_vector<Counted, 16> vec;
+	stx::detail::ecs::sparse_vector<Counted, 16> vec;
 
 	int count = 0;
 
