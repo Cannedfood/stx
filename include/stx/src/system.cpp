@@ -6,7 +6,14 @@ using group_mask = system_manager::group_mask;
 using group_names = system_manager::group_names;
 
 system_manager::system_manager() noexcept {}
-system_manager::~system_manager() noexcept {}
+system_manager::~system_manager() noexcept {
+	for(auto& entry : m_systems) {
+		if(entry.enabled) {
+			entry.sys->sysDisable(*this);
+		}
+		entry.sys->sysRemoved();
+	}
+}
 
 // Manage groups
 unsigned system_manager::groupId(std::string_view s) noexcept {
@@ -91,7 +98,7 @@ void system_manager::add(
 		system_manager& m_manager;
 		entry&          m_entry;
 	public:
-		add_configurator(system_manager& manager, entry& e)
+		add_configurator(system_manager& manager, entry& e) noexcept
 			: m_manager(manager), m_entry(e)
 		{}
 		system_manager& manager() noexcept override { return m_manager; }

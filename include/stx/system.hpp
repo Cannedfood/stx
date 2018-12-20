@@ -30,10 +30,11 @@ public:
 
 class system {
 public:
+	virtual ~system() {}
 	virtual void sysAdded(system_configuration&) {}
 	virtual void sysConfigure(system_configuration&) {}
 	virtual void sysEnable   (system_manager&) {}
-	virtual void sysUpdate   (system_manager&) {}
+	virtual void sysUpdate   () {}
 	virtual void sysDisable  (system_manager&) {}
 	virtual void sysRemoved() {}
 };
