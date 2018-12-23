@@ -293,7 +293,12 @@ public:
 	shared& operator=(shared<OtherT>&& other) noexcept { reset(std::move(other)); return *this; }
 	template<class OtherT>
 	void reset(shared<OtherT>&& other) noexcept {
-		static_assert(std::is_same_v<T, OtherT> || std::is_base_of_v<T, OtherT>, "T -> OtherT is not a trivial cast");
+		static_assert(
+			std::is_same_v<T, OtherT> ||
+			std::is_base_of_v<T, OtherT> ||
+			std::is_same_v<T, void>,
+			"T -> OtherT is not a trivial cast"
+		);
 		_move_reset(std::exchange(other.m_value, nullptr),
 		            std::exchange(other.m_block, nullptr));
 	}
