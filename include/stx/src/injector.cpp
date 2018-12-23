@@ -10,7 +10,7 @@ static size_t get_id(std::type_info const& info, size_t quirk) {
 	return (info.hash_code() + quirk) ^ quirk;
 }
 
-injector::entry injector::request   (std::type_info const& info, size_t quirk) {
+injector::entry_t injector::get(std::type_info const& info, size_t quirk) {
 	auto id = get_id(info, quirk);
 
 	auto iter = m_entries.find(id);
@@ -36,10 +36,10 @@ injector::entry injector::request   (std::type_info const& info, size_t quirk) {
 
 	return result;
 }
-void  injector::add       (entry   e, std::type_info const& info, size_t quirk) {
+void  injector::entry(entry_t   e, std::type_info const& info, size_t quirk) {
 	m_entries.try_emplace(get_id(info, quirk), e);
 }
-void  injector::addFactory(factory f, std::type_info const& info, size_t quirk) {
+void  injector::factory(factory_t f, std::type_info const& info, size_t quirk) {
 	m_factories.try_emplace(get_id(info, quirk), f);
 }
 

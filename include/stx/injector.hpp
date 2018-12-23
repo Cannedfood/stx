@@ -10,28 +10,25 @@ namespace stx {
 
 class injector {
 public:
-	using entry   = std::shared_ptr<void>;
-	using factory = std::function<entry(injector&)>;
-	using factory_listener = std::function<void(entry const&, injector&)>;
+	using entry_t   = std::shared_ptr<void>;
+	using factory_t = std::function<entry_t(injector&)>;
+	using factory_listener_t = std::function<void(entry_t const&, injector&)>;
 
-	entry request   (std::type_info const& info, size_t quirk);
-	void  add       (entry   e, std::type_info const& info, size_t quirk);
-	void  addFactory(factory f, std::type_info const& info, size_t quirk);
-	void  addFactoryListener(factory_listener f, std::type_info const& info, size_t quirk);
+	entry_t get(std::type_info const& info, size_t quirk);
+	void entry   (entry_t   e, std::type_info const& info, size_t quirk);
+	void factory (factory_t f, std::type_info const& info, size_t quirk);
+	void listener(factory_listener_t f, std::type_info const& info, size_t quirk);
 
-	template<class T> std::shared_ptr<T> request(size_t quirk = 0);
-	template<class T> void add(std::shared_ptr<T>, size_t quirk = 0);
-	template<class T> void add(size_t quirk = 0);
-	template<class T> void addFactory(factory f, size_t quirk = 0);
-	template<class T> void addFactory(size_t quirk = 0);
+	template<class T> std::shared_ptr<T> get(size_t quirk = 0);
+	template<class T> injector& entry(std::shared_ptr<T>, size_t quirk = 0);
+	template<class T> injector& entry(size_t quirk = 0);
+	template<class T> injector& factory(factory_t f, size_t quirk = 0);
+	template<class T> injector& factory(size_t quirk = 0);
 
-	template<class T>
-	operator std::shared_ptr<T>() {
-		return std::static_pointer_cast<T>(request(typeid(T), 0));
-	}
+	template<class T> operator std::shared_ptr<T>() { return get<T>(); }
 public:
-	std::unordered_map<size_t, entry>   m_entries;
-	std::unordered_map<size_t, factory> m_factories;
+	std::unordered_map<size_t, entry_t>   m_entries;
+	std::unordered_map<size_t, factory_t> m_factories;
 };
 
 } // namespace stx
@@ -43,24 +40,24 @@ public:
 namespace stx {
 
 template<class T>
-std::shared_ptr<T> injector::request(size_t quirk) {
-	return std::static_pointer_cast<T>(request(typeid(T), quirk));
+std::shared_ptr<T> injector::get(size_t quirk) {
+	return std::static_pointer_cast<T>(get(typeid(T), quirk));
 }
 template<class T>
-void injector::add(size_t quirk) {
-	add(std::make_shared<T>(), typeid(T), quirk);
+injector& injector::entry(size_t quirk) {
+	entry(std::make_shared<T>(), typeid(T), quirk); return *this;
 }
 template<class T>
-void injector::add(std::shared_ptr<T> e, size_t quirk) {
-	add(e, typeid(T), quirk);
+injector& injector::entry(std::shared_ptr<T> e, size_t quirk) {
+	entry(e, typeid(T), quirk); return *this;
 }
 template<class T>
-void injector::addFactory(size_t quirk) {
-	addFactory([](auto& injector) { return std::make_shared<T>(); }, typeid(T), quirk);
+injector& injector::factory(size_t quirk) {
+	factory([](auto& injector) { return std::make_shared<T>(); }, typeid(T), quirk); return *this;
 }
 template<class T>
-void injector::addFactory(factory f, size_t quirk) {
-	addFactory(f, typeid(T), quirk);
+injector& injector::factory(factory_t f, size_t quirk) {
+	factory(f, typeid(T), quirk); return *this;
 }
 
 } // namespace stx
