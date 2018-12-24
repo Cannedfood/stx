@@ -137,7 +137,7 @@ TEST_CASE("Test stx::entities", "[entities]") { ////////////////////////////////
 		}
 	}
 
-	SECTION("doesn't leave memory leaks after destruction") {
+	SECTION("doesn't leak memory after destruction") {
 		int count = 0;
 		{
 			stx::entities entities;
@@ -148,6 +148,21 @@ TEST_CASE("Test stx::entities", "[entities]") { ////////////////////////////////
 			}
 
 			REQUIRE(count == 1000);
+		}
+		REQUIRE(count == 0);
+	}
+
+	SECTION("doesn't leak memory when overwriting components") {
+		int count = 0;
+		{
+			stx::entities entities;
+
+			stx::entity e = entities.create();
+			for(size_t i = 0; i < 5; i++) {
+				entities.attach(e, Counted{count});
+			}
+
+			REQUIRE(count == 1);
 		}
 		REQUIRE(count == 0);
 	}
