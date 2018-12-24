@@ -22,6 +22,7 @@ public:
 	template<class T> std::shared_ptr<T> get(size_t quirk = 0);
 	template<class T> injector& entry(std::shared_ptr<T>, size_t quirk = 0);
 	template<class T> injector& entry(size_t quirk = 0);
+	template<class T> std::shared_ptr<T> emplace_entry(size_t quirk = 0);
 	template<class T> injector& factory(factory_t f, size_t quirk = 0);
 	template<class T> injector& factory(size_t quirk = 0);
 
@@ -50,6 +51,12 @@ injector& injector::entry(size_t quirk) {
 template<class T>
 injector& injector::entry(std::shared_ptr<T> e, size_t quirk) {
 	entry(e, typeid(T), quirk); return *this;
+}
+template<class T>
+std::shared_ptr<T> injector::emplace_entry(size_t quirk) {
+	auto result = std::make_shared<T>();
+	entry(result, typeid(T), quirk);
+	return result;
 }
 template<class T>
 injector& injector::factory(size_t quirk) {
