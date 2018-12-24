@@ -48,16 +48,16 @@ int main() {
 
 	double dt    = .1;
 	for (size_t i = 0; i < 1000; i++) {
-		for(auto [pos, vel] : stx::filter<position, velocity>(entities)) {
+		for(auto [pos, vel] : entities.filter<position, velocity>()) {
 			pos.x += dt * vel.x;
 			pos.y += dt * vel.y;
 		}
 
-		for(auto [pos, col, circ] : stx::filter<position, color, circle>(entities)) {
+		for(auto [pos, col, circ] : entities.filter<position, color, circle>()) {
 			circ.radius /= pos.x * col.r;
 		}
 
-		for(auto [pos, col, sqr] : stx::filter<position, color, square>(entities)) {
+		for(auto [pos, col, sqr] : entities.filter<position, color, square>()) {
 			sqr.size /= pos.x * col.r;
 		}
 	}

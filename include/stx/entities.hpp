@@ -216,6 +216,8 @@ private:
 
 using component_mask = std::bitset<options::MaxNumComponents>;
 
+template<class... Components> class filter_t;
+
 class entities {
 	using sparse_vector_interface = detail::ecs::sparse_vector_interface;
 	template<class T>
@@ -305,6 +307,9 @@ public:
 	entity first(component_mask m);
 	entity next(entity e, component_mask m);
 
+	template<class... Types>
+	filter_t<Types...> filter();
+
 	using statistics_t = detail::ecs::sparse_vector_interface::statistics_t;
 	statistics_t statistics() {
 		statistics_t stats;
@@ -330,11 +335,11 @@ private:
 // ====================================================================
 
 template<class... Components>
-class filter {
+class filter_t {
 	component_mask m_mask;
 	entities&      m_entities;
 public:
-	filter(entities& entities) noexcept :
+	filter_t(entities& entities) noexcept :
 		m_entities(entities)
 	{
 		for(unsigned id : std::array{ component_id<Components>... }) { // I <3 C++17
@@ -379,6 +384,19 @@ public:
 		return iterator();
 	}
 };
+
+} // namespace stx
+
+// =============================================================
+// == Inline implementation =============================================
+// =============================================================
+
+namespace stx {
+
+template<class... Types>
+filter_t<Types...> entities::filter() {
+	return {*this};
+}
 
 } // namespace stx
 

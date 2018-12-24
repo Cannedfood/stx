@@ -188,7 +188,7 @@ TEST_CASE("Test stx::filter(stx::entities)", "[entities]") { ///////////////////
 
 	SECTION("Filtering by Foo works") {
 		size_t count = 0;
-		for(auto [foo] : stx::filter<Foo>(entities)) {
+		for(auto [foo] : entities.filter<Foo>()) {
 			++count;
 		}
 		REQUIRE(count == Count);
@@ -196,7 +196,7 @@ TEST_CASE("Test stx::filter(stx::entities)", "[entities]") { ///////////////////
 
 	SECTION("Filtering by Bar works") {
 		size_t count = 0;
-		for(auto [bar] : stx::filter<Foo>(entities)) {
+		for(auto [bar] : entities.filter<Foo>()) {
 			++count;
 		}
 		REQUIRE(count == Count);
@@ -204,7 +204,7 @@ TEST_CASE("Test stx::filter(stx::entities)", "[entities]") { ///////////////////
 
 	SECTION("Filtering by Foo and Bar works") {
 		size_t count = 0;
-		for(auto [foo, bar] : stx::filter<Foo, Bar>(entities)) {
+		for(auto [foo, bar] : entities.filter<Foo, Bar>()) {
 			++count;
 		}
 		REQUIRE(count == Count);
