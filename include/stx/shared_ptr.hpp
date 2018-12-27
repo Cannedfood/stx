@@ -403,6 +403,9 @@ public:
 	weak& operator=(weak const& other) noexcept { reset(other); return *this; }
 	void reset(weak const& other) noexcept { _copy_reset(other.m_value, other.m_block); }
 
+	// Reset via nullptr assignment
+	weak& operator=(std::nullptr_t) noexcept { reset(nullptr); return *this; }
+
 	shared_block::refcount refcount()      const noexcept { return m_block ? m_block->strong_refs() : 0; }
 	shared_block::refcount weak_refcount() const noexcept { return m_block ? m_block->weak_refs() : 0; }
 
