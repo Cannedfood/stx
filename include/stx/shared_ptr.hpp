@@ -175,6 +175,12 @@ public:
 	}
 
 	operator shared<T>() const noexcept { return shared_from_this(); }
+
+	constexpr bool operator==(shared<T> const& ptr) const noexcept { return ptr.get() == static_cast<T const*>(this); }
+	constexpr bool operator!=(shared<T> const& ptr) const noexcept { return ptr.get() != static_cast<T const*>(this); }
+
+	constexpr bool operator==(weak<T> const& ptr)   const noexcept { return ptr.get() == static_cast<T const*>(this); }
+	constexpr bool operator!=(weak<T> const& ptr)   const noexcept { return ptr.get() != static_cast<T const*>(this); }
 };
 
 // =============================================================
