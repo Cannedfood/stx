@@ -93,6 +93,22 @@ void entities::destroy(entity e) {
 	}
 }
 
+void* entities::getUnchecked(entity e, size_t component_id) {
+	return m_component_storage[component_id]->getTypeErased(e.index());
+}
+void* entities::get(entity e, size_t component_id) {
+	if(!m_ids.valid(e) || !m_component_masks[e.index()].test(component_id))
+		return nullptr;
+
+	return getUnchecked(e, component_id);
+}
+void entities::remove(entity e, size_t component_id) {
+	if(m_ids.valid(e) && m_component_masks[e.index()].test(component_id)) {
+		m_component_storage[component_id]->destroyTypeErased(e.index());
+	}
+}
+
+
 entity entities::first(component_mask mask) {
 	for(
 		uint32_t entityIndex = 0;

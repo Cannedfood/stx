@@ -50,9 +50,9 @@ struct component_id_holder {
 	static_assert(!std::is_pointer_v<T>, "Pointers are not valid components");
 	static_assert(std::is_move_assignable_v<T>, "Components have to be move assignable");
 	static_assert(std::is_move_constructible_v<T>, "Components have to be move constructable");
-	static size_t value;
+	static const size_t value;
 };
-template<class T> size_t component_id_holder<T>::value = new_component_id();
+template<class T> const size_t component_id_holder<T>::value = new_component_id();
 
 } // namespace detail::ecs
 
@@ -217,6 +217,7 @@ private:
 using component_mask = std::bitset<options::MaxNumComponents>;
 
 template<class... Components> class filter_t;
+class filter_id_t;
 
 class entities {
 	using sparse_vector_interface = detail::ecs::sparse_vector_interface;
@@ -231,7 +232,7 @@ public:
 	entity create() noexcept;
 	entity create(component_mask hint) noexcept;
 	void   destroy(entity e);
-	bool   valid(entity e) const noexcept;
+	bool   valid(entity e) const noexcept { return m_ids.valid(e); }
 
 	template<class... Components>
 	entity create(Components&&... components) noexcept {
@@ -281,14 +282,14 @@ public:
 	template<class T>
 	T* get(entity e) {
 		if(!m_component_masks[e.index()].test(component_id<T>)) return nullptr;
-		return getUnchecked<T>(e);
+		return &getUnchecked<T>(e);
 	}
 	template<class T>
-	T* getUnchecked(entity e) {
+	T& getUnchecked(entity e) {
 		auto* storage = static_cast<sparse_vector<T>*>(
 			m_component_storage[component_id<T>].get()
 		);
-		return storage->get(e.index());
+		return *storage->get(e.index());
 	}
 
 	// -- Helpers -------------------------------------------------------
@@ -309,6 +310,8 @@ public:
 
 	template<class... Types>
 	filter_t<Types...> filter();
+	template<class... Types>
+	filter_id_t filter_id();
 
 	using statistics_t = detail::ecs::sparse_vector_interface::statistics_t;
 	statistics_t statistics() {
@@ -334,18 +337,63 @@ private:
 // == Component Filtering =============================================
 // ====================================================================
 
+class filter_id_t {
+	entities&      m_entities;
+	component_mask m_mask;
+public:
+	filter_id_t(entities& entities, component_mask mask) :
+		m_entities(entities),
+		m_mask(mask)
+	{}
+
+	struct iterator {
+	protected:
+		mutable entities* m_entities;
+		entity            m_entity;
+		component_mask    m_mask;
+	public:
+		constexpr iterator() noexcept
+			: m_entities(nullptr), m_entity(), m_mask()
+		{}
+
+		constexpr iterator(entities* ecs, entity e, component_mask mask) noexcept
+			: m_entities(ecs), m_entity(e), m_mask(mask)
+		{}
+
+		iterator& operator++(void) noexcept {
+			m_entity = m_entities->next(m_entity, m_mask);
+			return *this;
+		}
+
+		stx::entity operator*() const noexcept {
+			return m_entity;
+		}
+
+		constexpr bool operator==(iterator const& other) const noexcept {
+			return m_entity == other.m_entity;
+		}
+		constexpr bool operator!=(iterator const& other) const noexcept {
+			return m_entity != other.m_entity;
+		}
+	};
+
+	iterator begin() const noexcept {
+		return iterator(&m_entities, m_entities.first(m_mask), m_mask);
+	}
+	constexpr iterator end() const noexcept {
+		return iterator();
+	}
+};
+
 template<class... Components>
 class filter_t {
-	component_mask m_mask;
 	entities&      m_entities;
+	component_mask m_mask;
 public:
 	filter_t(entities& entities) noexcept :
-		m_entities(entities)
-	{
-		for(unsigned id : std::array{ component_id<Components>... }) { // I <3 C++17
-			m_mask.set(id);
-		}
-	}
+		m_entities(entities),
+		m_mask(entities.make_mask<Components...>())
+	{}
 
 	struct iterator {
 		mutable entities* m_entities;
@@ -366,7 +414,7 @@ public:
 		}
 
 		std::tuple<Components&...> operator*() const noexcept {
-			return { *m_entities->getUnchecked<Components>(m_entity)... };
+			return { m_entities->getUnchecked<Components>(m_entity)... };
 		}
 
 		constexpr bool operator==(iterator const& other) const noexcept {
@@ -396,6 +444,11 @@ namespace stx {
 template<class... Types>
 filter_t<Types...> entities::filter() {
 	return {*this};
+}
+
+template<class... Types>
+filter_id_t entities::filter_id() {
+	return {*this, make_mask<Types...>()};
 }
 
 } // namespace stx
