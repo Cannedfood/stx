@@ -5,7 +5,7 @@ namespace stx {
 using group_mask = system_manager::group_mask;
 using group_names = system_manager::group_names;
 
-system_manager::system_manager() noexcept {}
+system_manager::system_manager(injector* inj) noexcept : m_injector(inj) {}
 system_manager::~system_manager() noexcept {
 	for(auto& entry : m_systems) {
 		if(entry.enabled) {
@@ -101,7 +101,9 @@ void system_manager::add(
 		add_configurator(system_manager& manager, entry& e) noexcept
 			: m_manager(manager), m_entry(e)
 		{}
+		std::shared_ptr<void> request(std::type_info const& info, size_t quirk) noexcept override { return nullptr; }
 		system_manager& manager() noexcept override { return m_manager; }
+		injector& inject() noexcept override { return m_manager.inject(); }
 		void enabledBy(std::initializer_list<std::string_view> groups) noexcept override {
 			m_entry.enabledBy |= m_manager.groupMask(groups);
 		}
@@ -131,6 +133,11 @@ void system_manager::add(
 void system_manager::add(std::string_view name, std::shared_ptr<system> sys)
 {
 	add(name, {}, {}, sys);
+}
+
+injector& system_manager::inject() {
+	assert(m_injector && "No injector set in the system_manager's constructor");
+	return *m_injector;
 }
 
 // Debug

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <chrono>
 
+#include "injector.hpp"
 #include "shared_ptr.hpp"
 
 namespace stx {
@@ -22,6 +23,12 @@ class system_configuration;
 class system_configuration {
 public:
 	virtual system_manager& manager() noexcept = 0;
+	virtual injector&       inject()  noexcept = 0;
+
+	// Injection
+	virtual std::shared_ptr<void> request(std::type_info const& type, size_t quirk = 0) noexcept = 0;
+
+	template<class T> std::shared_ptr<T> request(size_t quirk = 0) noexcept { return std::static_pointer_cast<T>(request(typeid(T), quirk)); }
 
 	// Groups
 	virtual void enabledBy(std::initializer_list<std::string_view> groups) noexcept = 0;
@@ -33,9 +40,9 @@ public:
 	virtual ~system() {}
 	virtual void sysAdded(system_configuration&) {}
 	virtual void sysConfigure(system_configuration&) {}
-	virtual void sysEnable   (system_manager&) {}
-	virtual void sysUpdate   () {}
-	virtual void sysDisable  (system_manager&) {}
+	virtual void sysEnable(system_manager&) {}
+	virtual void sysUpdate() {}
+	virtual void sysDisable(system_manager&) {}
 	virtual void sysRemoved() {}
 };
 
@@ -44,7 +51,7 @@ public:
 	using group_mask  = std::bitset<options::MaxNumSystemGroups>;
 	using group_names = std::initializer_list<std::string_view>;
 
-	system_manager() noexcept;
+	system_manager(injector* = nullptr) noexcept;
 	~system_manager() noexcept;
 
 	// Manage groups
@@ -104,6 +111,8 @@ public:
 	bool   debugRandomize();
 	void   maxProfileMeasurements(size_t maxNumMeasurements); //<! Whether/How much performance data should be recorded
 	size_t maxProfileMeasurements();
+
+	injector& inject();
 private:
 	struct entry {
 		std::string name;
@@ -136,6 +145,8 @@ private:
 	std::unordered_map<std::string, unsigned> m_group_ids;
 
 	std::vector<group_mask> m_state_stack;
+
+	stx::injector* m_injector;
 };
 
 } // namespace stx
