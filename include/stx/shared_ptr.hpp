@@ -175,6 +175,12 @@ public:
 	}
 
 	operator shared<T>() const noexcept { return shared_from_this(); }
+
+	constexpr bool operator==(shared<T> const& ptr) const noexcept { return ptr.get() == static_cast<T const*>(this); }
+	constexpr bool operator!=(shared<T> const& ptr) const noexcept { return ptr.get() != static_cast<T const*>(this); }
+
+	constexpr bool operator==(weak<T> const& ptr)   const noexcept { return ptr.get() == static_cast<T const*>(this); }
+	constexpr bool operator!=(weak<T> const& ptr)   const noexcept { return ptr.get() != static_cast<T const*>(this); }
 };
 
 // =============================================================
@@ -402,6 +408,9 @@ public:
 	weak(weak const& other) noexcept { reset(other); }
 	weak& operator=(weak const& other) noexcept { reset(other); return *this; }
 	void reset(weak const& other) noexcept { _copy_reset(other.m_value, other.m_block); }
+
+	// Reset via nullptr assignment
+	weak& operator=(std::nullptr_t) noexcept { reset(nullptr); return *this; }
 
 	shared_block::refcount refcount()      const noexcept { return m_block ? m_block->strong_refs() : 0; }
 	shared_block::refcount weak_refcount() const noexcept { return m_block ? m_block->weak_refs() : 0; }
