@@ -102,7 +102,7 @@ public:
 
 	// Iterator
 	using iterator = node_iterator;
-	iterator begin();
+	iterator begin(); //<! Iterate over children
 	iterator end();
 
 	// Name hash for switch(node) { case stx::xml::name_hash("thing"): break; }
