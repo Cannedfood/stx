@@ -1,0 +1,54 @@
+#include "catch.hpp"
+
+#include <stx/config.hpp>
+
+#include <sstream>
+
+using namespace stx;
+
+TEST_CASE("Test config", "[config]") {
+	stx::config cfg;
+
+	cfg.set("does exist", "42");
+
+	std::string result = "nothing happened";
+
+	SECTION("Get string optional") {
+		CHECK(!cfg.get("doesn't exist", &result));
+		CHECK(result == "nothing happened");
+
+		CHECK(cfg.get("doesn't exist", "fallback") == "fallback");
+
+		CHECK(cfg.get("does exist", &result));
+		CHECK(result == "42");
+	}
+
+	SECTION("Get string required") {
+		CHECK_THROWS(cfg.get("doesn't exist"));
+
+		CHECK_NOTHROW(cfg.get("does exist"));
+		CHECK(cfg.get("does exist") == "42");
+	}
+
+	SECTION("Get string fallback") {
+		CHECK(cfg.get("doesn't exist", "fallback") == "fallback");
+		CHECK(cfg.get("does exist", "fallback") == "42");
+	}
+}
+
+TEST_CASE("Test config ini file loading", "[config]") {
+	stx::config cfg;
+
+	std::stringstream stream;
+
+	stream << "thing=ding" << std::endl;
+	stream << "; this is a comment" << std::endl;
+	stream << std::endl;
+	stream << "[NewSection]" << std::endl;
+	stream << "thing2=ding2" << std::endl;
+
+	REQUIRE_NOTHROW(cfg.parseIni(stream));
+
+	CHECK(cfg.get("thing") == "ding");
+	CHECK(cfg.get("NewSection.thing2") == "ding2");
+}
