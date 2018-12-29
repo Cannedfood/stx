@@ -1,5 +1,8 @@
 #include "../system.hpp"
 
+#include <random>
+#include <algorithm>
+
 namespace stx {
 
 using group_mask = system_manager::group_mask;
@@ -141,8 +144,9 @@ injector& system_manager::inject() {
 }
 
 // Debug
-void   system_manager::debugRandomize(bool b) {} // TODO
-bool   system_manager::debugRandomize() { return false; } // TODO
+void   system_manager::debugRandomize() {
+	std::shuffle(m_systems.begin(), m_systems.end(), std::mt19937(std::random_device()()));
+}
 void   system_manager::maxProfileMeasurements(size_t maxNumMeasurements) {} // TODO
 size_t system_manager::maxProfileMeasurements() { return 0; } // TODO
 

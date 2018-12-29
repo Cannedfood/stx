@@ -1,13 +1,10 @@
 #pragma once
 
-#include <vector>
 #include <deque>
 #include <bitset>
-#include <unordered_map>
 #include <chrono>
 
 #include "injector.hpp"
-#include "shared_ptr.hpp"
 
 namespace stx {
 
@@ -107,8 +104,7 @@ public:
 	void       disableOnRemove(std::string_view systemName, group_names) noexcept;
 
 	// Debug
-	void   debugRandomize(bool b); //!< Randomizes order to uncover bugs
-	bool   debugRandomize();
+	void   debugRandomize(); //!< Randomizes order to uncover bugs
 	void   maxProfileMeasurements(size_t maxNumMeasurements); //<! Whether/How much performance data should be recorded
 	size_t maxProfileMeasurements();
 
