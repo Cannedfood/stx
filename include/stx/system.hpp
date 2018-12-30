@@ -38,7 +38,7 @@ public:
 	virtual void sysAdded(system_configuration&) {}
 	virtual void sysConfigure(system_configuration&) {}
 	virtual void sysEnable(system_manager&) {}
-	virtual void sysUpdate() {}
+	virtual void sysUpdate(float dt) {}
 	virtual void sysDisable(system_manager&) {}
 	virtual void sysRemoved() {}
 };
@@ -50,6 +50,9 @@ public:
 
 	system_manager(injector* = nullptr) noexcept;
 	~system_manager() noexcept;
+
+	// Updating
+	void update(float dt);
 
 	// Manage groups
 	unsigned   groupId(std::string_view s) noexcept;

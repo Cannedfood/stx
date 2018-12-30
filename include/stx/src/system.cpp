@@ -18,7 +18,17 @@ system_manager::~system_manager() noexcept {
 	}
 }
 
-// Manage groups
+// -- Update -------------------------------------------------------
+
+void system_manager::update(float dt) {
+	for(auto& system : m_systems) {
+		if(system.enabled) {
+			system.sys->sysUpdate(dt);
+		}
+	}
+}
+
+// -- Manage groups --------------------------------------------------
 unsigned system_manager::groupId(std::string_view s) noexcept {
 	unsigned new_id     = m_group_ids.size();
 	auto [iter, is_new] = m_group_ids.try_emplace(std::string(s), new_id);
