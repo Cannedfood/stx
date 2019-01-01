@@ -27,6 +27,9 @@ public:
 	template<class T> injector& factory(size_t quirk = 0);
 
 	template<class T> operator std::shared_ptr<T>() { return get<T>(); }
+	template<class... Tn> void operator()(std::shared_ptr<Tn>&... t) {
+		std::tie(t...) = std::tuple{ get<Tn>()... };
+	}
 public:
 	std::unordered_map<size_t, entry_t>   m_entries;
 	std::unordered_map<size_t, factory_t> m_factories;
