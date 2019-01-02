@@ -298,7 +298,7 @@ const char* node::parse_content(arena_allocator& alloc, const char* s) {
 	while(*s <= ' ') s++; // Skipws
 	m_type = content;
 	const char* start = s;
-	while(*s && *s != '<') s++;
+	while(*s && (s[0] != '<' || s[1] <= ' ')) s++;
 	m_value = std::string_view(start, std::max(start, s - 1) - start);
 	while(!m_value.empty() && m_value.back() <= ' ') m_value.remove_suffix(1);
 	return s;

@@ -61,3 +61,32 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 	CHECK(content->content_value() == "I am content");
 	CHECK(comment->comment_value() == "I am a comment");
 }
+
+TEST_CASE("Test nasty text in xml") {
+	node document;
+	arena_allocator alloc;
+
+	REQUIRE_NOTHROW(
+		document.parse_document(alloc, R"(
+			<frag>
+				in  float random;
+				out vec3  color;
+
+				void main() {
+					if(random < .5) discard;
+					color = vec3(1, 1, 1);
+				}
+			</frag>
+		)")
+	);
+
+	REQUIRE(document.children()->name() == "frag");
+
+	node* frag = document.child("frag");
+	REQUIRE(frag);
+	REQUIRE(frag->children());
+	REQUIRE(!frag->children()->next());
+
+	REQUIRE(frag->children()->type() == node::content);
+	REQUIRE(frag->children()->content_value().find("random < .5") != std::string_view::npos);
+}
