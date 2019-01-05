@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <fstream>
+#include <algorithm>
 
 #if __has_include(<filesystem>)
 	#include <filesystem>
@@ -9,6 +10,8 @@
 #elif __has_include(<experimental/filesystem>)
 	#include <experimental/filesystem>
 	namespace filesystem = std::experimental::filesystem;
+#else
+	#define STX_NO_FILESYSTEM
 #endif
 
 namespace stx {
@@ -60,21 +63,31 @@ double config::get(std::string const& name, double fallback) noexcept {
 void config::parseIni(std::string const& path) {
 	auto status = filesystem::status(path);
 
+	#ifndef STX_NO_FILESYSTEM
 	// Is path a directory?
 	if(status.type() == filesystem::file_type::directory) {
 		// A directory
+
+		// Read directory contents IN ALPHABETICAL ORDER
+		std::vector<std::string> directory_contents;
 		using iter_t = filesystem::directory_iterator;
 		for(iter_t i = iter_t(path); i != iter_t(); i++) {
-			parseIni(i->path().string());
+			directory_contents.push_back(i->path().string());
 		}
-	}
-	else {
-		// A file
-		puts(path.c_str());
+		std::sort(directory_contents.begin(), directory_contents.end());
+		for(auto& content : directory_contents) {
+			parseIni(content);
+		}
 
-		std::ifstream file(path);
-		parseIni(file);
+		return;
 	}
+	#endif // !defined(STX_NO_FILESYSTEM)
+
+	// A file
+	puts(path.c_str());
+
+	std::ifstream file(path);
+	parseIni(file);
 }
 
 void config::parseIni(std::istream& stream) {
