@@ -3,6 +3,14 @@
 #include <cassert>
 #include <fstream>
 
+#if __has_include(<filesystem>)
+	#include <filesystem>
+	namespace filesystem = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+	#include <experimental/filesystem>
+	namespace filesystem = std::experimental::filesystem;
+#endif
+
 namespace stx {
 
 void config::set(std::string name, std::string value) noexcept {
@@ -50,8 +58,23 @@ double config::get(std::string const& name, double fallback) noexcept {
 
 
 void config::parseIni(std::string const& path) {
-	std::ifstream file(path);
-	parseIni(file);
+	auto status = filesystem::status(path);
+
+	// Is path a directory?
+	if(status.type() == filesystem::file_type::directory) {
+		// A directory
+		using iter_t = filesystem::directory_iterator;
+		for(iter_t i = iter_t(path); i != iter_t(); i++) {
+			parseIni(i->path().string());
+		}
+	}
+	else {
+		// A file
+		puts(path.c_str());
+
+		std::ifstream file(path);
+		parseIni(file);
+	}
 }
 
 void config::parseIni(std::istream& stream) {
