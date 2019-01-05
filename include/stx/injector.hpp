@@ -4,7 +4,7 @@
 #include <array>
 #include <functional>
 
-#include "shared_ptr.hpp"
+#include <memory>
 
 namespace stx {
 
