@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <vector>
 #include <stdexcept>
+#include <iostream>
 
 namespace stx {
 
@@ -25,6 +26,24 @@ inline std::string          file2string(const char* path) {
 	fseek(file, 0, SEEK_SET);
 	fread(result.data(), result.size(), 1, file);
 	fclose(file);
+	return result;
+}
+
+inline std::vector<uint8_t> stream2vector(std::istream& stream) {
+	std::vector<uint8_t> result;
+	stream.seekg(std::ios::end);
+	result.resize(stream.tellg(), '\0');
+	stream.seekg(std::ios::beg);
+	stream.read((char*)result.data(), result.size());
+	return result;
+}
+
+inline std::string          stream2string(std::istream& stream) {
+	std::string result;
+	stream.seekg(std::ios::end);
+	result.resize(stream.tellg(), '\0');
+	stream.seekg(std::ios::beg);
+	stream.read(result.data(), result.size());
 	return result;
 }
 
