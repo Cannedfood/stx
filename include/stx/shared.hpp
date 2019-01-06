@@ -8,6 +8,7 @@
 #include <memory>
 #include <atomic>
 #include <cassert>
+#include <functional>
 
 // TODO: optimize memory usage with enable_shared_from_this: Only needs one pointer
 
@@ -460,5 +461,23 @@ shared<T> make_shared(Args&&... args) {
 }
 
 } // namespace stx
+
+namespace std {
+
+template<class T>
+struct hash<stx::shared<T>> {
+	size_t operator()(stx::shared<T> const& s) const noexcept {
+		return (size_t)s.get();
+	}
+};
+
+template<class T>
+struct hash<stx::weak<T>> {
+	size_t operator()(stx::weak<T> const& s) const noexcept {
+		return (size_t)s.get_unchecked();
+	}
+};
+
+} // namespace std
 
 #endif // header guard STX_SHARED_PTR_HPP_INCLUDED

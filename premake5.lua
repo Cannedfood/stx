@@ -47,7 +47,7 @@ includedirs 'include/'
 project 'stx'
 	kind 'SharedLib'
 	files 'include/stx/src/**.cpp'
-	links {'dl', 'pthread'}
+	links {'dl', 'pthread', 'stdc++fs'}
 
 project 'test'
 	kind 'ConsoleApp'
