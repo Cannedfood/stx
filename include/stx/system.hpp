@@ -5,6 +5,7 @@
 #include <chrono>
 
 #include "injector.hpp"
+#include "shared.hpp"
 
 namespace stx {
 
@@ -32,7 +33,7 @@ public:
 	virtual void disabledBy(std::initializer_list<std::string_view> groups) noexcept = 0;
 };
 
-class system {
+class system : public stx::enable_shared_from_this<system> {
 public:
 	virtual ~system() {}
 	virtual void sysAdded(system_configuration&) {}
