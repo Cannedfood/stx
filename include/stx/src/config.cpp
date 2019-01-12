@@ -12,6 +12,7 @@
 	namespace filesystem = std::experimental::filesystem;
 #else
 	#define STX_NO_FILESYSTEM
+	#pragma message("No <filesystem> or <experimental/filesystem>, config will not support directories.")
 #endif
 
 namespace stx {
