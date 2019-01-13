@@ -4,27 +4,34 @@
 #include "../type.hpp"
 #endif
 
+#include <algorithm>
+
 namespace stx {
 
 static size_t get_id(std::type_info const& info, size_t quirk) {
 	return (info.hash_code() + quirk) ^ quirk;
 }
 
+#ifndef NDEBUG
+static int depth = 0;
+#endif
+
 injector::entry_t injector::get(std::type_info const& info, size_t quirk) {
 	auto id = get_id(info, quirk);
 
-	auto iter = m_entries.find(id);
-	if(iter != m_entries.end()) return iter->second;
+	entry_t& entry = m_entries[id];
+	if(entry) return entry;
 
 	auto factory_iter = m_factories.find(id);
-	if(factory_iter == m_factories.end())
-		throw std::runtime_error("Couldn't find " + std::string(info.name()));
+	if(factory_iter == m_factories.end()) {
+		std::string msg = "Couldn't find " + std::string(info.name());
+		throw std::runtime_error(msg);
+	}
 
 	#ifndef NDEBUG
-		static int depth = 0;
 		depth++;
 	#endif
-	auto result = m_entries.emplace_hint(iter, id, factory_iter->second(*this))->second;
+	entry = factory_iter->second(*this);
 	#ifndef NDEBUG
 		depth--;
 		printf(
@@ -34,7 +41,7 @@ injector::entry_t injector::get(std::type_info const& info, size_t quirk) {
 			stx::demangle(info.name()).c_str());
 	#endif
 
-	return result;
+	return entry;
 }
 void  injector::entry(entry_t   e, std::type_info const& info, size_t quirk) {
 	m_entries.try_emplace(get_id(info, quirk), e);

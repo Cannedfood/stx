@@ -14,10 +14,10 @@ public:
 	using factory_t = std::function<entry_t(injector&)>;
 	using factory_listener_t = std::function<void(entry_t const&, injector&)>;
 
-	entry_t get(std::type_info const& info, size_t quirk);
-	void entry   (entry_t   e, std::type_info const& info, size_t quirk);
-	void factory (factory_t f, std::type_info const& info, size_t quirk);
-	void listener(factory_listener_t f, std::type_info const& info, size_t quirk);
+	entry_t get     (std::type_info const& info, size_t quirk);
+	void    entry   (entry_t   e, std::type_info const& info, size_t quirk);
+	void    factory (factory_t f, std::type_info const& info, size_t quirk);
+	void    listener(factory_listener_t f, std::type_info const& info, size_t quirk);
 
 	template<class T> shared<T> get(size_t quirk = 0);
 	template<class T> injector& entry(shared<T>, size_t quirk = 0);
