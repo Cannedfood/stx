@@ -317,7 +317,7 @@ public:
 	shared& operator=(shared<OtherT> const& other) noexcept { reset(other); return *this; }
 	template<class OtherT>
 	void reset(shared<OtherT> const& other) noexcept {
-		static_assert(std::is_same_v<T, OtherT> || std::is_base_of_v<T, OtherT>, "T -> OtherT is not a trivial cast");
+		// static_assert(std::is_same_v<T, OtherT> || std::is_base_of_v<T, OtherT>, "T -> OtherT is not a trivial cast");
 		_copy_reset(other.m_value, other.m_block);
 	}
 

@@ -24,9 +24,9 @@ public:
 	virtual injector&       inject()  noexcept = 0;
 
 	// Injection
-	virtual std::shared_ptr<void> request(std::type_info const& type, size_t quirk = 0) noexcept = 0;
+	virtual shared<void> request(std::type_info const& type, size_t quirk = 0) noexcept = 0;
 
-	template<class T> std::shared_ptr<T> request(size_t quirk = 0) noexcept { return std::static_pointer_cast<T>(request(typeid(T), quirk)); }
+	template<class T> shared<T> request(size_t quirk = 0) noexcept { return std::static_pointer_cast<T>(request(typeid(T), quirk)); }
 
 	// Groups
 	virtual void enabledBy(std::initializer_list<std::string_view> groups) noexcept = 0;
@@ -80,22 +80,22 @@ public:
 		std::string_view name,
 		group_mask enabledIn,
 		group_mask disabledIn,
-		std::shared_ptr<system> sys);
+		shared<system> sys);
 
 	void add(
 		std::string_view name,
 		group_names enabledIn,
 		group_names disabledIn,
-		std::shared_ptr<system> sys);
+		shared<system> sys);
 
 	void add(
 		std::string_view name,
 		group_names enabledIn,
-		std::shared_ptr<system> sys);
+		shared<system> sys);
 
 	void add(
 		std::string_view name,
-		std::shared_ptr<system> sys);
+		shared<system> sys);
 
 	group_mask enableOn       (std::string_view systemName) noexcept;
 	void       enableOn       (std::string_view systemName, group_names) noexcept;
@@ -116,7 +116,7 @@ public:
 private:
 	struct entry {
 		std::string name;
-		std::shared_ptr<system> sys;
+		shared<system> sys;
 		group_mask enabledBy, disabledBy;
 		bool forceDisable = false;
 		bool enabled = false;

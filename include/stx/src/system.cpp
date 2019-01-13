@@ -99,7 +99,7 @@ void system_manager::pop() {
 // Manage systems
 void system_manager::add(
 	std::string_view name, group_mask enabledIn, group_mask disabledIn,
-	std::shared_ptr<system> sys)
+	shared<system> sys)
 {
 	m_systems.push_back({});
 	entry& e = m_systems.back();
@@ -115,7 +115,7 @@ void system_manager::add(
 		add_configurator(system_manager& manager, entry& e) noexcept
 			: m_manager(manager), m_entry(e)
 		{}
-		std::shared_ptr<void> request(std::type_info const& info, size_t quirk) noexcept override { return nullptr; }
+		shared<void> request(std::type_info const& info, size_t quirk) noexcept override { return nullptr; }
 		system_manager& manager() noexcept override { return m_manager; }
 		injector& inject() noexcept override { return m_manager.inject(); }
 		void enabledBy(std::initializer_list<std::string_view> groups) noexcept override {
@@ -133,18 +133,18 @@ void system_manager::add(
 
 void system_manager::add(
 	std::string_view name, group_names enabledIn, group_names disabledIn,
-	std::shared_ptr<system> sys)
+	shared<system> sys)
 {
 	 add(name, groupMask(enabledIn), groupMask(disabledIn), sys);
 }
 
 void system_manager::add(
-	std::string_view name, group_names enabledIn, std::shared_ptr<system> sys)
+	std::string_view name, group_names enabledIn, shared<system> sys)
 {
 	add(name, groupMask(enabledIn), {}, sys);
 }
 
-void system_manager::add(std::string_view name, std::shared_ptr<system> sys)
+void system_manager::add(std::string_view name, shared<system> sys)
 {
 	add(name, {}, {}, sys);
 }

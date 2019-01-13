@@ -4,13 +4,13 @@
 #include <array>
 #include <functional>
 
-#include <memory>
+#include "shared.hpp"
 
 namespace stx {
 
 class injector {
 public:
-	using entry_t   = std::shared_ptr<void>;
+	using entry_t   = shared<void>;
 	using factory_t = std::function<entry_t(injector&)>;
 	using factory_listener_t = std::function<void(entry_t const&, injector&)>;
 
@@ -19,15 +19,15 @@ public:
 	void factory (factory_t f, std::type_info const& info, size_t quirk);
 	void listener(factory_listener_t f, std::type_info const& info, size_t quirk);
 
-	template<class T> std::shared_ptr<T> get(size_t quirk = 0);
-	template<class T> injector& entry(std::shared_ptr<T>, size_t quirk = 0);
+	template<class T> shared<T> get(size_t quirk = 0);
+	template<class T> injector& entry(shared<T>, size_t quirk = 0);
 	template<class T> injector& entry(size_t quirk = 0);
-	template<class T> std::shared_ptr<T> emplace_entry(size_t quirk = 0);
+	template<class T> shared<T> emplace_entry(size_t quirk = 0);
 	template<class T> injector& factory(factory_t f, size_t quirk = 0);
 	template<class T> injector& factory(size_t quirk = 0);
 
-	template<class T> operator std::shared_ptr<T>() { return get<T>(); }
-	template<class... Tn> void operator()(std::shared_ptr<Tn>&... t) {
+	template<class T> operator shared<T>() { return get<T>(); }
+	template<class... Tn> void operator()(shared<Tn>&... t) {
 		std::tie(t...) = std::tuple{ get<Tn>()... };
 	}
 public:
@@ -44,26 +44,26 @@ public:
 namespace stx {
 
 template<class T>
-std::shared_ptr<T> injector::get(size_t quirk) {
-	return std::static_pointer_cast<T>(get(typeid(T), quirk));
+shared<T> injector::get(size_t quirk) {
+	return get(typeid(T), quirk).cast_static<T>();
 }
 template<class T>
 injector& injector::entry(size_t quirk) {
-	entry(std::make_shared<T>(), typeid(T), quirk); return *this;
+	entry(stx::make_shared<T>(), typeid(T), quirk); return *this;
 }
 template<class T>
-injector& injector::entry(std::shared_ptr<T> e, size_t quirk) {
+injector& injector::entry(shared<T> e, size_t quirk) {
 	entry(e, typeid(T), quirk); return *this;
 }
 template<class T>
-std::shared_ptr<T> injector::emplace_entry(size_t quirk) {
-	auto result = std::make_shared<T>();
+shared<T> injector::emplace_entry(size_t quirk) {
+	auto result = stx::make_shared<T>();
 	entry(result, typeid(T), quirk);
 	return result;
 }
 template<class T>
 injector& injector::factory(size_t quirk) {
-	factory([](auto& injector) { return std::make_shared<T>(); }, typeid(T), quirk); return *this;
+	factory([](auto& injector) { return stx::make_shared<T>(); }, typeid(T), quirk); return *this;
 }
 template<class T>
 injector& injector::factory(factory_t f, size_t quirk) {

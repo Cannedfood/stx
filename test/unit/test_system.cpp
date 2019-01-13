@@ -26,7 +26,7 @@ TEST_CASE("System manager", "[system]") {
 
 	SECTION("Enable and disable works") {
 		system_manager systems;
-		auto a = std::make_shared<test_system>();
+		auto a = stx::make_shared<test_system>();
 
 		systems.add("a", {"a"}, {"not_a"}, a);
 
@@ -68,7 +68,7 @@ TEST_CASE("System manager", "[system]") {
 		int count = 0;
 		{
 			system_manager systems;
-			systems.add("Thing", {"a"}, std::make_shared<check_remove_system>(count));
+			systems.add("Thing", {"a"}, stx::make_shared<check_remove_system>(count));
 			REQUIRE(count == 1);
 			systems.enable("a");
 		}
