@@ -7,16 +7,18 @@
 #include <map>
 #include <memory>
 
+#include "shared.hpp"
+
 namespace stx {
 
 template<class Value, class LoadInfo = std::string>
 class cache {
-	std::map<LoadInfo, std::weak_ptr<Value>> mCache;
+	std::map<LoadInfo, stx::weak<Value>> mCache;
 public:
 	template<class Loader>
-	std::shared_ptr<Value> getOrLoad(LoadInfo const& li, Loader&& l) {
+	stx::shared<Value> getOrLoad(LoadInfo const& li, Loader&& l) {
 		auto& entry = mCache[li];
-		std::shared_ptr<Value> result = entry.lock();
+		stx::shared<Value> result = entry.lock();
 		if(!result) {
 			result = l(li);
 			entry  = result;
@@ -24,11 +26,11 @@ public:
 		return result;
 	}
 
-	void overload(LoadInfo const& li, std::shared_ptr<Value> v) {
+	void overload(LoadInfo const& li, stx::shared<Value> v) {
 		mCache[li] = v;
 	}
 
-	std::shared_ptr<Value> get(LoadInfo const& li) {
+	stx::shared<Value> get(LoadInfo const& li) {
 		return mCache[li].lock();
 	}
 };
