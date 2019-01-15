@@ -27,6 +27,7 @@ public:
 	template<class T> injector& factory(size_t quirk = 0);
 
 	template<class T> operator shared<T>() { return get<T>(); }
+	template<class T> operator T*() { return get<T>().get(); }
 	template<class... Tn> void operator()(shared<Tn>&... t) {
 		std::tie(t...) = std::tuple{ get<Tn>()... };
 	}
