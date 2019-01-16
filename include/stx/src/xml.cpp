@@ -11,8 +11,19 @@
 
 #include <iostream>
 
+#include <array>
+
 namespace stx {
 namespace xml {
+
+template<class Pred> constexpr
+std::array<bool, 256> _character_lookup(Pred pred) {
+	std::array<bool, 256> values { false };
+	for(unsigned char c = 0; c < 255; c++) {
+		values[c] = pred((char) c);
+	}
+	return values;
+}
 
 static
 void next_token(const char*& s) {
@@ -23,9 +34,16 @@ void next_token(const char*& s) {
 }
 
 static
-bool is_name_inner(char c) {
-	bool isnt_ws = (c >= '!' && c <= '~') || c > '\b';
-	return isnt_ws && c != '/' && c != '>';
+bool is_name_character(char c) {
+	constexpr auto lookup = _character_lookup([](char c) {
+		bool is_ws_or_control = c <= ' ';
+		bool is_delete        = c == 127;
+		bool is_special_char  = (c == '>') || (c == '/') || (c == '=');
+
+		return !is_ws_or_control && !is_delete && !is_special_char;
+	});
+
+	return lookup[c];
 }
 
 static
@@ -39,7 +57,7 @@ static
 std::string_view parse_name(const char*& s) {
 	// TODO: conformance
 	const char* beg = s;
-	while(is_name_inner(*s)) {
+	while(is_name_character(*s)) {
 		s++;
 	}
 
@@ -123,9 +141,11 @@ attribute& attribute::req_prev(std::string_view const& name) {
 }
 
 const char* attribute::parse(arena_allocator& alloc, const char* s) {
-	m_value = parse_name(s);
-	if(*s != '=')
-		throw errors::parsing_error("Expected equals sign =", s, m_value);
+	m_name = parse_name(s);
+	if(*s != '=') {
+		m_value = std::string_view();
+		return s;
+	}
 	s++;
 	m_value = parse_literal(s);
 	return s;

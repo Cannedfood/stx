@@ -43,10 +43,15 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 	CHECK(commentA);
 	inner1 = commentA->next();
 	CHECK(inner1);
+	CHECK(inner1->name() == "inner1");
 	inner2 = inner1->next();
 	CHECK(inner2);
+	CHECK(inner2->name() == "inner2");
 	inner3 = inner2->next();
 	CHECK(inner3);
+	CHECK(inner3->name() == "inner3");
+	CHECK(inner3->req_attrib("name").value() == "nice name");
+	CHECK(inner3->req_attrib("type").value() == "awesome type");
 	inner4 = inner3->next();
 	CHECK(inner4);
 	CHECK(!inner4->next());
