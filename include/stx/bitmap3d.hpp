@@ -55,14 +55,14 @@ struct bitmap3d {
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
-	Assigner assign = [](auto&a,auto&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Dst&a,Src&b){a=std::move(b);}) noexcept;
 
 /// Copies one bitmap to another
 // The destination bitmap should not overlap with the source bitmap! (use blit_in_place for that)
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit_backwards(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
-	Assigner assign = [](auto&a,auto&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Dst&a,Src&b){a=std::move(b);}) noexcept;
 
 /// Copies one bitmap to another
 /// The destination bitmap may overlap with the source bitmap
@@ -70,7 +70,13 @@ void blit_backwards(
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit_in_place(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
-	Assigner assign = [](auto&a,auto&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Dst&a,Src&b){a=std::move(b);}) noexcept;
+
+namespace bitmap_migration {
+
+
+
+} // namespace bitmap_migration
 
 } // namespace stx
 
