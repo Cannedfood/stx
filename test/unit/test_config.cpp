@@ -41,14 +41,18 @@ TEST_CASE("Test config ini file loading", "[config]") {
 
 	std::stringstream stream;
 
-	stream << "thing=ding" << std::endl;
-	stream << "; this is a comment" << std::endl;
-	stream << std::endl;
-	stream << "[NewSection]" << std::endl;
-	stream << "thing2=ding2" << std::endl;
+	stream << R"(
+		thing=ding
+
+		[NewSection]
+		thing2=ding2
+		thing3=ding3; This comment should be ignored.
+	)";
 
 	REQUIRE_NOTHROW(cfg.parseIni(stream));
 
 	CHECK(cfg.get("thing") == "ding");
 	CHECK(cfg.get("NewSection.thing2") == "ding2");
+	CHECK(cfg.get("NewSection.thing3") == "ding3");
+
 }

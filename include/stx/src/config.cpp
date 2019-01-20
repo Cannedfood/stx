@@ -92,19 +92,24 @@ void config::parseIni(std::string const& path) {
 }
 
 void config::parseIni(std::istream& stream) {
+	constexpr auto npos = std::string_view::npos;
+
 	std::string section;
 
 	std::string raw_line;
 	while(std::getline(stream, raw_line)) {
 		std::string_view line = raw_line;
 
+		// Remove comment
+		if(auto commentBegin = line.find_first_of(';'); commentBegin != npos) {
+			line = line.substr(0, commentBegin);
+		}
+
 		// Trim leading whitespace
 		while(!line.empty() && std::isspace(line.front())) line.remove_prefix(1);
 
-		if(line.front() == ';') continue; // Comment
-
 		// Trim trailing whitespace
-		while(!line.empty() && std::isspace(line.back()))  line.remove_suffix(1);
+		while(!line.empty() && std::isspace(line.back())) line.remove_suffix(1);
 
 		if(line.empty()) continue; // Line is empty
 
