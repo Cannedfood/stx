@@ -103,7 +103,7 @@ std::string_view parse_literal(const char*& s) {
 	}
 }
 
-attribute* attribute::next(std::string_view const& name) noexcept {
+attribute* attribute::next(std::string_view name) noexcept {
 	attribute* n = this;
 	while((n = n->next())) {
 		if(n->name() == name)
@@ -111,7 +111,7 @@ attribute* attribute::next(std::string_view const& name) noexcept {
 	}
 	return nullptr;
 }
-attribute* attribute::prev(std::string_view const& name) noexcept {
+attribute* attribute::prev(std::string_view name) noexcept {
 	attribute* n = this;
 	while((n = n->prev())) {
 		if(n->name() == name)
@@ -119,7 +119,7 @@ attribute* attribute::prev(std::string_view const& name) noexcept {
 	}
 	return nullptr;
 }
-attribute& attribute::req_next(std::string_view const& name) {
+attribute& attribute::req_next(std::string_view name) {
 	attribute* result = next(name);
 	if(!result) {
 		throw errors::attribute_not_found(
@@ -129,7 +129,7 @@ attribute& attribute::req_next(std::string_view const& name) {
 	}
 	return *result;
 }
-attribute& attribute::req_prev(std::string_view const& name) {
+attribute& attribute::req_prev(std::string_view name) {
 	attribute* result = prev(name);
 	if(!result) {
 		throw errors::attribute_not_found(
@@ -177,15 +177,26 @@ float attribute::value<float>() const {
 	*/
 }
 
-node* node::next(std::string_view const& name) noexcept {
+bool node::name_in(std::initializer_list<std::string_view> const& names) const noexcept {
+	for(auto& name : names) {
+		if(this->name() == name) return true;
+	}
+	return false;
+}
+
+node* node::first(std::string_view name) noexcept {
 	node* n = this;
-	while((n = n->next())) {
+	do {
 		if(n->name() == name)
 			return n;
-	}
+	} while((n = n->next()));
 	return nullptr;
 }
-node* node::prev(std::string_view const& name) noexcept {
+node* node::next(std::string_view name) noexcept {
+	if(!next()) return nullptr;
+	return next()->first(name);
+}
+node* node::prev(std::string_view name) noexcept {
 	node* n = this;
 	while((n = n->prev())) {
 		if(n->name() == name)
@@ -194,14 +205,25 @@ node* node::prev(std::string_view const& name) noexcept {
 	return nullptr;
 }
 
-node* node::child(std::string_view const& name) noexcept {
-	node* n = children();
-	while(n) {
-		if(n->name() == name)
-			return n;
-		n = n->next();
-	}
+node* node::first_of(std::initializer_list<std::string_view> const& names) noexcept {
+	node* n = this;
+	do {
+		if(n->name_in(names)) return n;
+	} while((n = n->next()));
 	return nullptr;
+}
+node* node::next_of(std::initializer_list<std::string_view> const& names) noexcept {
+	if(!next()) return nullptr;
+	return next()->first_of(names);
+}
+
+node* node::child(std::initializer_list<std::string_view> const& names) noexcept {
+	if(!children()) return nullptr;
+	return children()->first_of(names);
+}
+node* node::child(std::string_view name) noexcept {
+	if(!children()) return nullptr;
+	return children()->first(name);
 }
 node* node::child(node::node_type type) noexcept {
 	node* n = children();
@@ -224,7 +246,7 @@ node& node::req_child(node::node_type type) {
 	return *result;
 }
 
-node& node::req_child(std::string_view const& name) {
+node& node::req_child(std::string_view name) {
 	auto* result = child(name);
 	if(!result) {
 		throw errors::node_not_found(
@@ -235,7 +257,7 @@ node& node::req_child(std::string_view const& name) {
 	return *result;
 }
 
-attribute* node::attrib(std::string_view const& name) noexcept {
+attribute* node::attrib(std::string_view name) noexcept {
 	attribute* n = attributes();
 	while(n) {
 		if(n->name() == name)
@@ -244,7 +266,7 @@ attribute* node::attrib(std::string_view const& name) noexcept {
 	}
 	return nullptr;
 }
-attribute& node::req_attrib(std::string_view const& name) {
+attribute& node::req_attrib(std::string_view name) {
 	auto* result = attrib(name);
 	if(!result) {
 		throw errors::attribute_not_found(

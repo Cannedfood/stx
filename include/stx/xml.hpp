@@ -31,17 +31,17 @@ size_t name_hash(std::string_view sv) noexcept;
 
 class attribute : public dlist_element<attribute> {
 public:
-	std::string_view const& name() const noexcept { return m_name; }
+	std::string_view name() const noexcept { return m_name; }
 
 	template<class T = std::string_view>
 	T value() const { return m_value; }
 
 	using dlist_element::next;
 	using dlist_element::prev;
-	attribute* next(std::string_view const& name) noexcept;
-	attribute* prev(std::string_view const& name) noexcept;
-	attribute& req_next(std::string_view const& name);
-	attribute& req_prev(std::string_view const& name);
+	attribute* next(std::string_view name) noexcept;
+	attribute* prev(std::string_view name) noexcept;
+	attribute& req_next(std::string_view name);
+	attribute& req_prev(std::string_view name);
 
 	const char* parse(arena_allocator& alloc, const char* s);
 private:
@@ -60,11 +60,13 @@ public:
 		comment
 	};
 
-	node_type               type() const noexcept { return m_type; }
-	std::string_view const& name()          const noexcept { assert(type() == node_type::regular);return m_value; }
-	std::string_view const& cdata_value()   const noexcept { assert(type() == node_type::cdata);  return m_value; }
-	std::string_view const& comment_value() const noexcept { assert(type() == node_type::comment);return m_value; }
-	std::string_view const& content_value() const noexcept { assert(type() == node_type::content);return m_value; }
+	node_type        type()          const noexcept { return m_type; }
+	std::string_view name()          const noexcept { assert(type() == node_type::regular);return m_value; }
+	std::string_view cdata_value()   const noexcept { assert(type() == node_type::cdata);  return m_value; }
+	std::string_view comment_value() const noexcept { assert(type() == node_type::comment);return m_value; }
+	std::string_view content_value() const noexcept { assert(type() == node_type::content);return m_value; }
+
+	bool name_in(std::initializer_list<std::string_view> const& names) const noexcept;
 
 	node* parent() const noexcept { return m_parent; }
 
@@ -72,10 +74,15 @@ public:
 	using dlist_element::next;
 	using dlist_element::prev;
 
-	node* next(std::string_view const& name) noexcept;
-	node* prev(std::string_view const& name) noexcept;
-	node& req_next(std::string_view const& name);
-	node& req_prev(std::string_view const& name);
+	node* first(std::string_view name) noexcept;
+	node* next(std::string_view name) noexcept;
+	node* prev(std::initializer_list<std::string_view> const& names) noexcept;
+	node* prev(std::string_view name) noexcept;
+	node& req_next(std::string_view name);
+	node& req_prev(std::string_view name);
+
+	node* next_of(std::initializer_list<std::string_view> const& names) noexcept;
+	node* first_of(std::initializer_list<std::string_view> const& names) noexcept;
 
 	node* next(node_type type) noexcept;
 	node* prev(node_type type) noexcept;
@@ -85,20 +92,21 @@ public:
 	// Child accessors
 	node* children() const noexcept { return m_children; }
 
-	node* child(std::string_view const& name) noexcept;
+	node* child(std::initializer_list<std::string_view> const& names) noexcept;
+	node* child(std::string_view name) noexcept;
 	node* child(node_type type) noexcept;
 
-	node& req_child(std::string_view const& name);
+	node& req_child(std::string_view name);
 	node& req_child(node_type type);
 
 	// Attribute accessors
 	attribute* attributes() const noexcept { return m_attributes; }
-	attribute* attrib(std::string_view const& name) noexcept;
-	attribute& req_attrib(std::string_view const& name);
+	attribute* attrib(std::string_view name) noexcept;
+	attribute& req_attrib(std::string_view name);
 	template<class T>
-	T attrib(std::string_view const& name, T alternative) noexcept;
+	T attrib(std::string_view name, T alternative) noexcept;
 	template<class T>
-	T req_attrib(std::string_view const& name);
+	T req_attrib(std::string_view name);
 
 	// Iterator
 	using iterator = node_iterator;
@@ -109,8 +117,8 @@ public:
 	constexpr inline operator size_t() const noexcept { return name_hash(m_value); }
 
 	// Comparisons
-	constexpr inline bool operator==(std::string_view const& other) const noexcept { return m_value == other; }
-	constexpr inline bool operator!=(std::string_view const& other) const noexcept { return m_value != other; }
+	constexpr inline bool operator==(std::string_view other) const noexcept { return m_value == other; }
+	constexpr inline bool operator!=(std::string_view other) const noexcept { return m_value != other; }
 
 	// ostream
 	void print(std::ostream& stream, unsigned indent = 0);
@@ -225,12 +233,12 @@ double attribute::value<double>() const;
 // ** node *******************************************************
 
 template<class T>
-T node::attrib(std::string_view const& name, T alternative) noexcept {
+T node::attrib(std::string_view name, T alternative) noexcept {
 	auto* atb = attrib(name);
 	return atb ? atb->value<T>() : alternative;
 }
 template<class T>
-T node::req_attrib(std::string_view const& name) {
+T node::req_attrib(std::string_view name) {
 	return req_attrib(name).value<T>();
 }
 
