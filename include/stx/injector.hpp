@@ -19,7 +19,7 @@ public:
 	void    factory (factory_t f, std::type_info const& info, size_t quirk);
 	void    listener(factory_listener_t f, std::type_info const& info, size_t quirk);
 
-	template<class T> shared<T> get(size_t quirk = 0);
+	template<class T> stx::shared<T> get(size_t quirk = 0);
 	template<class T> injector& entry(shared<T>, size_t quirk = 0);
 	template<class T> injector& entry(size_t quirk = 0);
 	template<class T> shared<T> emplace_entry(size_t quirk = 0);
@@ -28,8 +28,8 @@ public:
 
 	template<class T> operator shared<T>() { return get<T>(); }
 	template<class T> operator T*() { return get<T>().get(); }
-	template<class... Tn> void operator()(shared<Tn>&... t) {
-		std::tie(t...) = std::tuple{ get<Tn>()... };
+	template<class... Tn> void operator()(Tn&... t) {
+		std::tie(t...) = std::tuple{ ((std::remove_reference_t<Tn>)*this)... };
 	}
 public:
 	std::unordered_map<size_t, entry_t>   m_entries;
@@ -45,7 +45,7 @@ public:
 namespace stx {
 
 template<class T>
-shared<T> injector::get(size_t quirk) {
+stx::shared<T> injector::get(size_t quirk) {
 	return get(typeid(T), quirk).cast_static<T>();
 }
 template<class T>
