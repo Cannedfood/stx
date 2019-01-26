@@ -20,8 +20,10 @@ class system_configuration;
 /// Interface used by system::sysConfigure to gather data on how the system should be executed
 class system_configuration {
 public:
-	virtual system_manager& manager() noexcept = 0;
-	virtual injector&       inject()  noexcept = 0;
+	system_manager& manager;
+	injector&       inject;
+
+	system_configuration(system_manager& manager, injector& inject) noexcept : manager(manager), inject(inject) {}
 
 	// Injection
 	virtual shared<void> request(std::type_info const& type, size_t quirk = 0) noexcept = 0;

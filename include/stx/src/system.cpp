@@ -109,21 +109,14 @@ void system_manager::add(
 	e.disabledBy = disabledIn;
 
 	class add_configurator final : public system_configuration {
-		system_manager& m_manager;
-		entry&          m_entry;
+		entry& m_entry;
 	public:
 		add_configurator(system_manager& manager, entry& e) noexcept
-			: m_manager(manager), m_entry(e)
+			: system_configuration(manager, manager.inject()), m_entry(e)
 		{}
-		shared<void> request(std::type_info const& info, size_t quirk) noexcept override { return nullptr; }
-		system_manager& manager() noexcept override { return m_manager; }
-		injector& inject() noexcept override { return m_manager.inject(); }
-		void enabledBy(std::initializer_list<std::string_view> groups) noexcept override {
-			m_entry.enabledBy |= m_manager.groupMask(groups);
-		}
-		void disabledBy(std::initializer_list<std::string_view> groups) noexcept override {
-			m_entry.disabledBy |= m_manager.groupMask(groups);
-		}
+		shared<void> request   (std::type_info const& info, size_t quirk) noexcept override { return nullptr; }
+		void         enabledBy (std::initializer_list<std::string_view> groups) noexcept override { m_entry.enabledBy |= manager.groupMask(groups); }
+		void         disabledBy(std::initializer_list<std::string_view> groups) noexcept override { m_entry.disabledBy |= manager.groupMask(groups); }
 	};
 
 	auto add_config = add_configurator{*this, e};
