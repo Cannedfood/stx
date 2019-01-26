@@ -41,7 +41,6 @@ std::string config::get(std::string const& name, std::string const& fallback) no
 	return get(name, &result) ? result : fallback;
 }
 
-
 double config::getf(std::string const& name) {
 	double result;
 	if(!get(name, &result)) throw std::runtime_error("Couldn't find config entry '" + name + "'");
@@ -60,6 +59,41 @@ double config::get(std::string const& name, double fallback) noexcept {
 	return get(name, &result) ? result : fallback;
 }
 
+bool config::getb(std::string const& name) {
+	bool result;
+	if(!get(name, &result)) throw std::runtime_error("Couldn't find config entry '" + name + "'");
+	return result;
+}
+bool config::get(std::string const& name, bool* into) noexcept {
+	auto iter = m_entries.find(name);
+
+	if(iter == m_entries.end()) return false; // Not found
+
+	*into = iter->second == "true" || iter->second == "1";
+	return true;
+}
+bool config::get(std::string const& name, bool fallback) noexcept {
+	bool result;
+	return get(name, &result) ? result : fallback;
+}
+
+int config::geti(std::string const& name) {
+	int result;
+	if(!get(name, &result)) throw std::runtime_error("Couldn't find config entry '" + name + "'");
+	return result;
+}
+bool config::get(std::string const& name, int* into) noexcept {
+	auto iter = m_entries.find(name);
+
+	if(iter == m_entries.end()) return false; // Not found
+
+	*into = std::stoi(iter->second);
+	return true;
+}
+int config::get(std::string const& name, int fallback) noexcept {
+	int result;
+	return get(name, &result) ? result : fallback;
+}
 
 void config::parseIni(std::string const& path) {
 	auto status = filesystem::status(path);

@@ -14,13 +14,21 @@ public:
 	std::string get(std::string const& name);
 	bool        get(std::string const& name, std::string* into) noexcept;
 	std::string get(std::string const& name, std::string const& fallback) noexcept;
+	std::string get(std::string const& name, const char* fallback) noexcept { return get(name, std::string(fallback)); }
 
 
 	void   set(std::string name, double value) noexcept;
-
 	double getf(std::string const& name);
 	bool   get(std::string const& name, double* into) noexcept;
 	double get(std::string const& name, double fallback) noexcept;
+
+	int    geti(std::string const& name);
+	bool   get(std::string const& name, int* into) noexcept;
+	int    get(std::string const& name, int fallback) noexcept;
+
+	bool getb(std::string const& name);
+	bool get(std::string const& name, bool* into) noexcept;
+	bool get(std::string const& name, bool fallback) noexcept;
 
 	void parseIni(std::string const& path);
 	void parseIni(std::istream& stream);
