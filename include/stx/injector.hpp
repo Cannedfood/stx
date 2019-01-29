@@ -29,7 +29,10 @@ public:
 	template<class T> operator shared<T>() { return get<T>(); }
 	template<class T> operator T*() { return get<T>().get(); }
 	template<class... Tn> void operator()(Tn&... t) {
-		std::tie(t...) = std::tuple{ ((std::remove_reference_t<Tn>)*this)... };
+		std::tie(t...) =
+			std::tuple<std::remove_reference_t<Tn>...>(
+				(std::is_same_v<Tn, Tn> ? *this : *this)... // Hack to repeat *this for Tn...
+			);
 	}
 public:
 	std::unordered_map<size_t, entry_t>   m_entries;
