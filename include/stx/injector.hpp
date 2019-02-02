@@ -27,7 +27,7 @@ public:
 	template<class T> injector& factory(size_t quirk = 0);
 
 	template<class T> operator shared<T>() { return get<T>(); }
-	template<class T> operator T*() { return get<T>().get(); }
+	template<class T> explicit operator T*() { return get<T>().get(); }
 	template<class... Tn> void operator()(Tn&... t) {
 		std::tie(t...) =
 			std::tuple<std::remove_reference_t<Tn>...>(
@@ -67,7 +67,12 @@ shared<T> injector::emplace_entry(size_t quirk) {
 }
 template<class T>
 injector& injector::factory(size_t quirk) {
-	factory([](auto& injector) { return stx::make_shared<T>(); }, typeid(T), quirk); return *this;
+	if constexpr(std::is_constructible_v<T, stx::injector&>)
+		factory([](auto& injector) { return stx::make_shared<T>(injector); }, typeid(T), quirk);
+	else
+		factory([](auto& injector) { return stx::make_shared<T>(); }, typeid(T), quirk);
+
+	return *this;
 }
 template<class T>
 injector& injector::factory(factory_t f, size_t quirk) {
