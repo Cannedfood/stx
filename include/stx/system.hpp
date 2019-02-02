@@ -51,7 +51,8 @@ public:
 	using group_mask  = std::bitset<options::MaxNumSystemGroups>;
 	using group_names = std::initializer_list<std::string_view>;
 
-	system_manager(injector* = nullptr) noexcept;
+	system_manager() noexcept;
+	system_manager(stx::injector&) noexcept;
 	~system_manager() noexcept;
 
 	// Updating

@@ -9,7 +9,8 @@ namespace stx {
 using group_mask = system_manager::group_mask;
 using group_names = system_manager::group_names;
 
-system_manager::system_manager(injector* inj) noexcept : m_injector(inj) {}
+system_manager::system_manager() noexcept : m_injector(nullptr) {}
+system_manager::system_manager(stx::injector& inj) noexcept : m_injector(&inj) {}
 system_manager::~system_manager() noexcept {
 	for(auto& entry : m_systems) {
 		if(entry.enabled) {
