@@ -21,10 +21,7 @@ public:
 	double getf(std::string const& name);
 	bool   get(std::string const& name, double* into) noexcept;
 	double get(std::string const& name, double fallback) noexcept;
-
-	int    geti(std::string const& name);
-	bool   get(std::string const& name, int* into) noexcept;
-	int    get(std::string const& name, int fallback) noexcept;
+	double get(std::string const& name, int fallback) noexcept { return get(name, (double) fallback); }
 
 	bool getb(std::string const& name);
 	bool get(std::string const& name, bool* into) noexcept;
