@@ -48,9 +48,12 @@ group_mask system_manager::groupMask(group_names names) noexcept {
 
 void system_manager::disable(std::string_view group) { disable(groupId(group)); }
 void system_manager::enable (std::string_view group) { enable(groupId(group)); }
+void system_manager::toggle (std::string_view group) { toggle(groupId(group)); }
 
 void system_manager::enable (group_names groups) { enable(groupMask(groups)); }
 void system_manager::disable(group_names groups) { disable(groupMask(groups)); }
+void system_manager::toggle (group_names groups) { toggle(groupMask(groups)); }
+
 void system_manager::set    (group_names groups) { set(groupMask(groups)); }
 
 // by id
@@ -65,9 +68,15 @@ void system_manager::disable(unsigned group) {
 	groups.reset(group);
 	set(groups);
 }
+void system_manager::toggle(unsigned group) {
+	group_mask groups = m_enabled_groups;
+	groups[group] = !groups[group];
+	set(groups);
+}
 
 void system_manager::enable (group_mask groups) { set(m_enabled_groups | groups); }
 void system_manager::disable(group_mask groups) { set(m_enabled_groups & ~groups); }
+void system_manager::toggle (group_mask groups) { set(m_enabled_groups ^ groups); }
 void system_manager::set(group_mask groups) {
 	m_enabled_groups = groups;
 	for(auto& e : m_systems) {

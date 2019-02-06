@@ -65,14 +65,22 @@ public:
 	// Enable/Disable
 	void enable (std::string_view group);
 	void disable(std::string_view group);
+	void toggle (std::string_view group);
+
 	void enable (group_names groups);
 	void disable(group_names groups);
+	void toggle (group_names groups);
+
 	void set    (group_names groups);
 
 	void enable (unsigned group);
 	void disable(unsigned group);
+	void toggle (unsigned group);
+
 	void enable (group_mask groups);
 	void disable(group_mask groups);
+	void toggle (group_mask groups);
+
 	void set    (group_mask groups);
 
 	void push() noexcept; //<! Push enabled state
