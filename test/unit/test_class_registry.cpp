@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include <stx/class_registry.hpp>
+#include <stx/unmaintained/class_registry.hpp>
 
 #include <algorithm>
 

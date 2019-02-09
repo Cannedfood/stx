@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include <stx/json.hpp>
+#include <stx/wip/json.hpp>
 
 using namespace stx;
 

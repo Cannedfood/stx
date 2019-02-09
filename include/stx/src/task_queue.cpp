@@ -1,4 +1,4 @@
-#include "../task_queue.hpp"
+#include "../wip/task_queue.hpp"
 
 #include <chrono>
 
@@ -26,6 +26,7 @@ void task_queue::execute_tasks() {
 	}
 }
 
+/*
 advanced_task_queue::advanced_task_queue() :
 	m_quitting(false)
 {}
@@ -96,5 +97,6 @@ void advanced_task_queue::stop() {
 		t.join();
 	}
 }
+*/
 
 } // namespace stx

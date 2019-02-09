@@ -1,15 +1,11 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#include "../class_registry.hpp"
+#include "../unmaintained/class_registry.hpp"
 
 #include <iostream>
 #include <string>
 
 namespace stx {
-
-class TestBase0 {};
-class TestBase1 {};
-class TestImpl : public TestBase0, public TestBase1 {};
 
 void classes::print(std::ostream& s) {
 	// TODO: Print as tree structure

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <tuple>
+
 namespace stx {
 
 
@@ -26,6 +28,8 @@ struct bitmap3d {
 	constexpr bitmap3d<T> subimage(u32 w, u32 h, u32 d) noexcept;
 	constexpr bitmap3d<T> subimage(i32 x, i32 y, i32 z, u32 w, u32 h, u32 d) noexcept;
 
+	constexpr std::tuple<u32, u32, u32> indexOf(T const* element) const noexcept;
+
 	template<class Callback>
 	void each(Callback&& callback) {
 		T* slice = data;
@@ -42,7 +46,8 @@ struct bitmap3d {
 	}
 
 	constexpr i32 index(i32 x, i32 y, i32 z) const noexcept { return x + y * elements_per_scanline + z * elements_per_slice; }
-	constexpr T&  operator()(i32 x, i32 y, i32 z) const noexcept { return data[index(x, y, z)]; }
+	constexpr T*  get(i32 x, i32 y, i32 z)         noexcept { return data + index(x, y, z); }
+	constexpr T&  operator()(i32 x, i32 y, i32 z)  noexcept { return data[index(x, y, z)]; }
 
 	constexpr u32 volume() const noexcept { return w * h * d; }
 };
@@ -72,11 +77,8 @@ void blit_in_place(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
 	Assigner assign = [](Dst&a,Src&b){a=std::move(b);}) noexcept;
 
-namespace bitmap_migration {
-
-
-
-} // namespace bitmap_migration
+template<class T>
+bitmap3d<T> overlap(bitmap3d<T> a, bitmap3d<T> b) noexcept;
 
 } // namespace stx
 
@@ -111,6 +113,17 @@ template<class T> constexpr
 bitmap3d<T> bitmap3d<T>::subimage(i32 x, i32 y, i32 z, u32 w, u32 h, u32 d) noexcept
 {
 	return bitmap3d<T>(data + index(x, y, z), w, h, d, elements_per_scanline, elements_per_slice);
+}
+
+template<class T> constexpr
+std::tuple<unsigned, unsigned, unsigned> bitmap3d<T>::indexOf(T const* element) const noexcept {
+	u32 index = element - data;
+
+	u32 z = index / elements_per_slice;
+	u32 y = (index % elements_per_slice) / elements_per_scanline;
+	u32 x = ((index % elements_per_slice) % elements_per_scanline) / 1;
+
+	return { x, y, z };
 }
 
 // -- Blitting -------------------------------------------------------
@@ -168,6 +181,18 @@ void blit_in_place(bitmap3d<Src> src, bitmap3d<Dst> dst, Assigner assign) noexce
 	else {
 		blit_backwards<Src, Dst, Assigner>(src, dst, assign);
 	}
+}
+
+template<class T>
+bitmap3d<T> overlap(bitmap3d<T> a, bitmap3d<T> b) noexcept
+{
+	if(a.data > b.data) { // Swap a and b
+		bitmap3d<T> c = b; c = a; b = a; a = c;
+	}
+
+	auto [minx, miny, minz] = a.indexOf(b.data);
+
+
 }
 
 } // namespace stx

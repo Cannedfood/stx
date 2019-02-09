@@ -31,8 +31,8 @@ stx::classes::register_specialization<base1, derived>;
 #include <tuple>
 #include <iosfwd>
 
-#include "list.hpp"
-#include "type.hpp"
+#include "../list.hpp"
+#include "../type.hpp"
 
 namespace stx {
 

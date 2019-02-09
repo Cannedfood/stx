@@ -31,8 +31,18 @@ void writeRaw(std::ostream& stream, T const& data) {
 }
 
 template<class T>
+void writeRaw(std::ostream& stream, T const* data, size_t count) {
+	stream.write((char const*)data, sizeof(T) * count);
+}
+
+template<class T>
 void readRaw(std::istream& stream, T& data) {
 	stream.read((char*)&data, sizeof(T));
+}
+
+template<class T>
+void readRaw(std::istream& stream, T* data, size_t count) {
+	stream.read((char*)data, sizeof(T) * count);
 }
 
 template<class T>
