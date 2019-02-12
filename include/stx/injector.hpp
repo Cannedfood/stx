@@ -19,12 +19,12 @@ public:
 	void    factory (factory_t f, std::type_info const& info, size_t quirk);
 	void    listener(factory_listener_t f, std::type_info const& info, size_t quirk);
 
-	template<class T> stx::shared<T> get(size_t quirk = 0);
-	template<class T> injector& entry(shared<T>, size_t quirk = 0);
-	template<class T> injector& entry(size_t quirk = 0);
-	template<class T> shared<T> emplace_entry(size_t quirk = 0);
-	template<class T> injector& factory(factory_t f, size_t quirk = 0);
-	template<class T> injector& factory(size_t quirk = 0);
+	template<class T>             stx::shared<T> get(size_t quirk = 0);
+	template<class T>             injector& entry(shared<T>, size_t quirk = 0);
+	template<class T>             injector& entry(size_t quirk = 0);
+	template<class T>             shared<T> emplace_entry(size_t quirk = 0);
+	template<class T, class As=T> injector& factory(factory_t f, size_t quirk = 0);
+	template<class T, class As=T> injector& factory(size_t quirk = 0);
 
 	template<class T> operator shared<T>() { return get<T>(); }
 	template<class T> explicit operator T*() { return get<T>().get(); }
@@ -65,18 +65,18 @@ shared<T> injector::emplace_entry(size_t quirk) {
 	entry(result, typeid(T), quirk);
 	return result;
 }
-template<class T>
+template<class T, class As>
 injector& injector::factory(size_t quirk) {
 	if constexpr(std::is_constructible_v<T, stx::injector&>)
-		factory([](auto& injector) { return stx::make_shared<T>(injector); }, typeid(T), quirk);
+		factory([](auto& injector) { return stx::make_shared<T>(injector); }, typeid(As), quirk);
 	else
-		factory([](auto& injector) { return stx::make_shared<T>(); }, typeid(T), quirk);
+		factory([](auto& injector) { return stx::make_shared<T>(); }, typeid(As), quirk);
 
 	return *this;
 }
-template<class T>
+template<class T, class As>
 injector& injector::factory(factory_t f, size_t quirk) {
-	factory(f, typeid(T), quirk); return *this;
+	factory(f, typeid(As), quirk); return *this;
 }
 
 } // namespace stx

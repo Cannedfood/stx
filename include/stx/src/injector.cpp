@@ -35,7 +35,7 @@ injector::entry_t injector::get(std::type_info const& info, size_t quirk) {
 	#ifndef NDEBUG
 		depth--;
 		printf(
-			"[stx:injector](info) %.*s%sCreating %s\n",
+			"[stx::injector](info) %.*s%sCreating %s\n",
 			std::clamp((depth - 1) * 3, 0, 32), "                                  ",
 			depth > 0 ? u8"  ↙" : "",
 			stx::demangle(info.name()).c_str());
@@ -48,6 +48,10 @@ void  injector::entry(entry_t   e, std::type_info const& info, size_t quirk) {
 }
 void  injector::factory(factory_t f, std::type_info const& info, size_t quirk) {
 	m_factories.try_emplace(get_id(info, quirk), f);
+
+	#ifndef NDEBUG
+		printf("[stx::injector](info) Factory %s\n", stx::demangle(info.name()).c_str());
+	#endif
 }
 
 } // namespace stx
