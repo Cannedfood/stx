@@ -53,6 +53,7 @@ project 'test'
 	kind 'ConsoleApp'
 	files 'test/unit/**.cpp'
 	links 'stx'
+	links {'pthread'}
 
 project 'perf'
 	kind 'ConsoleApp'
