@@ -15,6 +15,8 @@ public:
 
 	template<class Callback, class T>
 	void defer(Callback&& callback, weak<T> context, float priority) noexcept;
+
+	virtual ~executor() {}
 };
 
 // ** Standard Executors *******************************************************

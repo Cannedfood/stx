@@ -14,7 +14,7 @@ public:
 		start(count);
 	}
 
-	virtual ~threadpool() noexcept { stop(); }
+	~threadpool() noexcept { stop(); }
 
 	void start(unsigned count) noexcept {
 		stop();

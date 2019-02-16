@@ -24,6 +24,7 @@ executor& global_threadpool() noexcept {
 
 		p_threadpool = std::make_unique<threadpool>(count);
 	}
+
 	return *p_threadpool;
 }
 executor& global_io_thread()  noexcept {
