@@ -26,6 +26,11 @@ public:
 		return result;
 	}
 
+	stx::shared<Value> tryGet(LoadInfo const& li) {
+		auto entry = mCache.find(li);
+		return (entry == mCache.end()) ? stx::shared<Value>() : entry->second.lock();
+	}
+
 	void overload(LoadInfo const& li, stx::shared<Value> v) {
 		mCache[li] = v;
 	}
