@@ -45,7 +45,8 @@ void task_queue::start() noexcept {
 // =============================================================
 
 task_queue_mt::task_queue_mt() noexcept :
-	m_finish(false)
+	m_finish(false),
+	m_num_threads(0)
 {}
 task_queue_mt::~task_queue_mt() noexcept {
 	stop();
