@@ -23,6 +23,23 @@ public:
 executor& global_threadpool()  noexcept;
 executor& global_io_thread()   noexcept;
 
+// ** Utilities ***************************************************************
+template<class T>
+auto assignTo(T& output) {
+	return [&](T result) {
+		output = result;
+	};
+}
+
+template<class T, class Context>
+auto assignTo(T& output, stx::weak<Context> if_this_still_exists) {
+	return [&output, if_this_still_exists](T result) {
+		if(auto tmp = if_this_still_exists.lock()) {
+			output = result;
+		}
+	};
+}
+
 } // namespace stx
 
 
