@@ -21,14 +21,12 @@ class system_configuration;
 class system_configuration {
 public:
 	system_manager& manager;
-	injector&       inject;
 
-	system_configuration(system_manager& manager, injector& inject) noexcept : manager(manager), inject(inject) {}
+	system_configuration(system_manager& manager) noexcept : manager(manager) {}
 
 	// Injection
-	virtual shared<void> request(std::type_info const& type, size_t quirk = 0) noexcept = 0;
-
-	template<class T> shared<T> request(size_t quirk = 0) noexcept { return std::static_pointer_cast<T>(request(typeid(T), quirk)); }
+	injector& inject();
+	template<class Arg1, class... ArgN> void inject(Arg1&&, ArgN&&...);
 
 	// Groups
 	virtual void enabledBy(std::initializer_list<std::string_view> groups) noexcept = 0;
@@ -159,5 +157,18 @@ private:
 
 	stx::injector* m_injector;
 };
+
+} // namespace stx
+
+// =============================================================
+// == Inline implementation =====================================
+// =============================================================
+
+namespace stx {
+
+inline injector& system_configuration::inject() { return manager.inject(); }
+
+template<class Arg1, class... ArgN>
+inline void system_configuration::inject(Arg1&& arg1, ArgN&&... argN) { inject()(std::forward<Arg1>(arg1), std::forward<ArgN>(argN)...); }
 
 } // namespace stx

@@ -122,9 +122,8 @@ void system_manager::add(
 		entry& m_entry;
 	public:
 		add_configurator(system_manager& manager, entry& e) noexcept
-			: system_configuration(manager, manager.inject()), m_entry(e)
+			: system_configuration(manager), m_entry(e)
 		{}
-		shared<void> request   (std::type_info const& info, size_t quirk) noexcept override { return nullptr; }
 		void         enabledBy (std::initializer_list<std::string_view> groups) noexcept override { m_entry.enabledBy |= manager.groupMask(groups); }
 		void         disabledBy(std::initializer_list<std::string_view> groups) noexcept override { m_entry.disabledBy |= manager.groupMask(groups); }
 	};

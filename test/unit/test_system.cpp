@@ -10,7 +10,7 @@ public:
 	void sysAdded    (system_configuration&) { added = true; }
 	void sysConfigure(system_configuration&) { configured = true; }
 	void sysEnable   (system_manager&) { enabled = true; }
-	void sysUpdate   () {}
+	void sysUpdate   (float) {}
 	void sysDisable  (system_manager&) { enabled = false; }
 	void sysRemoved  () { added = false; configured = false; }
 };
