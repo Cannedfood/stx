@@ -9,11 +9,12 @@ namespace stx {
 class threadpool : public task_queue_mt {
 	std::vector<std::thread> m_threads;
 public:
+	threadpool() noexcept {}
 	threadpool(unsigned count) noexcept {
 		start(count);
 	}
 
-	~threadpool() noexcept { stop(); }
+	virtual ~threadpool() noexcept { stop(); }
 
 	void start(unsigned count) noexcept {
 		stop();
