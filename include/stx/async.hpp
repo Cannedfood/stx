@@ -11,12 +11,15 @@ template<class T> class weak;
 // TODO: promises
 class executor {
 public:
-	virtual void defer(std::function<void()> fn, float priority = 0) noexcept { fn(); }
+	inline virtual ~executor() {}
+
+	inline virtual void defer(std::function<void()> fn, float priority = 0) noexcept { fn(); }
 
 	template<class Callback, class T>
 	void defer(Callback&& callback, weak<T> context, float priority) noexcept;
 
-	virtual ~executor() {}
+	template<class... Args> inline
+	void operator()(Args&&... args) noexcept { defer(std::forward<Args>(args)...); }
 };
 
 // ** Standard Executors *******************************************************
