@@ -122,6 +122,9 @@ public:
 	size_t maxProfileMeasurements();
 
 	injector& inject();
+
+	template<class T> stx::shared<T> inject() { return inject().get<T>(); }
+	template<class... Args> void inject(Args&&... args) { inject().get(std::forward<Args>(args)...); }
 private:
 	struct entry {
 		std::string name;
