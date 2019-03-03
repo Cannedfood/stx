@@ -7,14 +7,9 @@
 
 namespace stx {
 
-namespace {
-
-static std::unique_ptr<threadpool> p_threadpool = nullptr;
-static std::unique_ptr<threadpool> p_io_thread  = nullptr;
-
-} // namespace
-
 executor& global_threadpool() noexcept {
+	static std::unique_ptr<threadpool> p_threadpool = nullptr;
+
 	if(!p_threadpool) {
 		unsigned count = std::thread::hardware_concurrency() - 1;
 
@@ -28,9 +23,12 @@ executor& global_threadpool() noexcept {
 	return *p_threadpool;
 }
 executor& global_io_thread()  noexcept {
+	static std::unique_ptr<threadpool> p_io_thread  = nullptr;
+
 	if(!p_io_thread) {
 		p_io_thread = std::make_unique<threadpool>(1);
 	}
+
 	return *p_io_thread;
 }
 
