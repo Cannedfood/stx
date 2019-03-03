@@ -87,17 +87,19 @@ void task_queue_mt::start() noexcept {
 	std::function<void()> task;
 
 	while(true) {
-		std::unique_lock lock{m_mutex};
+		{
+			std::unique_lock lock{m_mutex};
 
-		// Wait until we have a task
-		if(m_tasks.empty()) {
-			m_sleeping_threads.wait(lock, [this]() { return m_finish || !m_tasks.empty(); });
-			if(m_tasks.empty() && m_finish) break;
+			// Wait until we have a task
+			if(m_tasks.empty()) {
+				m_sleeping_threads.wait(lock, [this]() { return m_finish || !m_tasks.empty(); });
+				if(m_tasks.empty() && m_finish) break;
+			}
+
+			// Get the task
+			task = std::move(m_tasks.begin()->second);
+			m_tasks.erase(m_tasks.begin());
 		}
-
-		// Get the task
-		task = std::move(m_tasks.begin()->second);
-		m_tasks.erase(m_tasks.begin());
 
 		// Execute the task
 		task();
