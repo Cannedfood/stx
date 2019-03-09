@@ -159,6 +159,8 @@ private:
 	std::vector<group_mask> m_state_stack;
 
 	stx::injector* m_injector;
+
+	void _updateEnabled(entry& e);
 };
 
 } // namespace stx

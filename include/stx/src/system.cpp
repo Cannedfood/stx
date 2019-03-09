@@ -80,20 +80,7 @@ void system_manager::toggle (group_mask groups) { set(m_enabled_groups ^ groups)
 void system_manager::set(group_mask groups) {
 	m_enabled_groups = groups;
 	for(auto& e : m_systems) {
-		bool should_be_enabled =
-			(e.enabledBy  & m_enabled_groups).any() &&
-			(e.disabledBy & m_enabled_groups).none() &&
-			!e.forceDisable;
-
-		if(e.enabled != should_be_enabled) {
-			e.enabled = should_be_enabled;
-			if(e.enabled) {
-				e.sys->sysEnable(*this);
-			}
-			else {
-				e.sys->sysDisable(*this);
-			}
-		}
+		_updateEnabled(e);
 	}
 }
 
@@ -131,6 +118,8 @@ void system_manager::add(
 	auto add_config = add_configurator{*this, e};
 	sys->sysAdded(add_config);
 	sys->sysConfigure(add_config);
+
+	_updateEnabled(e);
 }
 
 void system_manager::add(
@@ -162,5 +151,22 @@ void   system_manager::debugRandomize() {
 }
 void   system_manager::maxProfileMeasurements(size_t maxNumMeasurements) {} // TODO
 size_t system_manager::maxProfileMeasurements() { return 0; } // TODO
+
+void system_manager::_updateEnabled(entry& e) {
+	bool should_be_enabled =
+		(e.enabledBy  & m_enabled_groups).any() &&
+		(e.disabledBy & m_enabled_groups).none() &&
+		!e.forceDisable;
+
+	if(e.enabled != should_be_enabled) {
+		e.enabled = should_be_enabled;
+		if(e.enabled) {
+			e.sys->sysEnable(*this);
+		}
+		else {
+			e.sys->sysDisable(*this);
+		}
+	}
+}
 
 } // namespace stx
