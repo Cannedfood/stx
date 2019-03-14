@@ -225,13 +225,13 @@ class entities {
 	using sparse_vector = detail::ecs::sparse_vector<T>;
 	using id_manager    = detail::ecs::id_manager;
 public:
-	entities();
-	~entities();
+	entities() noexcept;
+	~entities() noexcept;
 
 	// -- Create/Destroy entities ------------------------------------------
 	entity create() noexcept;
 	entity create(component_mask hint) noexcept;
-	void   destroy(entity e);
+	bool   destroy(entity e) noexcept;
 	bool   valid(entity e) const noexcept { return m_ids.valid(e); }
 
 	template<class... Components>
@@ -242,9 +242,9 @@ public:
 	}
 
 	// -- Attach/Remove components (For C API) -----------------------------
-	void* getUnchecked(entity e, size_t component_id);
-	void* get(entity e, size_t component_id);
-	void  remove(entity e, size_t component_id);
+	void* getUnchecked(entity e, size_t component_id) noexcept;
+	void* get(entity e, size_t component_id) noexcept;
+	void  remove(entity e, size_t component_id) noexcept;
 
 	// -- Attach/Remove components (Template based) ------------------------
 	template<class T, class... Args>
@@ -280,12 +280,12 @@ public:
 			return getUnchecked<T>(e);
 	}
 	template<class T>
-	T* get(entity e) {
+	T* get(entity e) noexcept {
 		if(!m_component_masks[e.index()].test(component_id<T>)) return nullptr;
 		return &getUnchecked<T>(e);
 	}
 	template<class T>
-	T& getUnchecked(entity e) {
+	T& getUnchecked(entity e) noexcept {
 		auto* storage = static_cast<sparse_vector<T>*>(
 			m_component_storage[component_id<T>].get()
 		);
@@ -294,7 +294,7 @@ public:
 
 	// -- Helpers -------------------------------------------------------
 	template<class... Components>
-	static component_mask make_mask() {
+	static component_mask make_mask() noexcept {
 		using namespace std;
 
 		component_mask mask;
@@ -305,16 +305,16 @@ public:
 	}
 
 	// -- Filter entities by component -------------------------------------
-	entity first(component_mask m);
-	entity next(entity e, component_mask m);
+	entity first(component_mask m) noexcept;
+	entity next(entity e, component_mask m) noexcept;
 
 	template<class... Types>
-	filter_t<Types...> filter();
+	filter_t<Types...> filter() noexcept;
 	template<class... Types>
-	filter_id_t filter_id();
+	filter_id_t        filter_id() noexcept;
 
 	using statistics_t = detail::ecs::sparse_vector_interface::statistics_t;
-	statistics_t statistics() {
+	statistics_t statistics() noexcept {
 		statistics_t stats;
 		for(auto& v : m_component_storage) {
 			if(v) {
@@ -442,12 +442,12 @@ public:
 namespace stx {
 
 template<class... Types>
-filter_t<Types...> entities::filter() {
+filter_t<Types...> entities::filter() noexcept {
 	return {*this};
 }
 
 template<class... Types>
-filter_id_t entities::filter_id() {
+filter_id_t entities::filter_id() noexcept {
 	return {*this, make_mask<Types...>()};
 }
 

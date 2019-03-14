@@ -53,8 +53,8 @@ entity id_manager::entityAt(uint32_t index) const noexcept {
 } // namespace detail
 
 // -- entities -------------------------------------------------------
-entities::entities() {}
-entities::~entities() {
+entities::entities() noexcept {}
+entities::~entities() noexcept {
 	for(unsigned entityIndex = 0; entityIndex < m_component_masks.size(); entityIndex++) {
 		auto& mask = m_component_masks[entityIndex];
 		if(mask.any()) {
@@ -80,7 +80,9 @@ entity entities::create(component_mask hint) noexcept {
 	return create();
 }
 
-void entities::destroy(entity e) {
+bool entities::destroy(entity e) noexcept {
+	if(!valid(e)) return false;
+
 	m_ids.free(e);
 	auto& mask = m_component_masks[e.index()];
 	if(mask.any()) {
@@ -91,25 +93,27 @@ void entities::destroy(entity e) {
 		}
 		mask.reset();
 	}
+
+	return true;
 }
 
-void* entities::getUnchecked(entity e, size_t component_id) {
+void* entities::getUnchecked(entity e, size_t component_id) noexcept {
 	return m_component_storage[component_id]->getTypeErased(e.index());
 }
-void* entities::get(entity e, size_t component_id) {
+void* entities::get(entity e, size_t component_id) noexcept {
 	if(!m_ids.valid(e) || !m_component_masks[e.index()].test(component_id))
 		return nullptr;
 
 	return getUnchecked(e, component_id);
 }
-void entities::remove(entity e, size_t component_id) {
+void entities::remove(entity e, size_t component_id) noexcept {
 	if(m_ids.valid(e) && m_component_masks[e.index()].test(component_id)) {
 		m_component_storage[component_id]->destroyTypeErased(e.index());
 	}
 }
 
 
-entity entities::first(component_mask mask) {
+entity entities::first(component_mask mask) noexcept {
 	for(
 		uint32_t entityIndex = 0;
 		entityIndex < m_component_masks.size();
@@ -121,7 +125,7 @@ entity entities::first(component_mask mask) {
 	}
 	return entity();
 }
-entity entities::next(entity e, component_mask mask) {
+entity entities::next(entity e, component_mask mask) noexcept {
 	for(
 		uint32_t entityIndex = e.index() + 1;
 		entityIndex < m_component_masks.size();

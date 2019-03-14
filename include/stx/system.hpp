@@ -26,6 +26,7 @@ public:
 
 	// Injection
 	injector& inject();
+	template<class T> stx::shared<T> inject() { return inject().get<T>(); }
 	template<class Arg1, class... ArgN> void inject(Arg1&&, ArgN&&...);
 
 	// Groups
@@ -39,9 +40,9 @@ public:
 	virtual void sysAdded(system_configuration&) {}
 	virtual void sysConfigure(system_configuration&) {}
 	virtual void sysEnable(system_manager&) {}
-	virtual void sysUpdate(float dt) {}
-	virtual void sysDisable(system_manager&) {}
-	virtual void sysRemoved() {}
+	virtual void sysUpdate(float dt) noexcept {}
+	virtual void sysDisable(system_manager&) noexcept {}
+	virtual void sysRemoved() noexcept {}
 };
 
 class system_manager {
