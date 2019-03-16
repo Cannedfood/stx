@@ -115,16 +115,25 @@ TEST_CASE("Test sparse_memory", "[entities]") { ////////////////////////////////
 }
 
 TEST_CASE("Test stx::entities", "[entities]") { ////////////////////////////////
-	SECTION("Attaching components works") {
+	SECTION("Attaching and removing components works") {
+		constexpr size_t N = 1000;
+
 		int           count = 0;
 		stx::entities entities;
 
-		for(size_t i = 0; i < 1000; i++) {
+		for(size_t i = 0; i < N; i++) {
 			stx::entity e = entities.create();
 			entities.attach(e, Counted{count});
 		}
 
-		REQUIRE(count == 1000);
+		REQUIRE(count == N);
+
+		for(auto e : entities.filter_id<Counted>())
+		{
+			entities.remove<Counted>(e);
+		}
+
+		REQUIRE(count == 0);
 	}
 
 	SECTION("Getting components works") {

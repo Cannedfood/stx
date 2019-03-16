@@ -248,10 +248,10 @@ public:
 
 	// -- Attach/Remove components (Template based) ------------------------
 	template<class T, class... Args>
-	T* attachNew(entity e, Args&&... args) {
+	T& attachNew(entity e, Args&&... args) {
 		assert(m_ids.valid(e));
 
-		using storage_t = sparse_vector<std::remove_reference_t<T>>;
+		using storage_t = sparse_vector<T>;
 
 		size_t componentId = component_id<T>;
 		auto* storage = static_cast<storage_t*>(m_component_storage[componentId].get());
@@ -266,16 +266,16 @@ public:
 			storage->destroy(e.index());
 		}
 		componentMask.set(componentId);
-		return storage->create(e.index(), std::forward<Args>(args)...);
+		return *storage->create(e.index(), std::forward<Args>(args)...);
 	}
 	template<class T>
-	std::remove_reference_t<T>* attach(entity e, T&& t) {
-		return attachNew<std::remove_reference_t<T>>(e, std::forward<T>(t));
+	auto attach(entity e, T&& t) -> std::remove_cv_t<std::remove_reference_t<T>>& {
+		return attachNew<std::remove_cv_t<std::remove_reference_t<T>>>(e, std::forward<T>(t));
 	}
 	template<class T, class... Args>
-	T* getOrAttach(entity e, Args&&... args) {
+	T& getOrAttach(entity e, Args&&... args) {
 		if(!m_component_masks[e.index()].test(component_id<T>))
-			return attachNew(e, std::forward<Args>(args)...);
+			return attachNew<T>(e, std::forward<Args>(args)...);
 		else
 			return getUnchecked<T>(e);
 	}
@@ -291,6 +291,8 @@ public:
 		);
 		return *storage->get(e.index());
 	}
+	template<class T>
+	void remove(entity e) { remove(e, component_id<T>); }
 
 	// -- Helpers -------------------------------------------------------
 	template<class... Components>

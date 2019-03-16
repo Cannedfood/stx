@@ -109,6 +109,7 @@ void* entities::get(entity e, size_t component_id) noexcept {
 void entities::remove(entity e, size_t component_id) noexcept {
 	if(m_ids.valid(e) && m_component_masks[e.index()].test(component_id)) {
 		m_component_storage[component_id]->destroyTypeErased(e.index());
+		m_component_masks[e.index()].reset(component_id);
 	}
 }
 
