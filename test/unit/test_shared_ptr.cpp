@@ -1,20 +1,16 @@
 #include "catch.hpp"
 
+#include "test_helpers/counted.hpp"
+
 #include <stx/shared.hpp>
 
 using namespace stx;
-
-struct Counted {
-	int& counter;
-	Counted(int& c) : counter(c) { ++counter; }
-	~Counted() { --counter; }
-};
 
 TEST_CASE("make_shared and simple destruct") {
 	int count = 0;
 
 	{
-		shared<Counted> ptr = make_shared<Counted>(count);
+		shared<counted> ptr = make_shared<counted>(count);
 		REQUIRE(ptr.refcount() == 1);
 		REQUIRE(count == 1);
 	}
@@ -25,11 +21,11 @@ TEST_CASE("Shared pointer copy", "[shared_ptr]") {
 	int count = 0;
 
 	{
-		shared<Counted> a = make_shared<Counted>(count);
+		shared<counted> a = make_shared<counted>(count);
 		CHECK(count == 1);
 		REQUIRE(a.refcount() == 1);
 		{
-			shared<Counted> b = make_shared<Counted>(count);
+			shared<counted> b = make_shared<counted>(count);
 			REQUIRE(count == 2);
 			REQUIRE(b.refcount() == 1);
 			b = a;
@@ -47,12 +43,12 @@ TEST_CASE("Shared pointer move", "[shared_ptr]") {
 	int count = 0;
 
 	{
-		shared<Counted> a = make_shared<Counted>(count);
+		shared<counted> a = make_shared<counted>(count);
 		REQUIRE(count == 1);
 		REQUIRE(a.refcount() == 1);
 		{
-			shared<Counted> b = make_shared<Counted>(count);
-			shared<Counted> c = a;
+			shared<counted> b = make_shared<counted>(count);
+			shared<counted> c = a;
 			REQUIRE(count == 2);
 			REQUIRE(a.refcount() == 2);
 			REQUIRE(b.refcount() == 1);
@@ -77,12 +73,12 @@ TEST_CASE("Shared pointer move", "[shared_ptr]") {
 
 TEST_CASE("Shared pointer override", "[shared_ptr]") {
 	int count = 0;
-	shared<Counted> a = make_shared<Counted>(count);
-	shared<Counted> b = make_shared<Counted>(count);
+	shared<counted> a = make_shared<counted>(count);
+	shared<counted> b = make_shared<counted>(count);
 	REQUIRE(count == 2);
 	a = b;
 	REQUIRE(count == 1);
-	b = make_shared<Counted>(count);
+	b = make_shared<counted>(count);
 	REQUIRE(count == 2);
 	a = std::move(b);
 	REQUIRE(count == 1);
@@ -90,7 +86,7 @@ TEST_CASE("Shared pointer override", "[shared_ptr]") {
 
 TEST_CASE("Shared pointer self-assign", "[shared_ptr]") {
 	int count = 0;
-	shared<Counted> a = make_shared<Counted>(count);
+	shared<counted> a = make_shared<counted>(count);
 	REQUIRE(count == 1);
 	a = a;
 	REQUIRE(count == 1);
@@ -108,17 +104,17 @@ TEST_CASE("Weak pointer self-assign", "[shared_ptr]") {
 TEST_CASE("Basic weak pointer", "[shared_ptr]") {
 	int count = 0;
 
-	shared<Counted> a = make_shared<Counted>(count);
+	shared<counted> a = make_shared<counted>(count);
 	REQUIRE(count == 1);
 	{
-		weak<Counted> b = a;
+		weak<counted> b = a;
 		REQUIRE(a.refcount() == 1);
 		REQUIRE(a.weak_refcount() == 1);
 
-		weak<Counted> c = b;
+		weak<counted> c = b;
 		REQUIRE(a.weak_refcount() == 2);
 
-		shared<Counted> d = c.lock();
+		shared<counted> d = c.lock();
 		REQUIRE(a.refcount() == 2);
 	}
 }
@@ -126,9 +122,9 @@ TEST_CASE("Basic weak pointer", "[shared_ptr]") {
 TEST_CASE("Weak pointer destroyed after last shared", "[shared_ptr]") {
 	int count = 0;
 	{
-		shared<Counted> a = make_shared<Counted>(count);
+		shared<counted> a = make_shared<counted>(count);
 		{
-			weak<Counted> b = a;
+			weak<counted> b = a;
 			a.reset();
 			REQUIRE(b.refcount() == 0);
 			REQUIRE(b.weak_refcount() == 1);
@@ -138,9 +134,9 @@ TEST_CASE("Weak pointer destroyed after last shared", "[shared_ptr]") {
 
 TEST_CASE("Weak pointer locked after last shared was destroyed", "[shared_ptr]") {
 	int count = 0;
-	weak<Counted> a;
+	weak<counted> a;
 	{
-		shared<Counted> b = make_shared<Counted>(count);
+		shared<counted> b = make_shared<counted>(count);
 		a = b;
 	}
 	REQUIRE(a.refcount() == 0);
@@ -148,8 +144,8 @@ TEST_CASE("Weak pointer locked after last shared was destroyed", "[shared_ptr]")
 	REQUIRE(a.lock() == nullptr);
 }
 
-struct Refcounted : public Counted, public stx::enable_shared_from_this<Refcounted> {
-	using Counted::Counted;
+struct Refcounted : public counted, public stx::enable_shared_from_this<Refcounted> {
+	using counted::counted;
 };
 
 TEST_CASE("Test enable_shared_from_this", "[shared_ptr]") {

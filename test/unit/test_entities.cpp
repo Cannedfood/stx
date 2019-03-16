@@ -1,15 +1,10 @@
 #include "catch.hpp"
 
+#include "test_helpers/counted.hpp"
+
 #include <stx/entities.hpp>
 
 #include <random>
-
-struct Counted {
-	struct Decrementer { void operator()(int* c) const noexcept { --*c; } };
-
-	std::unique_ptr<int, Decrementer> c;
-	Counted(int& c) : c(&(++c)) {}
-};
 
 std::vector<size_t> random_indices(size_t count, std::pair<size_t, size_t> minmax) {
 	std::vector<size_t> result;
@@ -81,7 +76,7 @@ TEST_CASE("id_manager works", "[entities]") { //////////////////////////////////
 }
 
 TEST_CASE("Test sparse_memory", "[entities]") { ////////////////////////////////
-	stx::detail::ecs::sparse_vector<Counted, 16> vec;
+	stx::detail::ecs::sparse_vector<counted, 16> vec;
 
 	int count = 0;
 
@@ -123,14 +118,14 @@ TEST_CASE("Test stx::entities", "[entities]") { ////////////////////////////////
 
 		for(size_t i = 0; i < N; i++) {
 			stx::entity e = entities.create();
-			entities.attach(e, Counted{count});
+			entities.attach(e, counted{count});
 		}
 
 		REQUIRE(count == N);
 
-		for(auto e : entities.filter_id<Counted>())
+		for(auto e : entities.filter_id<counted>())
 		{
-			entities.remove<Counted>(e);
+			entities.remove<counted>(e);
 		}
 
 		REQUIRE(count == 0);
@@ -153,7 +148,7 @@ TEST_CASE("Test stx::entities", "[entities]") { ////////////////////////////////
 
 			for(size_t i = 0; i < 1000; i++) {
 				stx::entity e = entities.create();
-				entities.attach(e, Counted{count});
+				entities.attach(e, counted{count});
 			}
 
 			REQUIRE(count == 1000);
@@ -168,7 +163,7 @@ TEST_CASE("Test stx::entities", "[entities]") { ////////////////////////////////
 
 			stx::entity e = entities.create();
 			for(size_t i = 0; i < 5; i++) {
-				entities.attach(e, Counted{count});
+				entities.attach(e, counted{count});
 			}
 
 			REQUIRE(count == 1);
