@@ -10,9 +10,9 @@ public:
 	void sysAdded    (system_configuration&) { added = true; }
 	void sysConfigure(system_configuration&) { configured = true; }
 	void sysEnable   (system_manager&) { enabled = true; }
-	void sysUpdate   (float) {}
-	void sysDisable  (system_manager&) { enabled = false; }
-	void sysRemoved  () { added = false; configured = false; }
+	void sysUpdate   (float) noexcept {}
+	void sysDisable  (system_manager&) noexcept { enabled = false; }
+	void sysRemoved  () noexcept { added = false; configured = false; }
 };
 
 TEST_CASE("System manager", "[system]") {
