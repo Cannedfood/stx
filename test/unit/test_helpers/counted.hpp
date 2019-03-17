@@ -2,10 +2,13 @@
 
 #include <atomic>
 
+template<class T>
+struct basic_counted {
+	struct Decrementer { void operator()(int* c) const noexcept { --*c; } };
 
-struct counted {
-	std::atomic<int>& m_count;
-
-	counted(std::atomic<int>* count) noexcept : m_count(*count) { ++m_count; }
-	~counted() noexcept { --m_count; }
+	std::unique_ptr<T, Decrementer> c;
+	basic_counted(T& c) : c(&(++c)) {}
 };
+
+using counted = basic_counted<int>;
+using atomic_counted = basic_counted<std::atomic<int>>;
