@@ -78,7 +78,7 @@ public:
 	constexpr entity(entity const&) = default;
 	constexpr entity& operator=(entity const&) = default;
 
-	constexpr uint64_t id() const { return m_id; }
+	constexpr uint64_t id()      const { return m_id; }
 	constexpr uint32_t index()   const { return m_id & 0xFFFFFFFF; }
 	constexpr uint32_t version() const { return m_id >> 32; }
 
