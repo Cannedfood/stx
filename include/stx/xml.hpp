@@ -9,6 +9,7 @@
 
 #include "dlist.hpp"
 #include "allocator.hpp"
+#include "parsing.hpp"
 
 #include <exception>
 #include <string_view>
@@ -18,8 +19,9 @@
 
 #include <cassert>
 
-namespace stx {
-namespace xml {
+namespace stx::xml {
+
+namespace errors = ::stx::parsing::errors;
 
 class attribute;
 class node;
@@ -142,61 +144,13 @@ private:
 
 std::string load_document(std::string_view path);
 
-struct cursor_location {
-	unsigned         line;
-	unsigned         column;
-	std::string_view line_content;
-
-	cursor_location(unsigned line, unsigned column);
-	cursor_location(const char* start, const char* location);
-};
-
-namespace errors {
-	class error : public std::exception {
-		std::string m_message;
-		const char* m_location;
-		std::string_view m_location2;
-	public:
-		error(std::string message, const char* location = nullptr, std::string_view location2 = {}) :
-			m_message(std::move(message)),
-			m_location(location), m_location2(location2)
-		{}
-
-		const char* what() const noexcept override { return m_message.c_str(); }
-		const char* location() const noexcept { return m_location; }
-		std::string_view location2() const noexcept { return m_location2; }
-
-		void diagnose(
-			const char* sourcefile,
-			const char* source,
-			std::ostream& printTo);
-		void diagnose(
-			const char* sourcefile,
-			const char* source);
-	};
-
-	class parsing_error : public error {
-	public: using error::error;
-	};
-
-	class attribute_not_found : public error {
-	public: using error::error;
-	};
-
-	class node_not_found : public error {
-	public: using error::error;
-	};
-} // namespace errors
-
-} // namespace xml
-} // namespace stx
+} // namespace stx::xml
 
 // =============================================================
 // == Inline implementation =============================================
 // =============================================================
 
-namespace stx {
-namespace xml {
+namespace stx::xml {
 
 constexpr inline
 size_t name_hash(std::string_view sv) noexcept {
@@ -259,8 +213,7 @@ public:
 inline node_iterator node::begin() { return node_iterator(children()); }
 inline node_iterator node::end() { return node_iterator(); }
 
-} // namespace xml
-} // namespace stx
+} // namespace stx::xml
 
 #endif // header guard STX_XML_HPP_INCLUDED
 
