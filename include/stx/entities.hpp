@@ -21,7 +21,7 @@ namespace stx {
 
 namespace options {
 
-constexpr inline size_t MaxNumComponents = 64;
+constexpr inline size_t MaxNumComponents = 16;
 
 } // namespace options
 
@@ -32,7 +32,7 @@ constexpr inline size_t MaxNumComponents = 64;
 
 namespace detail::ecs {
 
-size_t new_component_id() noexcept;
+size_t new_component_id(std::type_info const& t) noexcept;
 
 template<class T>
 constexpr inline bool is_valid_component_v =
@@ -52,7 +52,7 @@ struct component_id_holder {
 	static_assert(std::is_move_constructible_v<T>, "Components have to be move constructable");
 	static const size_t value;
 };
-template<class T> const size_t component_id_holder<T>::value = new_component_id();
+template<class T> const size_t component_id_holder<T>::value = new_component_id(typeid(T));
 
 } // namespace detail::ecs
 
@@ -115,8 +115,8 @@ public:
 	virtual ~sparse_vector_interface() {}
 
 
-	virtual void*        getTypeErased    (size_t index) = 0;
-	virtual void         destroyTypeErased(size_t index) = 0;
+	virtual void* getTypeErased    (size_t index) = 0;
+	virtual void  destroyTypeErased(size_t index) = 0;
 
 	struct statistics_t {
 		size_t total_slots  = 0;
@@ -245,6 +245,10 @@ public:
 	void* getUnchecked(entity e, size_t component_id) noexcept;
 	void* get(entity e, size_t component_id) noexcept;
 	void  remove(entity e, size_t component_id) noexcept;
+	component_mask getMask(entity e) const noexcept {
+		if(!valid(e)) return component_mask{};
+		else return m_component_masks[e.index()];
+	}
 
 	// -- Attach/Remove components (Template based) ------------------------
 	template<class T, class... Args>
@@ -266,6 +270,8 @@ public:
 			storage->destroy(e.index());
 		}
 		componentMask.set(componentId);
+
+		// std::cout << componentMask << " " << e.index()<<":"<<e.id() << " attach " << typeid(T).name() << std::endl;
 		return *storage->create(e.index(), std::forward<Args>(args)...);
 	}
 	template<class T>
@@ -300,8 +306,10 @@ public:
 		using namespace std;
 
 		component_mask mask;
-		for(unsigned id : std::array{ component_id<remove_cv_t<remove_reference_t<Components>>>... }) { // I <3 C++17
-			mask.set(id);
+		if constexpr(sizeof...(Components) > 0) {
+			for(unsigned id : { component_id<remove_cv_t<remove_reference_t<Components>>>... }) {
+				mask.set(id);
+			}
 		}
 		return mask;
 	}
