@@ -236,7 +236,7 @@ public:
 
 	template<class... Components>
 	entity create(Components&&... components) noexcept {
-		entity e = create(make_mask<Components...>());
+		entity e = create(mask<Components...>());
 		(attach(e, std::forward<Components>(components)), ...);
 		return e;
 	}
@@ -245,7 +245,7 @@ public:
 	void* getUnchecked(entity e, size_t component_id) noexcept;
 	void* get(entity e, size_t component_id) noexcept;
 	void  remove(entity e, size_t component_id) noexcept;
-	component_mask getMask(entity e) const noexcept {
+	component_mask mask(entity e) const noexcept {
 		if(!valid(e)) return component_mask{};
 		else return m_component_masks[e.index()];
 	}
@@ -302,7 +302,7 @@ public:
 
 	// -- Helpers -------------------------------------------------------
 	template<class... Components>
-	static component_mask make_mask() noexcept {
+	static component_mask mask() noexcept {
 		using namespace std;
 
 		component_mask mask;
@@ -400,9 +400,9 @@ class filter_t {
 	entities&      m_entities;
 	component_mask m_mask;
 public:
-	filter_t(entities& entities) noexcept :
-		m_entities(entities),
-		m_mask(entities.make_mask<Components...>())
+	filter_t(entities& ecs) noexcept :
+		m_entities(ecs),
+		m_mask(entities::mask<Components...>())
 	{}
 
 	struct iterator {
@@ -458,7 +458,7 @@ filter_t<Types...> entities::filter() noexcept {
 
 template<class... Types>
 filter_id_t entities::filter_id() noexcept {
-	return {*this, make_mask<Types...>()};
+	return {*this, entities::mask<Types...>()};
 }
 
 } // namespace stx
