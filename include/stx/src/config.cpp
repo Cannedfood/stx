@@ -87,9 +87,8 @@ void config::parseIni(std::string const& path) {
 
 		// Read directory contents IN ALPHABETICAL ORDER
 		std::vector<std::string> directory_contents;
-		using iter_t = filesystem::directory_iterator;
-		for(iter_t i = iter_t(path); i != iter_t(); i++) {
-			directory_contents.push_back(i->path().string());
+		for(auto& entry : filesystem::recursive_directory_iterator(path)) {
+			directory_contents.push_back(entry.path().string());
 		}
 		std::sort(directory_contents.begin(), directory_contents.end());
 		for(auto& content : directory_contents) {
