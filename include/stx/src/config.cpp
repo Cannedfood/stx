@@ -170,4 +170,22 @@ void config::parseCmd(int argc, const char** argv) noexcept {
 
 }
 
+extern "C" char** environ;
+
+void config::importEnv() noexcept {
+	for(char** envar = environ; *envar; envar++) {
+		std::string_view option(*envar);
+
+		size_t equals_pos = option.find('=');
+		if(equals_pos == std::string_view::npos) {
+			set(std::string(option), "true");
+		}
+		else {
+			std::string_view option_name = option.substr(0, equals_pos);
+			std::string_view option_value = option.substr(equals_pos + 1);
+			set(std::string(option_name), std::string(option_value));
+		}
+	}
+}
+
 } // namespace stx

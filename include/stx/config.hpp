@@ -31,6 +31,8 @@ public:
 	void parseIni(std::istream& stream);
 
 	void parseCmd(int argc, const char** argv) noexcept;
+
+	void importEnv() noexcept; // Imports config from environment variables
 };
 
 } // namespace stx
