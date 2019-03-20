@@ -56,3 +56,19 @@ TEST_CASE("Test config ini file loading", "[config]") {
 	CHECK(cfg.get("NewSection.thing3") == "ding3");
 
 }
+
+TEST_CASE("Test cmd argument parsing", "[config]") {
+	stx::config cfg;
+
+	const char* args[] = {
+		"--meatballs",
+		"--tasty=absolutely",
+		"not_parsed"
+	};
+
+	REQUIRE_NOTHROW(cfg.parseCmd(std::size(args), args));
+
+	CHECK(cfg.get("meatballs", false));
+	CHECK(cfg.get("tasty") == "absolutely");
+	CHECK(cfg.get("not_parsed", 1.1) == 1.1);
+}

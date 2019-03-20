@@ -29,6 +29,8 @@ public:
 
 	void parseIni(std::string const& path);
 	void parseIni(std::istream& stream);
+
+	void parseCmd(int argc, const char** argv) noexcept;
 };
 
 } // namespace stx

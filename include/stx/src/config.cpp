@@ -150,4 +150,24 @@ void config::parseIni(std::istream& stream) {
 	}
 }
 
+void config::parseCmd(int argc, const char** argv) noexcept {
+	for(int i = 0; i < argc; i++) {
+		const char* arg = argv[i];
+		if(arg[0] == '-' && arg[1] == '-') {
+			std::string_view option(arg + 2);
+
+			size_t equals_pos = option.find('=');
+			if(equals_pos == std::string_view::npos) {
+				set(std::string(option), "true");
+			}
+			else {
+				std::string_view option_name = option.substr(0, equals_pos);
+				std::string_view option_value = option.substr(equals_pos + 1);
+				set(std::string(option_name), std::string(option_value));
+			}
+		}
+	}
+
+}
+
 } // namespace stx
