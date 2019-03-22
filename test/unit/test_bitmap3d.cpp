@@ -85,4 +85,58 @@ TEST_CASE("Test bitmap3d", "[bitmap3d]") {
 		});
 		REQUIRE(overwritten_voxels == 0);
 	}
+
+	// TODO:
+	SECTION("bitmap::relocate works") {
+		unsigned border = 1;
+		unsigned w1 = 2, h1 = 2, d1 = 2;
+		unsigned w2 = w1+border, h2 = h1+border, d2 = d1+border;
+
+		std::vector<int> from_data(w1*h1*d1, -1);
+		std::vector<int> to_data  (w2*h2*d2, -1);
+
+		stx::bitmap3d<int> from {from_data.data(), w1, h1, d1};
+		stx::bitmap3d<int> to   {to_data.data(),   w2, h2, d2};
+
+		SECTION("initializer, finalizer and assigner are applied correctly") {
+			enum PixelState {
+				Assigned,
+				Initialized,
+				Finalized,
+			};
+
+			stx::relocate(
+				from, 1, 1, 1,
+				to,   0, 0, 0,
+				[](auto&a,auto&b) { a = Assigned;    }, // Assigner (a = b)
+				[](auto&a)        { a = Finalized;   }, // Finalizer
+				[](auto&a)        { a = Initialized; }  // Initializer
+			);
+
+			// Copied area should have the assigner run over it.
+			to.subimage(border, border, border, w1, h1, d1).each([](auto& v) {
+				CHECK(v == Assigned);
+			});
+
+			// Everything should be initialized
+			to.each([](auto& v) {
+				bool initialized_or_assigned = (v == Initialized) || (v == Assigned);
+				CHECK(initialized_or_assigned);
+			});
+		}
+
+		// Just tests for the copying
+		SECTION("overlap is copied correctly") {
+			for(unsigned i = 0; i < w1; i++)
+				from(i, i, i) = i;
+
+			stx::relocate(
+				from, border, border, border,
+				to,   0, 0, 0
+			);
+
+			for(unsigned i = 0; i < w1; i++)
+				CHECK(to(i + border, i + border, i + border) == i);
+		}
+	}
 }

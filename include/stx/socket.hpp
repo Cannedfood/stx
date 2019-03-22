@@ -16,6 +16,7 @@
 		#include <sys/socket.h>
 		#include <netinet/in.h> // sockaddr_in
 		#include <netdb.h> // getservbyname
+		#include <fcntl.h> // fcntl
 	}
 #endif
 
@@ -48,7 +49,9 @@ enum class sockopt_level {
 
 enum class sockopt {
 	reuse_address = SO_REUSEADDR,
-	reuse_port    = SO_REUSEPORT
+	reuse_port    = SO_REUSEPORT,
+
+	non_blocking = -2062144233
 };
 
 /// An interface for an address, you probably want to use the stx::ipv4 or stx::ipv6 address types
@@ -61,13 +64,17 @@ public:
 /// Ipv4 address helper
 class ipv4 : public address {
 public:
-	ipv4() noexcept;
+	ipv4() noexcept {}
+	explicit ipv4(address const& addr) noexcept;
 	ipv4(uint32_t ip, uint16_t port) noexcept;
 	ipv4(uint8_t ip_1, uint8_t ip_2, uint8_t ip_3, uint8_t ip_4, uint16_t port) noexcept;
 	ipv4(uint16_t port) noexcept;
 
+
 	uint32_t ip()   const noexcept { return ntohl(m_addr.sin_addr.s_addr); }
 	uint16_t port() const noexcept { return ntohs(m_addr.sin_port); }
+
+	std::string to_string() const noexcept;
 
 	sockaddr const* get()    const noexcept override;
 	int             length() const noexcept override;
@@ -78,12 +85,14 @@ private:
 /// A address of any socket address family (sa_family), mostly for reading incoming addresses
 struct any_address : public address {
 public:
-	any_address() noexcept;
+	any_address() noexcept {}
 	any_address(address const& other) noexcept;
 
 	domain          family() const noexcept { return static_cast<domain>(m_addr.ss_family); }
 	sockaddr const* get()    const noexcept override;
 	int             length() const noexcept override;
+
+	ipv4 to_ipv4() const noexcept { return ipv4(*this); }
 
 	sockaddr*  get()     noexcept { return reinterpret_cast<sockaddr*>(&m_addr); }
 	socklen_t* plength() noexcept { return &m_size; }
@@ -108,11 +117,13 @@ public:
 	[[nodiscard]] socket accept(any_address* addr = nullptr) noexcept;
 
 	// TCP-ish
-	int  send(const void* data, size_t len, int flags = 0) noexcept; // TODO: span
+	int  send(const void* data, size_t len, int flags = 0) noexcept;
+	int  send(std::string_view s, int flags = 0) noexcept { return send(s.data(), s.length(), flags); }
 	int  recv(void* data,       size_t len, int flags = 0) noexcept; // TODO: span
 	// UDP-ish
-	int recvfrom(void*       buf, size_t len, any_address*   from = nullptr, int flags = 0) noexcept;
 	int sendto  (void const* buf, size_t len, address const& to,             int flags = 0) noexcept;
+	int sendto  (std::string_view s,          address const& to,             int flags = 0) noexcept { return sendto(s.data(), s.length(), to, flags); }
+	int recvfrom(void*       buf, size_t len, any_address*   from = nullptr, int flags = 0) noexcept;
 
 
 	bool option(sockopt_level level, sockopt opt, bool value) noexcept;

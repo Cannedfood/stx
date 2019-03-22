@@ -1,12 +1,14 @@
 #include "../socket.hpp"
 
+#include <cassert>
+extern "C" {
+#include <memory.h>
+}
+
+
 namespace stx {
 
 // -- ipv4 -------------------------------------------------------
-
-ipv4::ipv4() noexcept :
-	m_addr {}
-{}
 
 ipv4::ipv4(uint32_t ip, uint16_t port) noexcept :
 	m_addr {
@@ -24,9 +26,33 @@ ipv4::ipv4(uint8_t ip_1, uint8_t ip_2, uint8_t ip_3, uint8_t ip_4, uint16_t port
 	ipv4(uint32_t(ip_1) << 24 | uint32_t(ip_2) << 16 | uint32_t(ip_3) << 8 | uint32_t(ip_4) << 0, port)
 {}
 
+ipv4::ipv4(address const& addr) noexcept {
+	memcpy(&m_addr, addr.get(), addr.length());
+	assert(m_addr.sin_family == (sa_family_t)domain::ipv4);
+}
+
+std::string ipv4::to_string() const noexcept {
+	uint32_t ip   = ntohl(m_addr.sin_addr.s_addr);
+	uint16_t port = ntohs(m_addr.sin_port);
+
+	return
+		std::to_string(0xFFu & (ip >> 24)) + "." +
+		std::to_string(0xFFu & (ip >> 24)) + "." +
+		std::to_string(0xFFu & (ip >> 24)) + "." +
+		std::to_string(0xFFu & (ip >> 24)) + ":" +
+		std::to_string(port);
+}
+
 sockaddr const* ipv4::get()    const noexcept { return reinterpret_cast<sockaddr const*>(&m_addr); }
 int             ipv4::length() const noexcept { return sizeof(m_addr); }
 
+// -- Any Address -------------------------------------------------------
+any_address::any_address(address const& other) noexcept {
+	memcpy(&m_addr, other.get(), other.length());
+	m_size = other.length();
+}
+sockaddr const* any_address::get()    const noexcept { return reinterpret_cast<sockaddr const*>(&m_addr); }
+int             any_address::length() const noexcept { return m_size; }
 
 // -- socket -------------------------------------------------------
 
@@ -42,6 +68,7 @@ void socket::close() noexcept {
 		#else
 			::close(m_handle);
 		#endif
+		m_handle = -1;
 	}
 }
 
@@ -99,7 +126,28 @@ bool socket::option(sockopt_level level, sockopt opt, bool value) noexcept {
 	return option(level, opt, value ? &yes : &no, sizeof(yes));
 }
 bool socket::option(sockopt_level level, sockopt opt, void const* value, size_t size) noexcept {
-	int err_code = ::setsockopt(m_handle, (int)level, (int) opt, value, size);
+	int err_code;
+	switch (opt) {
+		case sockopt::non_blocking:{
+			#if defined(STX_WINDOWS_SOCKETS)
+				// Not tested, on a linux machine right now
+				err_code = ioctlsocket(m_handle, FIONBIO, value);
+			#elif defined(STX_LINUX_SOCKETS)
+				int flags = fcntl(m_handle, F_GETFL, 0);
+				if (flags < 0) {
+					err_code = flags;
+					break;
+				}
+				flags = *((int*) value) ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK);
+				err_code = fcntl(m_handle, F_SETFL, flags);
+			#else
+				#error "I don't know how to set the socket to async for this platform"
+			#endif
+		} break;
+		default: {
+			err_code = ::setsockopt(m_handle, (int)level, (int) opt, value, size);
+		} break;
+	}
 	return err_code >= 0;
 }
 

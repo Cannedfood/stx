@@ -5,6 +5,7 @@
 #pragma once
 
 #include <tuple>
+#include <algorithm>
 
 namespace stx {
 
@@ -60,14 +61,14 @@ struct bitmap3d {
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
-	Assigner assign = [](Dst&a,Src&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Dst&a,Src&b){a=b;}) noexcept;
 
 /// Copies one bitmap to another
 // The destination bitmap should not overlap with the source bitmap! (use blit_in_place for that)
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit_backwards(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
-	Assigner assign = [](Dst&a,Src&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Dst&a,Src&b){a=b;}) noexcept;
 
 /// Copies one bitmap to another
 /// The destination bitmap may overlap with the source bitmap
@@ -75,10 +76,18 @@ void blit_backwards(
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit_in_place(
 	bitmap3d<Src> src, bitmap3d<Dst> dst,
-	Assigner assign = [](Dst&a,Src&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Dst&a,Src&b){a=b;}) noexcept;
 
-template<class T>
-bitmap3d<T> overlap(bitmap3d<T> a, bitmap3d<T> b) noexcept;
+
+// == Relocating =================================================
+template<class Src, class Dst, class Assigner = void(*)(Src&, Dst&), class Finalizer = void(*)(Src&), class Initializer = void(*)(Dst&)>
+void relocate(
+	stx::bitmap3d<Src> from, int from_x, int from_y, int from_z,
+	stx::bitmap3d<Dst> to,   int to_x,   int to_y,   int to_z,
+	Assigner&&    assign  = [](Src&a,Dst&b){a=b;},
+	Finalizer&&   voider  = [](Src&a){},
+	Initializer&& creator = [](Dst&a){}
+) noexcept;
 
 } // namespace stx
 
@@ -89,6 +98,33 @@ bitmap3d<T> overlap(bitmap3d<T> a, bitmap3d<T> b) noexcept;
 // =============================================================
 
 namespace stx {
+
+namespace detail {
+
+template<class Src, class Dst, class Assigner>
+void invoke_assigner(
+	int from_x, int from_y, int from_z,
+	int to_x, int to_y, int to_z,
+	Src& src, Dst& dst,
+	Assigner&& assigner)
+{
+	if constexpr(std::is_invocable_v<Assigner, int, int, int, int, int, int, Src&, Dst&>) {
+		assigner(from_x, from_y, from_z, to_x, to_y, to_z, std::forward<Src>(src), std::forward<Dst>(dst));
+	}
+	else if constexpr(std::is_invocable_v<Assigner, Src&, Dst&>) {
+		assigner(std::forward<Src>(src), std::forward<Dst>(dst));
+	}
+	else {
+		static_assert(
+			"Expected assigner to be of the form "
+			"void(Src& src, Dst& dst)"
+			" or "
+			"void(int from_x, int from_y, int from_z, int to_x, int to_y, int to_z, Src& src, Dst& dst)."
+		);
+	}
+}
+
+} // namespace detail
 
 // -- bitmap3d -------------------------------------------------------
 
@@ -183,16 +219,78 @@ void blit_in_place(bitmap3d<Src> src, bitmap3d<Dst> dst, Assigner assign) noexce
 	}
 }
 
-template<class T>
-bitmap3d<T> overlap(bitmap3d<T> a, bitmap3d<T> b) noexcept
+// -- Relocating ------------------------------------------------------
+template<class Src, class Dst, class Assigner, class Finalizer, class Initializer>
+void relocate(
+	stx::bitmap3d<Src> from, int from_x, int from_y, int from_z,
+	stx::bitmap3d<Dst> to,   int to_x,   int to_y,   int to_z,
+	Assigner&&    assign,
+	Finalizer&&   finalize,
+	Initializer&& init) noexcept
 {
-	if(a.data > b.data) { // Swap a and b
-		bitmap3d<T> c = b; c = a; b = a; a = c;
+	int from_max_x = from_x + from.w;
+	int from_max_y = from_y + from.h;
+	int from_max_z = from_z + from.d;
+
+	int to_max_x = to_x + to.w;
+	int to_max_y = to_y + to.h;
+	int to_max_z = to_z + to.d;
+
+	int overlap_x = std::max(from_x, to_x);
+	int overlap_y = std::max(from_y, to_y);
+	int overlap_z = std::max(from_z, to_z);
+
+	int overlap_max_x = std::clamp(to_max_x, overlap_x, from_max_x);
+	int overlap_max_y = std::clamp(to_max_y, overlap_y, from_max_y);
+	int overlap_max_z = std::clamp(to_max_z, overlap_z, from_max_z);
+
+	stx::bitmap3d<Src> overlap = from.subimage(
+		overlap_x - from_x, overlap_y - from_y, overlap_z - from_z,
+		overlap_max_x - overlap_x, overlap_max_y - overlap_y, overlap_max_z - overlap_z
+	);
+
+	// printf("Overlap from (%i %i %i) (%ux%ux%u)\n",
+	// 	overlap_x - from_x, overlap_y - from_y, overlap_z - from_z,
+	// 	overlap.w, overlap.h, overlap.d
+	// );
+
+	// Apply finalizer
+	{
+		// Front slab
+		// from.subimage(
+		// 		0, 0, 0,
+		// 		from.w, from.h, overlap_x - from_x)
+		//     .each(std::forward<Finalizer>(finalize));
+
+		// Back slab
+		// from.subimage(
+		// 		0, 0, 0,
+		// 		from.w, from.h, overlap_max_x - from_max_x)
+		//     .each(std::forward<Finalizer>(finalize));
 	}
 
-	auto [minx, miny, minz] = a.indexOf(b.data);
+	// Apply initializer
+	{
 
+	}
 
+	// Copy overlap
+	{
+		bitmap3d<Dst> to_overlap = to.subimage(
+			overlap_x - to_x, overlap_y - to_y, overlap_z - to_z,
+			overlap.w, overlap.h, overlap.d
+		);
+
+		// printf("Overlap to (%i %i %i) (%ux%ux%u)\n",
+		// 	overlap_x - to_x, overlap_y - to_y, overlap_z - to_z,
+		// 	to_overlap.w, to_overlap.h, to_overlap.d
+		// );
+
+		blit_in_place(
+			overlap, to_overlap,
+			std::forward<Assigner>(assign)
+		);
+	}
 }
 
 } // namespace stx
