@@ -11,7 +11,7 @@ namespace stx {
 
 std::atomic<size_t> NumRegisteredComponents = 0;
 
-size_t detail::ecs::new_component_id(std::type_info const& t) noexcept {
+size_t ecs::new_component_id(std::type_info const& t) noexcept {
 	size_t result = NumRegisteredComponents++;
 	// printf("%s -> %zu\n", t.name(), result);
 	if(result >= options::MaxNumComponents) {
@@ -20,39 +20,6 @@ size_t detail::ecs::new_component_id(std::type_info const& t) noexcept {
 	}
 	return result;
 }
-
-// -- id_manager -------------------------------------------------------
-namespace detail::ecs {
-
-entity id_manager::create() noexcept {
-	if(!m_free.empty()) {
-		uint32_t index = m_free.back();
-		m_free.pop_back();
-		return entityAt(index);
-	}
-	else {
-		m_versions.push_back(0);
-		return entityAt(m_versions.size() - 1);
-	}
-}
-
-void id_manager::free(entity e) noexcept {
-	assert(e.index() < m_versions.size());
-	assert(m_versions[e.index()] == e.version() && "Freeing invalid id or double free!");
-	m_versions[e.index()]++;
-	m_free.push_back(e.index());
-}
-
-bool id_manager::valid(entity id) const noexcept {
-	return m_versions.size() > id.index() && m_versions[id.index()] == id.version();
-}
-
-entity id_manager::entityAt(uint32_t index) const noexcept {
-	assert(index < m_versions.size());
-	return {index, m_versions[index]};
-}
-
-} // namespace detail
 
 // -- entities -------------------------------------------------------
 entities::entities() noexcept {}

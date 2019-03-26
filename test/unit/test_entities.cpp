@@ -47,7 +47,7 @@ TEST_CASE("entity id works", "[entities]") { ///////////////////////////////////
 TEST_CASE("id_manager works", "[entities]") { //////////////////////////////////
 	using namespace stx;
 
-	detail::ecs::id_manager manager;
+	ecs::entity_ids manager;
 	int count = 5;
 
 	std::mt19937 rgen {(unsigned long)rand()};
@@ -76,7 +76,7 @@ TEST_CASE("id_manager works", "[entities]") { //////////////////////////////////
 }
 
 TEST_CASE("Test sparse_memory", "[entities]") { ////////////////////////////////
-	stx::detail::ecs::sparse_vector<counted, 16> vec;
+	stx::ecs::component_storage<counted, 16> storage;
 
 	int count = 0;
 
@@ -84,28 +84,28 @@ TEST_CASE("Test sparse_memory", "[entities]") { ////////////////////////////////
 		auto indices = random_indices(1000, {0, 128});
 
 		for(auto idx : indices) {
-			auto created = vec.create(idx, count);
-			auto gotten  = vec.get(idx);
+			auto created = storage.create(idx, count);
+			auto gotten  = storage.get(idx);
 			REQUIRE(created == gotten);
 		}
 
 		for(auto idx : indices)
-			vec.destroy(idx);
+			storage.destroy(idx);
 	}
 
 	SECTION("sparse_vector doesn't leak") {
 		auto indices = random_indices(1000, {0, 4096});
 
-		for(auto idx : indices) vec.create(idx, count);
+		for(auto idx : indices) storage.create(idx, count);
 
 		REQUIRE(count == indices.size());
-		REQUIRE(vec.statistics().used_slots == indices.size());
+		REQUIRE(storage.statistics().used_slots == indices.size());
 		std::shuffle(indices.begin(), indices.end(), std::mt19937(rand()));
 
-		for(auto idx : indices) vec.destroy(idx);
+		for(auto idx : indices) storage.destroy(idx);
 		REQUIRE(count == 0);
-		REQUIRE(vec.statistics().used_slots == 0);
-		REQUIRE(vec.statistics().used_memory == 0);
+		REQUIRE(storage.statistics().used_slots == 0);
+		REQUIRE(storage.statistics().used_memory == 0);
 	}
 }
 
