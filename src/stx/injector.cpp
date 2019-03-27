@@ -1,7 +1,7 @@
-#include "../injector.hpp"
+#include "injector.hpp"
 
 #ifndef NDEBUG
-#include "../type.hpp"
+#include "type.hpp"
 #endif
 
 #include <algorithm>

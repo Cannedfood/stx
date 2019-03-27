@@ -42,11 +42,11 @@ flags { 'MultiProcessorCompile', 'NoIncrementalLink' }
 vectorextensions 'SSE2'
 floatingpoint 'Fast'
 
-includedirs 'include/'
+includedirs 'src/'
 
 project 'stx'
 	kind 'SharedLib'
-	files 'include/stx/src/**.cpp'
+	files 'src/**.cpp'
 	links {'dl', 'pthread', 'stdc++fs'}
 
 project 'test'

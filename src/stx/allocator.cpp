@@ -1,6 +1,6 @@
-#include "../allocator.hpp"
+#include "allocator.hpp"
 
-#include "../platform.hpp"
+#include "platform.hpp"
 
 namespace stx {
 

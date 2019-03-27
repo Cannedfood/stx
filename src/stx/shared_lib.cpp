@@ -1,6 +1,6 @@
 // Copyright (c) 2017 Benno Straub, licensed under the MIT license. (A copy can be found at the end of this file)
 
-#include "../shared_lib.hpp"
+#include "shared_lib.hpp"
 
 #include <utility>
 

@@ -1,4 +1,4 @@
-#include "../../entities/entity_ids.hpp"
+#include "entity_ids.hpp"
 
 #include <cassert>
 

@@ -1,4 +1,4 @@
-#include "../type.hpp"
+#include "type.hpp"
 
 #ifdef __GNUC__
 

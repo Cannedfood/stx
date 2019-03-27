@@ -1,6 +1,6 @@
-#include "../xml.hpp"
+#include "xml.hpp"
 
-#include "../platform.hpp"
+#include "platform.hpp"
 
 #include <fstream>
 

@@ -1,4 +1,4 @@
-#include "../serial.hpp"
+#include "serial.hpp"
 
 namespace stx {
 

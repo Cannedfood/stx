@@ -1,4 +1,4 @@
-#include "../file_watcher.hpp"
+#include "file_watcher.hpp"
 
 #include "../platform.hpp"
 

@@ -1,4 +1,4 @@
-#include "../system.hpp"
+#include "system.hpp"
 
 #include <random>
 #include <algorithm>

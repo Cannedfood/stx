@@ -1,4 +1,4 @@
-#include "../socket.hpp"
+#include "socket.hpp"
 
 #include <cassert>
 extern "C" {
