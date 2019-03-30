@@ -100,8 +100,6 @@ void config::parseIni(std::string const& path) {
 	#endif // !defined(STX_NO_FILESYSTEM)
 
 	// A file
-	puts(path.c_str());
-
 	std::ifstream file(path);
 	parseIni(file);
 }
