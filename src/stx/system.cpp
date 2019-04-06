@@ -25,7 +25,9 @@ system_manager::~system_manager() noexcept {
 void system_manager::update(float dt) {
 	for(auto& system : m_systems) {
 		if(system.enabled) {
-			system.sys->sysUpdate(dt);
+			system.profiling.sysUpdate.measure([&]() {
+				system.sys->sysUpdate(dt);
+			});
 		}
 	}
 }
@@ -111,13 +113,17 @@ void system_manager::add(
 		add_configurator(system_manager& manager, entry& e) noexcept
 			: system_configuration(manager), m_entry(e)
 		{}
-		void         enabledBy (std::initializer_list<std::string_view> groups) noexcept override { m_entry.enabledBy |= manager.groupMask(groups); }
-		void         disabledBy(std::initializer_list<std::string_view> groups) noexcept override { m_entry.disabledBy |= manager.groupMask(groups); }
+		void enabledBy (std::initializer_list<std::string_view> groups) noexcept override { m_entry.enabledBy |= manager.groupMask(groups); }
+		void disabledBy(std::initializer_list<std::string_view> groups) noexcept override { m_entry.disabledBy |= manager.groupMask(groups); }
 	};
 
 	auto add_config = add_configurator{*this, e};
-	sys->sysAdded(add_config);
-	sys->sysConfigure(add_config);
+	e.profiling.sysAdded.measure([&]() {
+		sys->sysAdded(add_config);
+	});
+	e.profiling.sysConfigure.measure([&]() {
+		sys->sysConfigure(add_config);
+	});
 
 	_updateEnabled(e);
 }
@@ -161,10 +167,14 @@ void system_manager::_updateEnabled(entry& e) {
 	if(e.enabled != should_be_enabled) {
 		e.enabled = should_be_enabled;
 		if(e.enabled) {
-			e.sys->sysEnable(*this);
+			e.profiling.sysEnable.measure([&]() {
+				e.sys->sysEnable(*this);
+			});
 		}
 		else {
-			e.sys->sysDisable(*this);
+			e.profiling.sysEnable.measure([&]() {
+				e.sys->sysDisable(*this);
+			});
 		}
 	}
 }

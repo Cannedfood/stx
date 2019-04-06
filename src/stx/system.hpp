@@ -49,6 +49,36 @@ class system_manager {
 public:
 	using group_mask  = std::bitset<options::MaxNumSystemGroups>;
 	using group_names = std::initializer_list<std::string_view>;
+	using  clock = std::chrono::high_resolution_clock;
+	using  time_point = clock::time_point;
+	struct time_range { clock::time_point start, end; };
+	struct timings {
+		unsigned               max;
+		std::deque<time_range> events;
+		timings(unsigned n) : max(n) {}
+		void add(time_range range) { events.push_back(range); while(events.size() > max) events.pop_front(); }
+		template<class C> void measure(C&& c) { time_range t; t.start = clock::now(); c(); t.end = clock::now(); add(t); }
+	};
+	struct profiling_info {
+		timings sysAdded     = {100};
+		timings sysRemoved   = {100};
+
+		timings sysConfigure = {100};
+
+		timings sysEnable    = {100};
+		timings sysDisable   = {100};
+
+		timings sysUpdate    = {100};
+	};
+	struct entry {
+		std::string name;
+		shared<system> sys;
+		group_mask enabledBy, disabledBy;
+		bool forceDisable = false;
+		bool enabled = false;
+		profiling_info profiling;
+	};
+
 
 	system_manager() noexcept;
 	system_manager(stx::injector&) noexcept;
@@ -124,34 +154,11 @@ public:
 
 	injector& inject();
 
+	std::deque<entry> const& systems() const noexcept { return m_systems; }
+
 	template<class T> stx::shared<T> inject() { return inject().get<T>(); }
 	template<class... Args> void inject(Args&&... args) { inject().get(std::forward<Args>(args)...); }
 private:
-	struct entry {
-		std::string name;
-		shared<system> sys;
-		group_mask enabledBy, disabledBy;
-		bool forceDisable = false;
-		bool enabled = false;
-
-		struct profiling_info {
-			using clock = std::chrono::high_resolution_clock;
-
-			enum class EventType {
-				sysAdded, sysConfigure, sysEnable, sysUpdate, sysDisable, sysRemoved
-			};
-
-			struct data_point {
-				EventType         type;
-				int               thread;
-				clock::time_point start, end;
-			};
-
-			std::deque<data_point> infos;
-		};
-		profiling_info profiling;
-	};
-
 	std::deque<entry> m_systems;
 	group_mask        m_enabled_groups;
 
