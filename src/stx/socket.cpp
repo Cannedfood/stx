@@ -14,7 +14,8 @@ ipv4::ipv4(uint32_t ip, uint16_t port) noexcept :
 	m_addr {
 		.sin_family = (sa_family_t)domain::ipv4,
 		.sin_port = htons(port),
-		.sin_addr.s_addr = htonl(ip)
+		.sin_addr = { .s_addr = htonl(ip) },
+		.sin_zero = {}
 	}
 {}
 
