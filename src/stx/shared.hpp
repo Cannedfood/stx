@@ -10,6 +10,11 @@
 #include <cassert>
 #include <functional>
 
+#ifdef STX_SHARED_DEBUG
+#include <typeinfo>
+#include "type_hacks.hpp"
+#endif
+
 // TODO: optimize memory usage with enable_shared_from_this: Only needs one pointer
 
 namespace stx {
@@ -26,6 +31,30 @@ template<class T> class default_shared_block; //<! A shared_block allocated like
 template<class T, class Deleter> class pointer_shared_block; class dummy_shared_block; //<! A shared_block for pointers (can take a deleter as argument)
 
 template<class T> class enable_shared_from_this; //<! Make an object track it's shared block, so you can generate shared- and weak pointers directly from the object
+
+// =============================================================
+// == shared debugging (for reference loops etc.), slow AF =====
+// =============================================================
+
+namespace debug {
+
+#ifdef STX_SHARED_DEBUG
+
+void shared_created  (void* shared, void* ptr, size_t type_size, std::type_info const* type) noexcept;
+void shared_destroyed(void* sptr) noexcept;
+void shared_debug_print(bool all = false) noexcept;
+
+template<class T> inline void shared_created(void* shared, T* ptr) noexcept {
+	shared_created(shared, ptr, try_sizeof<T>(), try_typeid<T>());
+}
+#else
+constexpr static inline void shared_created  (void* shared, void* ptr, size_t type_size, std::type_info const* type) noexcept {}
+constexpr static inline void shared_destroyed(void* sptr) noexcept {}
+
+template<class T> constexpr static inline void shared_created(void* shared, T* ptr) noexcept {}
+#endif
+
+} // namespace debug
 
 // =============================================================
 // == shared_block =============================================
@@ -259,6 +288,8 @@ public:
 	shared(std::nullptr_t = nullptr) noexcept {}
 	shared& operator=(std::nullptr_t) noexcept { reset(nullptr); return *this; }
 	void reset(std::nullptr_t = nullptr) noexcept {
+		if(m_value) debug::shared_destroyed(this);
+
 		shared_block* block = m_block;
 		m_block = nullptr;
 		m_value = nullptr;
@@ -308,6 +339,9 @@ public:
 		);
 		_move_reset(std::exchange(other.m_value, nullptr),
 		            std::exchange(other.m_block, nullptr));
+		if(m_value) {
+			debug::shared_destroyed(&other);
+		}
 	}
 
 	// Copy related
@@ -336,6 +370,7 @@ public:
 		reset();
 		m_value = value;
 		m_block = block;
+		debug::shared_created<T>(this, m_value);
 	}
 
 	// Operators
