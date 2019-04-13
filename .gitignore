@@ -1,3 +1,5 @@
+.vscode/ipch
+
 test.run
 install/stx/
 install/src/
