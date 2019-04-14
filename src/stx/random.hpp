@@ -24,15 +24,25 @@ public:
 		mGenerator.seed(value);
 	}
 
-	template<class T> std::enable_if_t<std::is_integral_v<T>,
-	T> get(T min, T max) { return std::uniform_int_distribution<T>(min, max)(mGenerator); }
-	template<class T> std::enable_if_t<std::is_floating_point_v<T>,
-	T> get(T min, T max) { return std::uniform_real_distribution<T>(min, max)(mGenerator); }
+	template<class T>
+	T get(T min, T max) {
+		static_assert(std::is_integral_v<T> || std::is_floating_point_v<T>, "Can only generate floating point numbers or integers");
+		if constexpr(std::is_floating_point_v<T>) {
+			return std::uniform_real_distribution<T>(min, max)(mGenerator);
+		}
+		if constexpr(std::is_integral_v<T>) {
+			return std::uniform_int_distribution<T>(min, max)(mGenerator);
+		}
+	}
 
 	template<class T>
-	T get(T range) { return get<T>(0, range); }
+	T get(T range) { return get<T>(T(0), range); }
 	template<class T>
 	T get() { return get<T>(std::numeric_limits<T>::min(), std::numeric_limits<T>::max()); }
+	template<class T>
+	auto& get(T* array, size_t size) { return array[get<size_t>(size - 1)]; }
+
+	Generator& generator() noexcept { return mGenerator; }
 };
 
 inline
