@@ -2,10 +2,14 @@
 
 #include <functional>
 
+#include "gc.hpp"
+#include "shared.hpp"
+
 namespace stx {
 
 // ** Forward declarations *******************************************************
 template<class T> class weak;
+template<class T> class gc;
 
 // ** Executor *******************************************************
 // TODO: promises
@@ -38,6 +42,15 @@ template<class T, class Context>
 auto assignTo(T& output, stx::weak<Context> if_this_still_exists) {
 	return [&output, if_this_still_exists](T result) {
 		if(auto tmp = if_this_still_exists.lock()) {
+			output = result;
+		}
+	};
+}
+
+template<class T, class Context>
+auto assignTo(T& output, stx::gc<Context> const& if_still_exists) {
+	return [&output, if_still_exists = stx::weak_gc<Context>(if_still_exists)](T result) {
+		if(if_still_exists.lock()) {
 			output = result;
 		}
 	};

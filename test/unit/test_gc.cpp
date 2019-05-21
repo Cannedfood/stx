@@ -2,15 +2,16 @@
 
 #include "test_helpers/counted.hpp"
 
-#include <stx/gc.hpp>
 #include <stx/random.hpp>
+
+#include <stx/gc.hpp>
 
 #include <fstream>
 #include <iostream>
+#include <vector>
+#include <map>
 
-using stx::gc;
-using stx::make_gc;
-using stx::garbage_collector;
+using namespace stx;
 
 TEST_CASE("Single reference doesn't leak", "[gc]") {
 	int count = 0;
@@ -124,7 +125,7 @@ TEST_CASE("Assignment tests", "[gc]") {
 
 	// Move
 	{
-		puts("========== Move");
+		// puts("========== Move");
 		gc<counted> a = make_gc<counted>(count);
 		gc<counted> b = std::move(a);
 
@@ -135,14 +136,14 @@ TEST_CASE("Assignment tests", "[gc]") {
 		CHECK(garbage_collector::total_ref_count() == 1);
 		CHECK(garbage_collector::refcount(b.get()) == 1);
 
-		garbage_collector::printDotGraph(std::cout);
+		// garbage_collector::printDotGraph(std::cout);
 	}
 	garbage_collector::mark_and_sweep();
 	REQUIRE(count == 0);
 
 	// Copy
 	{
-		puts("========== Copy");
+		// puts("========== Copy");
 		gc<counted> a = make_gc<counted>(count);
 		gc<counted> b = a;
 
@@ -229,4 +230,55 @@ TEST_CASE("GC stress test", "[gc]") {
 	CHECK(count == 0);
 	CHECK(garbage_collector::total_obj_count() == 0);
 	CHECK(garbage_collector::total_ref_count() == 0);
+}
+
+struct recursive_ref {
+	std::vector<gc<recursive_ref>, gc_alloc<gc<recursive_ref>>> refs;
+	recursive_ref() : refs({ this }) {}
+};
+
+TEST_CASE("gc_alloc works", "[gc]") {
+	stx::random rnd;
+
+	SECTION("With std::map") {
+		garbage_collector::LEAK_ALL();
+
+		auto owner = stx::make_gc<int>();
+
+		using gc_map = std::map<int, int, std::less<>, gc_alloc<std::pair<const int, int>>>;
+
+		gc_map map(gc_alloc{owner.get()});
+		for (size_t i = 0; i < 100; i++) {
+			map.emplace(rnd.get<int>(), rnd.get<int>());
+		}
+		CHECK(garbage_collector::total_obj_count() > 0);
+		CHECK(garbage_collector::total_ref_count() > 0);
+		CHECK(garbage_collector::total_ref_count() == 1+garbage_collector::outrefcount(owner.get()));
+	}
+
+	SECTION("With circular references") {
+		garbage_collector::LEAK_ALL();
+
+		auto ref = stx::make_gc<recursive_ref>();
+		ref->refs.push_back(ref);
+		ref->refs.push_back(ref);
+		garbage_collector::mark_and_sweep();
+		CHECK(garbage_collector::total_obj_count() == 2);
+		ref = nullptr;
+		CHECK(garbage_collector::total_obj_count() == 0);
+
+		garbage_collector::writeDotFile("test.gv");
+	}
+
+	CHECK(garbage_collector::total_ref_count() == 0);
+	CHECK(garbage_collector::total_obj_count() >  0);
+	garbage_collector::mark_and_sweep();
+	CHECK(garbage_collector::total_ref_count() == 0);
+	CHECK(garbage_collector::total_obj_count() == 0);
+}
+
+TEST_CASE("Test destruction order") {
+	// TODO
+
+
 }
