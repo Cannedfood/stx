@@ -57,40 +57,43 @@ void perfEntities() {
 }
 
 void perfGC() {
-	using stx::gc;
-	using stx::make_gc;
-	using stx::garbage_collector;
+	using namespace stx;
+
+	struct thing { gc<thing> value; };
 
 	puts("GC performance:");
 
-	constexpr size_t N = 10000;
 	stx::random rnd;
-
-	struct thing {
-		gc<thing> value;
-	};
-
-	std::vector<gc<thing>> things(N);
-
 	stx::timer t;
 
-	t.reset();
-	for(auto& e : things) e = make_gc<thing>();
-	printf("\tTook %s to create %zu elements\n", t.to_string().c_str(), things.size());
+	constexpr size_t N = 20000;
 
-	t.reset();
-	for(auto& e : things) e->value = rnd.get(things.data(), things.size());
-	printf("\tTook %s to randomly link %zu elements\n", t.to_string().c_str(), things.size());
+	for (size_t i = 1; i <= 3; i++)
+	{
+		garbage_collector::LEAK_ALL();
 
-	t.reset();
-	things.clear();
-	printf("\tTook %s to remove %zu references\n", t.to_string().c_str(), things.size());
+		printf("\tRound %zu\n", i);
 
-	t.reset();
-	garbage_collector::mark_and_sweep();
-	printf("\tTook %s to collect graph with %zu objects with each a random ref to another\n", t.to_string().c_str(), things.size());
+		std::vector<gc<thing>> things(N);
 
-	puts("");
+		t.reset();
+		for(auto& e : things) e = make_gc<thing>();
+		printf("\t\tTook %s to create %zu elements\n", t.to_string().c_str(), N);
+
+		t.reset();
+		for(auto& e : things) e->value = rnd.get(things.data(), things.size());
+		printf("\t\tTook %s to randomly link %zu elements\n", t.to_string().c_str(), N);
+
+		t.reset();
+		things.clear();
+		printf("\t\tTook %s to remove %zu references\n", t.to_string().c_str(), N);
+
+		t.reset();
+		garbage_collector::mark_and_sweep();
+		printf("\t\tTook %s to collect graph with %zu objects with each a random ref to another\n", t.to_string().c_str(), N);
+
+		puts("");
+	}
 }
 
 int main() {
