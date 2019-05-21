@@ -35,10 +35,7 @@ public:
 			);
 	}
 public:
-	template<class Key, class Value>
-	using gc_unordered_map = std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, gc_alloc<std::pair<const Key, Value>>>;
-
-	  gc_unordered_map<size_t, entry_t>   m_entries;
+	std::unordered_map<size_t, entry_t>   m_entries;
 	std::unordered_map<size_t, factory_t> m_factories;
 };
 
