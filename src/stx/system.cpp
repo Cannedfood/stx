@@ -12,11 +12,15 @@ using group_names = system_manager::group_names;
 system_manager::system_manager() noexcept : m_injector(nullptr) {}
 system_manager::system_manager(stx::injector& inj) noexcept : m_injector(&inj) {}
 system_manager::~system_manager() noexcept {
-	for(auto& entry : m_systems) {
-		if(entry.enabled) {
-			entry.sys->sysDisable(*this);
+	for (auto& e : m_systems) {
+		if(e.enabled) {
+			e.sys->sysDisable(*this);
 		}
-		entry.sys->sysRemoved();
+	}
+
+	while(!m_systems.empty()) {
+		m_systems.front().sys->sysRemoved();
+		m_systems.pop_front();
 	}
 }
 
@@ -118,12 +122,8 @@ void system_manager::add(
 	};
 
 	auto add_config = add_configurator{*this, e};
-	e.profiling.sysAdded.measure([&]() {
-		sys->sysAdded(add_config);
-	});
-	e.profiling.sysConfigure.measure([&]() {
-		sys->sysConfigure(add_config);
-	});
+	e.profiling.sysAdded    .measure([&]() { sys->sysAdded(add_config); });
+	e.profiling.sysConfigure.measure([&]() { sys->sysConfigure(add_config); });
 
 	_updateEnabled(e);
 }
@@ -132,7 +132,7 @@ void system_manager::add(
 	std::string_view name, group_names enabledIn, group_names disabledIn,
 	shared<system> sys)
 {
-	 add(name, groupMask(enabledIn), groupMask(disabledIn), sys);
+	add(name, groupMask(enabledIn), groupMask(disabledIn), sys);
 }
 
 void system_manager::add(
