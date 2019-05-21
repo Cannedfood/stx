@@ -12,6 +12,10 @@ static size_t get_id(std::type_info const& info, size_t quirk) {
 	return (info.hash_code() + quirk) ^ quirk;
 }
 
+injector::injector() :
+	m_entries({ this })
+{}
+
 #ifndef NDEBUG
 static int depth = 0;
 #endif
