@@ -12,6 +12,7 @@
 
 #ifdef STX_SHARED_DEBUG
 #include <typeinfo>
+#include <iosfwd>
 #include "type_hacks.hpp"
 #endif
 
@@ -39,19 +40,18 @@ template<class T> class enable_shared_from_this; //<! Make an object track it's 
 namespace debug {
 
 #ifdef STX_SHARED_DEBUG
+void trace_reference(void const* self, void const* ptr, size_t type_size, std::type_info const* type) noexcept;
 
-void shared_created  (void* shared, void* ptr, size_t type_size, std::type_info const* type) noexcept;
-void shared_destroyed(void* sptr) noexcept;
-void shared_debug_print(bool all = false) noexcept;
-
-template<class T> inline void shared_created(void* shared, T* ptr) noexcept {
-	shared_created(shared, ptr, try_sizeof<T>(), try_typeid<T>());
+template<class T>
+inline void trace_reference(stx::shared<T> const& p) noexcept {
+	trace_reference(&p, p.get(), try_sizeof<T>(), try_typeid<T>());
 }
-#else
-constexpr static inline void shared_created  (void* shared, void* ptr, size_t type_size, std::type_info const* type) noexcept {}
-constexpr static inline void shared_destroyed(void* sptr) noexcept {}
 
-template<class T> constexpr static inline void shared_created(void* shared, T* ptr) noexcept {}
+void shared_debug_print(std::ostream& to) noexcept;
+#else
+inline void trace_reference(void* self, void* ptr, size_t type_size, std::type_info const* type) noexcept {}
+template<class T>
+inline void trace_reference(stx::shared<T> const& p) noexcept {}
 #endif
 
 } // namespace debug
@@ -288,14 +288,13 @@ public:
 	shared(std::nullptr_t = nullptr) noexcept {}
 	shared& operator=(std::nullptr_t) noexcept { reset(nullptr); return *this; }
 	void reset(std::nullptr_t = nullptr) noexcept {
-		if(m_value) debug::shared_destroyed(this);
-
 		shared_block* block = m_block;
 		m_block = nullptr;
 		m_value = nullptr;
 		if(block) {
 			block->remove_strong_ref();
 		}
+		debug::trace_reference(*this);
 	}
 
 	// Move
@@ -303,7 +302,7 @@ public:
 	shared& operator=(shared&& other) noexcept { reset(std::move(other)); return *this; }
 	void reset(shared&& other) noexcept {
 		_move_reset(std::exchange(other.m_value, nullptr),
-								std::exchange(other.m_block, nullptr));
+		            std::exchange(other.m_block, nullptr));
 	}
 
 	// Copy
@@ -339,9 +338,7 @@ public:
 		);
 		_move_reset(std::exchange(other.m_value, nullptr),
 		            std::exchange(other.m_block, nullptr));
-		if(m_value) {
-			debug::shared_destroyed(&other);
-		}
+		debug::trace_reference(other);
 	}
 
 	// Copy related
@@ -370,7 +367,7 @@ public:
 		reset();
 		m_value = value;
 		m_block = block;
-		debug::shared_created<T>(this, m_value);
+		debug::trace_reference(*this);
 	}
 
 	// Operators
