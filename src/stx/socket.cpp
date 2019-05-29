@@ -2,58 +2,46 @@
 
 #include <cassert>
 extern "C" {
-#include <memory.h>
+	#include <memory.h>
 }
-
 
 namespace stx {
 
-// -- ipv4 -------------------------------------------------------
-
-ipv4::ipv4(uint32_t ip, uint16_t port) noexcept :
-	m_addr {
+address ipv4(uint32_t ip, uint16_t port) noexcept {
+	address addr;
+	sockaddr_in addr_thing {
 		.sin_family = (sa_family_t)domain::ipv4,
 		.sin_port = htons(port),
 		.sin_addr = { .s_addr = htonl(ip) },
 		.sin_zero = {}
+	};
+	memcpy((void*)(sockaddr_storage*)&addr, &addr_thing, sizeof(addr_thing));
+	addr.length = sizeof(addr_thing);
+	return addr;
+}
+address ipv4(uint8_t ip_1, uint8_t ip_2, uint8_t ip_3, uint8_t ip_4, uint16_t port) noexcept {
+	return ipv4(uint32_t(ip_1) << 24 | uint32_t(ip_2) << 16 | uint32_t(ip_3) << 8 | uint32_t(ip_4) << 0, port);
+}
+address ipv4(uint16_t port) noexcept {
+	return ipv4(INADDR_ANY, port);
+}
+
+std::string to_string(address const& addr) noexcept {
+	switch(addr.ss_family){
+		case (int)domain::ipv4: {
+			uint32_t ip   = ntohl(((sockaddr_in&)addr).sin_addr.s_addr);
+			uint16_t port = ntohs(((sockaddr_in&)addr).sin_port);
+
+			return
+				std::to_string(0xFFu & (ip >> 24)) + "." +
+				std::to_string(0xFFu & (ip >> 24)) + "." +
+				std::to_string(0xFFu & (ip >> 24)) + "." +
+				std::to_string(0xFFu & (ip >> 24)) + ":" +
+				std::to_string(port);
+		} break;
+		default: return "";
 	}
-{}
-
-ipv4::ipv4(uint16_t port) noexcept :
-	ipv4(INADDR_ANY, port)
-{}
-
-ipv4::ipv4(uint8_t ip_1, uint8_t ip_2, uint8_t ip_3, uint8_t ip_4, uint16_t port) noexcept :
-	ipv4(uint32_t(ip_1) << 24 | uint32_t(ip_2) << 16 | uint32_t(ip_3) << 8 | uint32_t(ip_4) << 0, port)
-{}
-
-ipv4::ipv4(address const& addr) noexcept {
-	memcpy(&m_addr, addr.get(), addr.length());
-	assert(m_addr.sin_family == (sa_family_t)domain::ipv4);
 }
-
-std::string ipv4::to_string() const noexcept {
-	uint32_t ip   = ntohl(m_addr.sin_addr.s_addr);
-	uint16_t port = ntohs(m_addr.sin_port);
-
-	return
-		std::to_string(0xFFu & (ip >> 24)) + "." +
-		std::to_string(0xFFu & (ip >> 24)) + "." +
-		std::to_string(0xFFu & (ip >> 24)) + "." +
-		std::to_string(0xFFu & (ip >> 24)) + ":" +
-		std::to_string(port);
-}
-
-sockaddr const* ipv4::get()    const noexcept { return reinterpret_cast<sockaddr const*>(&m_addr); }
-int             ipv4::length() const noexcept { return sizeof(m_addr); }
-
-// -- Any Address -------------------------------------------------------
-any_address::any_address(address const& other) noexcept {
-	memcpy(&m_addr, other.get(), other.length());
-	m_size = other.length();
-}
-sockaddr const* any_address::get()    const noexcept { return reinterpret_cast<sockaddr const*>(&m_addr); }
-int             any_address::length() const noexcept { return m_size; }
 
 // -- socket -------------------------------------------------------
 
@@ -75,25 +63,25 @@ void socket::close() noexcept {
 
 // Client
 bool socket::connect(address const& addr) noexcept {
-	int err_code = ::connect(m_handle, addr.get(), addr.length());
+	int err_code = ::connect(m_handle, addr, addr.length);
 	return err_code >= 0;
 }
 
 // Server
 bool socket::bind(address const& addr) noexcept {
-	int err_code = ::bind(m_handle, addr.get(), addr.length());
+	int err_code = ::bind(m_handle, addr, addr.length);
 	return err_code >= 0;
 }
 bool socket::listen(unsigned queueLength) noexcept {
 	int err_code = ::listen(m_handle, queueLength);
 	return err_code >= 0;
 }
-socket socket::accept(any_address* addr) noexcept {
+socket socket::accept(address* addr) noexcept {
 	socket result;
 	result.m_handle = ::accept(
 		m_handle,
-		addr ? addr->get() : nullptr,
-		addr ? addr->plength() : nullptr
+		addr ? *addr : (sockaddr*)nullptr,
+		addr ? &addr->length : nullptr
 	);
 	return result;
 }
@@ -107,17 +95,17 @@ int socket::recv(void* data,       size_t len, int flags) noexcept {
 }
 
 // UDP-ish
-int socket::recvfrom(void*       buf, size_t len, any_address* from, int flags) noexcept {
+int socket::recvfrom(void*       buf, size_t len, address* from, int flags) noexcept {
 	return ::recvfrom(
 		m_handle,
 		(char*)buf, len,
 		flags,
-		from ? from->get() : nullptr,
-		from ? from->plength() : nullptr
+		from ? *from : (sockaddr*)nullptr,
+		from ? &from->length : nullptr
 	);
 }
 int socket::sendto  (void const* buf, size_t len, address const& to,   int flags) noexcept {
-	return ::sendto(m_handle, buf, len, flags, to.get(), to.length());
+	return ::sendto(m_handle, buf, len, flags, to, to.length);
 }
 
 // Options
