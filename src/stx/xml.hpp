@@ -183,6 +183,8 @@ template<>
 float attribute::value<float>() const;
 template<>
 double attribute::value<double>() const;
+template<>
+std::string attribute::value<std::string>() const;
 
 // ** node *******************************************************
 

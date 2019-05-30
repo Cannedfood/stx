@@ -166,6 +166,10 @@ float attribute::value<float>() const {
 	return result;
 	*/
 }
+template<>
+std::string attribute::value<std::string>() const {
+	return std::string(this->value());
+}
 
 bool node::name_in(std::initializer_list<std::string_view> const& names) const noexcept {
 	for(auto& name : names) {
