@@ -492,6 +492,18 @@ shared<T> make_shared(Args&&... args) {
 	return result;
 }
 
+template<class T, class Deleter = std::default_delete<T>>
+shared<T> share(T* t, Deleter&& del = {}) {
+	using ActualDeleter = std::remove_cv_t<std::remove_reference_t<Deleter>>;
+
+	shared<T> result;
+
+	auto* block = new pointer_shared_block<T, ActualDeleter>(t, std::forward<Deleter>(del));
+	result._move_reset(block->value(), block);
+
+	return result;
+}
+
 } // namespace stx
 
 namespace std {
