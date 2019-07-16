@@ -57,6 +57,7 @@ public:
 		unassigned,
 		doctype,
 		cdata, // TODO: should those be regular content nodes? (Annoying for serialization)
+		processing_instruction,
 		regular,
 		content,
 		comment
@@ -129,9 +130,10 @@ public:
 	const char* parse_document(arena_allocator&, const char* cstr);
 	const char* parse_regular(arena_allocator&, const char*);
 	const char* parse_doctype(arena_allocator&, const char*);
+	const char* parse_processing_instruction(arena_allocator&, const char*);
 	const char* parse_comment(arena_allocator&, const char*);
 	const char* parse_content(arena_allocator&, const char*);
-	const char* parse_attributes(arena_allocator&, const char*);
+	const char* parse_attributes(arena_allocator&, const char*, const char endChar);
 	const char* parse_children(arena_allocator&, const char*);
 	const char* parse_node(arena_allocator&, const char*);
 private:

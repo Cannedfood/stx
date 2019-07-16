@@ -280,7 +280,7 @@ const char* node::parse_regular(arena_allocator& alloc, const char* s) {
 	m_type = regular;
 
 	next_token(s);
-	s = parse_attributes(alloc, s);
+	s = parse_attributes(alloc, s, '/');
 	if(*s == '/') {
 		s++;
 		if(STX_UNLIKELY(*s != '>')) {
@@ -330,6 +330,30 @@ const char* node::parse_comment(arena_allocator& alloc, const char* s) {
 	}
 	throw errors::parsing_error("Expected closing greater-than sign", s);
 }
+const char* node::parse_processing_instruction(arena_allocator& alloc, const char* s) {
+	m_type = processing_instruction;
+
+	if(s[0] != '<' || s[1] != '?') {
+		throw parsing::errors::parsing_error("Expected processing instruction starting with <?", s);
+	}
+
+	s += 2;
+
+	next_token(s);
+	this->m_value = parse_name(s);
+
+	next_token(s);
+	parse_attributes(alloc, s, '?');
+
+	while(!(s[0] == '?' && s[1] == '>')) {
+		if(s[1] == '\0') {
+			throw parsing::errors::parsing_error("Expected '?>' matching '<?' (End of processing instruction)", s);
+		}
+		s++;
+	}
+
+	return s + 2;
+}
 const char* node::parse_content(arena_allocator& alloc, const char* s) {
 	while(*s <= ' ') s++; // Skipws
 	m_type = content;
@@ -339,8 +363,8 @@ const char* node::parse_content(arena_allocator& alloc, const char* s) {
 	while(!m_value.empty() && m_value.back() <= ' ') m_value.remove_suffix(1);
 	return s;
 }
-const char* node::parse_attributes(arena_allocator& alloc, const char* s) {
-	while(*s != '/' && *s != '>') {
+const char* node::parse_attributes(arena_allocator& alloc, const char* s, const char endChar) {
+	while((*s != endChar) && *s != '>') {
 		attribute* attrib = alloc.create<attribute>();
 		s = attrib->parse(alloc, s);
 
@@ -392,6 +416,11 @@ const char* node::parse_node(arena_allocator& alloc, const char* s) {
 			);
 		}
 	}
+
+	if(STX_UNLIKELY(s[1] == '?')) {
+		return parse_processing_instruction(alloc, s);
+	}
+
 	return parse_regular(alloc, s);
 }
 

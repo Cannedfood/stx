@@ -7,6 +7,7 @@ using namespace stx::xml;
 
 TEST_CASE("Simple xml parser test", "[xml]") {
 	const char* source = R"(
+		<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 		<outer>
 			<!-- comment -->
 			<inner1/>
@@ -22,7 +23,13 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 
 	node doc;
 	arena_allocator alloc;
-	doc.parse_document(alloc, source);
+	try {
+		doc.parse_document(alloc, source);
+	}
+	catch(stx::parsing::errors::parsing_error& e) {
+		e.diagnose("c_str", source);
+		throw;
+	}
 
 	node
 		*outer,
@@ -32,10 +39,11 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 		*inner3,
 		*inner4;
 
-	outer = doc.children();
+	CHECK(doc.children()->type() == node::processing_instruction);
+
+	outer = doc.child(node::regular);
 	CHECK(outer);
 	CHECK(!outer->next());
-	CHECK(!outer->prev());
 	CHECK(outer->type() == node::regular);
 	CHECK(!outer->attributes());
 
