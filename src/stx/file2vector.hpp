@@ -31,18 +31,18 @@ inline std::string          file2string(const char* path) {
 
 inline std::vector<uint8_t> stream2vector(std::istream& stream) {
 	std::vector<uint8_t> result;
-	stream.seekg(std::ios::end);
+	stream.seekg(0, std::ios::end);
 	result.resize(stream.tellg(), '\0');
-	stream.seekg(std::ios::beg);
+	stream.seekg(0, std::ios::beg);
 	stream.read((char*)result.data(), result.size());
 	return result;
 }
 
 inline std::string          stream2string(std::istream& stream) {
 	std::string result;
-	stream.seekg(std::ios::end);
+	stream.seekg(0, std::ios::end);
 	result.resize(stream.tellg(), '\0');
-	stream.seekg(std::ios::beg);
+	stream.seekg(0, std::ios::beg);
 	stream.read(result.data(), result.size());
 	return result;
 }
