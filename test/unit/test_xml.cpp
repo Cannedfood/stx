@@ -18,6 +18,7 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 				I am content
 				<!-- I am a comment -->
 			</inner4>
+			<inner5>I am squished content</inner5>
 		</outer>
 	)";
 
@@ -37,7 +38,8 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 		*inner1,
 		*inner2,
 		*inner3,
-		*inner4;
+		*inner4,
+		*inner5;
 
 	CHECK(doc.children()->type() == node::processing_instruction);
 
@@ -62,7 +64,10 @@ TEST_CASE("Simple xml parser test", "[xml]") {
 	CHECK(inner3->req_attrib("type").value() == "awesome type");
 	inner4 = inner3->next();
 	CHECK(inner4);
-	CHECK(!inner4->next());
+	inner5 = inner4->next();
+	CHECK(inner5);
+	CHECK(inner5->child(node::content)->content_value() == "I am squished content");
+	CHECK(!inner5->next());
 
 	node* content = inner4->children();
 	REQUIRE(content);

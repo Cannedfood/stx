@@ -181,7 +181,7 @@ bool node::name_in(std::initializer_list<std::string_view> const& names) const n
 node* node::first(std::string_view name) noexcept {
 	node* n = this;
 	do {
-		if(n->name() == name)
+		if(n->type() == regular && n->name() == name)
 			return n;
 	} while((n = n->next()));
 	return nullptr;
@@ -193,7 +193,7 @@ node* node::next(std::string_view name) noexcept {
 node* node::prev(std::string_view name) noexcept {
 	node* n = this;
 	while((n = n->prev())) {
-		if(n->name() == name)
+		if(n->type() == regular && n->name() == name)
 			return n;
 	}
 	return nullptr;
@@ -202,7 +202,7 @@ node* node::prev(std::string_view name) noexcept {
 node* node::first_of(std::initializer_list<std::string_view> const& names) noexcept {
 	node* n = this;
 	do {
-		if(n->name_in(names)) return n;
+		if(n->type() == regular && n->name_in(names)) return n;
 	} while((n = n->next()));
 	return nullptr;
 }
@@ -359,7 +359,7 @@ const char* node::parse_content(arena_allocator& alloc, const char* s) {
 	m_type = content;
 	const char* start = s;
 	while(*s && (s[0] != '<' || s[1] <= ' ')) s++;
-	m_value = std::string_view(start, std::max(start, s - 1) - start);
+	m_value = std::string_view(start, std::max(start, s) - start);
 	while(!m_value.empty() && m_value.back() <= ' ') m_value.remove_suffix(1);
 	return s;
 }
@@ -405,7 +405,12 @@ const char* node::parse_node(arena_allocator& alloc, const char* s) {
 		if(STX_LIKELY(s[2] == '-' && s[3] == '-')) {
 			return parse_comment(alloc, s);
 		}
-		else if(!strcmp(s + 2, "DOCTYPE")) {
+		else if(
+			0 == memcmp(s + 2, "DOCTYPE", 7) ||
+			0 == memcmp(s + 2, "ELEMENT", 7) ||
+			0 == memcmp(s + 2, "ATTLIST", 7) ||
+			0 == memcmp(s + 2, "ENTITY",  6)
+		) {
 			return parse_doctype(alloc, s);
 		}
 		else {
@@ -413,6 +418,7 @@ const char* node::parse_node(arena_allocator& alloc, const char* s) {
 				"Expected "
 				"comment (e.g. <!-- comment -->) or "
 				"DOCTYPE declaration (e.g. <!DOCTYPE html>)"
+				"after <!"
 			);
 		}
 	}
