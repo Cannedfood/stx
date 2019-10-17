@@ -211,6 +211,41 @@ node* node::next_of(std::initializer_list<std::string_view> const& names) noexce
 	return next()->first_of(names);
 }
 
+node* node::next(node::node_type type) noexcept {
+	node* n = this;
+	while((n = n->next())) {
+		if(n->type() == type) return n;
+	}
+	return nullptr;
+}
+node* node::prev(node::node_type type) noexcept {
+	node* n = this;
+	while((n = n->prev())) {
+		if(n->type() == type) return n;
+	}
+	return nullptr;
+}
+node& node::req_next(node::node_type type) {
+	node* result = next(type);
+	if(!result) {
+		throw errors::node_not_found(
+			"Node doesn't have required child of type " + std::to_string(type) + "",
+			m_value.data()
+		);
+	}
+	return *result;
+}
+node& node::req_prev(node::node_type type) {
+	node* result = prev(type);
+	if(!result) {
+		throw errors::node_not_found(
+			"Node doesn't have required child of type " + std::to_string(type) + "",
+			m_value.data()
+		);
+	}
+	return *result;
+}
+
 node* node::child(std::initializer_list<std::string_view> const& names) noexcept {
 	if(!children()) return nullptr;
 	return children()->first_of(names);
@@ -480,7 +515,7 @@ void node::print(std::ostream& stream, unsigned indent) {
 	}
 }
 
-std::string load_document(std::string_view path) {
+static std::string _load_file(std::string_view path) {
 	std::string result;
 
 	// Open file
@@ -498,6 +533,16 @@ std::string load_document(std::string_view path) {
 		throw std::runtime_error("Couldn't read full file");
 
 	return result;
+}
+
+
+document document::parse(const char* text) {
+	document result;
+	result.parse_document(result.allocator, text);
+	return result;
+}
+document document::load(const char* path) {
+	return document::parse(_load_file(path).c_str());
 }
 
 } // namespace stx::xml

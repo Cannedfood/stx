@@ -144,7 +144,15 @@ private:
 	node*            m_children   = nullptr;
 };
 
-std::string load_document(std::string_view path);
+class document : public xml::node {
+public:
+	static document parse(const char* text);
+	static document load(const char* path);
+
+	stx::arena_allocator allocator;
+private:
+	document() {}
+};
 
 } // namespace stx::xml
 
