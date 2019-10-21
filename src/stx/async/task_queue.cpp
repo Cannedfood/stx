@@ -17,13 +17,16 @@ void task_queue::defer(std::function<void()> task, float priority) noexcept {
 	m_tasks.emplace(priority, std::move(task));
 }
 
-void task_queue::execute_tasks() noexcept {
+bool task_queue::execute_tasks() noexcept {
 	std::multimap<float, std::function<void()>> tasks;
-	while(m_tasks.size()) {
+	bool result = false;
+	while(true) {
 		// Get tasks
 		{ std::scoped_lock lock{m_mutex};
 			std::swap(m_tasks, tasks);
 		}
+		if(tasks.empty()) break;
+		result = true;
 
 		// Execute tasks
 		for(auto& [prio, task] : tasks) {
@@ -34,6 +37,7 @@ void task_queue::execute_tasks() noexcept {
 		// Clear executed tasks
 		tasks.clear();
 	}
+	return result;
 }
 
 void task_queue::start() noexcept {

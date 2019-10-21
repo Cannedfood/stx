@@ -13,7 +13,7 @@ namespace stx {
 class task_queue : public executor {
 public:
 	void defer(std::function<void()> task, float priority = 0) noexcept;
-	void execute_tasks() noexcept;
+	bool execute_tasks() noexcept;
 	void start() noexcept;
 
 private:
