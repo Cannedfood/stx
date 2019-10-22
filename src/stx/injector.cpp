@@ -37,7 +37,7 @@ injector::entry_t injector::get(std::type_info const& info, size_t quirk) {
 		printf(
 			"[stx::injector](info) %.*s%sCreating %s\n",
 			std::clamp((depth - 1) * 3, 0, 32), "                                  ",
-			depth > 0 ? u8"  ↙" : "",
+			depth > 0 ? (char const*)u8"  ↙" : "",
 			stx::demangle(info.name()).c_str());
 	#endif
 
