@@ -10,7 +10,6 @@ namespace stx {
 // =============================================================
 // == task_queue =============================================
 // =============================================================
-
 void task_queue::defer(std::function<void()> task, float priority) noexcept {
 	std::scoped_lock lock{m_mutex};
 
@@ -38,10 +37,6 @@ bool task_queue::execute_tasks() noexcept {
 		tasks.clear();
 	}
 	return result;
-}
-
-void task_queue::start() noexcept {
-	// TODO
 }
 
 // =============================================================

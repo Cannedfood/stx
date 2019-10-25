@@ -12,9 +12,10 @@ namespace stx {
 
 class task_queue : public executor {
 public:
-	void defer(std::function<void()> task, float priority = 0) noexcept;
+	task_queue() noexcept = default;
+	~task_queue() noexcept = default;
+	void defer(std::function<void()> task, float priority = 0) noexcept override;
 	bool execute_tasks() noexcept;
-	void start() noexcept;
 
 private:
 	std::mutex                                  m_mutex;
