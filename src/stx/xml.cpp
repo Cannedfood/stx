@@ -155,6 +155,15 @@ int attribute::value<int>() const {
 	return result;
 }
 template<>
+unsigned attribute::value<unsigned>() const {
+	unsigned result;
+	std::from_chars_result error = std::from_chars(m_value.data(), m_value.data() + m_value.length(), result);
+	if(error.ec != std::errc()) {
+		throw errors::parsing_error("Expected a valid number value", m_value.data(), m_value);
+	}
+	return result;
+}
+template<>
 float attribute::value<float>() const {
 	return std::stof(std::string(m_value));
 	/*

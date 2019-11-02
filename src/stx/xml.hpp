@@ -150,8 +150,9 @@ public:
 	static document load(const char* path);
 
 	stx::arena_allocator allocator;
-private:
+
 	document() {}
+	document(std::string const& path) { load(path.c_str()); }
 };
 
 } // namespace stx::xml
@@ -189,6 +190,8 @@ template<>
 bool attribute::value<bool>() const;
 template<>
 int attribute::value<int>() const;
+template<>
+unsigned attribute::value<unsigned>() const;
 template<>
 float attribute::value<float>() const;
 template<>
