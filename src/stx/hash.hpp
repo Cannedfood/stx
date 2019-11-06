@@ -3,6 +3,10 @@
 
 #pragma once
 
+#include <type_traits>
+#include <cstddef>
+#include <string_view>
+
 namespace stx {
 
 // TODO: 16bit
@@ -28,12 +32,17 @@ struct fnv1a {
 	Hash m_state = kFnvBasis;
 public:
 	inline
-	fnv1a& operator()(char const* t, size_t count) noexcept {
+	fnv1a& operator()(std::byte const* t, size_t count) noexcept {
 		for(size_t i = 0; i < count; i++) {
 			m_state ^= Hash(t[i]);
 			m_state *= kFnvPrime;
 		}
 		return *this;
+	}
+
+	template<class T> inline
+	fnv1a& operator()(T const* data, size_t count) {
+		return (*this)(reinterpret_cast<std::byte const*>(data), count * sizeof(T));
 	}
 
 	inline
