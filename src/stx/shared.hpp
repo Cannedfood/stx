@@ -504,6 +504,9 @@ shared<T> share(T* t, Deleter&& del = {}) {
 	return result;
 }
 
+template<class T>
+shared<T> share(T&& t) noexcept { return stx::make_shared<T>(std::forward<T>(t)); }
+
 } // namespace stx
 
 namespace std {
