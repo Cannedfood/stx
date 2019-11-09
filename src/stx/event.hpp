@@ -19,8 +19,11 @@ class event;
 template<class... Args>
 class listener : private list_element<listener<Args...>> {
 public:
+	using node_t     = list_element<listener<Args...>>;
 	using listener_t = listener<Args...>;
 	using event_t    = event<Args...>;
+
+	using node_t::remove;
 
 	virtual void onEventCleared() {}
 	virtual void on(Args... args) = 0;
