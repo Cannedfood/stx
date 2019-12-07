@@ -190,17 +190,17 @@ void handle_enable_shared_from_this(Tptr object, shared_block* block) noexcept {
 template<class T>
 class enable_shared_from_this : public detail::enable_shared_from_this_base {
 protected:
-	T* value() const noexcept { return const_cast<T*>(static_cast<T const*>(this)); }
+	T* shared_from_this_value() const noexcept { return const_cast<T*>(static_cast<T const*>(this)); }
 public:
 	shared<T> shared_from_this() const noexcept {
 		shared<T> result;
-		result._copy_reset(value(), get_shared_block());
+		result._copy_reset(shared_from_this_value(), get_shared_block());
 		return result;
 	}
 
 	weak<T> weak_from_this() const noexcept {
 		weak<T> result;
-		result._copy_reset(value(), get_shared_block());
+		result._copy_reset(shared_from_this_value(), get_shared_block());
 		return result;
 	}
 
