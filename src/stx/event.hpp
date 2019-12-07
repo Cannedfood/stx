@@ -36,6 +36,12 @@ private:
 	friend event_t;
 };
 
+template<class... ListenerTypes>
+class multi_listener : public ListenerTypes... {
+public:
+	void removeListeners() { (ListenerTypes::remove(), ...); }
+};
+
 template<class C, bool autodelete = true, class... Args>
 class callback_listener final : public listener<Args...> {
 	C m_callback;
