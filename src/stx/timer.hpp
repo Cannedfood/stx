@@ -29,8 +29,10 @@ public:
 	template<class Duration = clock_duration>
 	Duration time() const noexcept { return duration_cast<Duration>(now() - m_begin); }
 
-	std::string to_string() const {
-		auto dif = time<>();
+	std::string to_string() const { return to_string(time<>()); }
+
+	template<class T, class Rep>
+	static std::string to_string(duration<T, Rep> dif) {
 		if(dif >= 1min) {
 			auto hours = duration_cast<duration<unsigned, ratio<3600>>>(dif);
 			dif -= hours;
@@ -54,97 +56,41 @@ public:
 	}
 
 	// Get time passe since timer construction or the last timer reset
-	double days() const noexcept {
-		return time<duration<double, ratio<86400>>>().count();
-	}
-	double hours() const noexcept {
-		return time<duration<double, ratio<3600>>>().count();
-	}
-	double minutes() const noexcept {
-		return time<duration<double, ratio<60>>>().count();
-	}
-	double seconds() const noexcept {
-		return time<duration<double, ratio<1>>>().count();
-	}
-	double millis() const noexcept {
-		return time<duration<double, milli>>().count();
-	}
-	double micros() const noexcept {
-		return time<duration<double, micro>>().count();
-	}
-	double nanos() const noexcept {
-		return time<duration<double, nano>>().count();
-	}
+	double days()    const noexcept { return time<duration<double, ratio<86400>>>().count(); }
+	double hours()   const noexcept { return time<duration<double, ratio<3600>>>().count(); }
+	double minutes() const noexcept { return time<duration<double, ratio<60>>>().count(); }
+	double seconds() const noexcept { return time<duration<double, ratio<1>>>().count(); }
+	double millis()  const noexcept { return time<duration<double, milli>>().count(); }
+	double micros()  const noexcept { return time<duration<double, micro>>().count(); }
+	double nanos()   const noexcept { return time<duration<double, nano>>().count(); }
 
 	// Get time passed and reset the timer
-	double poll_days() noexcept {
-		double result = days(); reset(); return result;
-	}
-	double poll_hours() noexcept {
-		double result = hours(); reset(); return result;
-	}
-	double poll_minutes() noexcept {
-		double result = minutes(); reset(); return result;
-	}
-	double poll_seconds() noexcept {
-		double result = seconds(); reset(); return result;
-	}
-	double poll_millis() noexcept {
-		double result = millis(); reset(); return result;
-	}
-	double poll_micros() noexcept {
-		double result = micros(); reset(); return result;
-	}
-	double poll_nanos() noexcept {
-		double result = nanos(); reset(); return result;
-	}
+	double poll_days()    noexcept { double result = days();    reset(); return result; }
+	double poll_hours()   noexcept { double result = hours();   reset(); return result; }
+	double poll_minutes() noexcept { double result = minutes(); reset(); return result; }
+	double poll_seconds() noexcept { double result = seconds(); reset(); return result; }
+	double poll_millis()  noexcept { double result = millis();  reset(); return result; }
+	double poll_micros()  noexcept { double result = micros();  reset(); return result; }
+	double poll_nanos()   noexcept { double result = nanos();   reset(); return result; }
 
 	// Returns whether d time has passed, if it returns true also resets the timer
 	// For use in something like void update() { if(mTimer.passed_seconds(1)) update_once_a_seconds(); }
-	bool passed_days(double d) noexcept {
-		bool b = days() >= d; if(b) reset(); return b;
-	}
-	bool passed_hours(double d) noexcept {
-		bool b = hours() >= d; if(b) reset(); return b;
-	}
-	bool passed_minutes(double d) noexcept {
-		bool b = minutes() >= d; if(b) reset(); return b;
-	}
-	bool passed_seconds(double d) noexcept {
-		bool b = seconds() >= d; if(b) reset(); return b;
-	}
-	bool passed_millis(double d) noexcept {
-		bool b = millis() >= d; if(b) reset(); return b;
-	}
-	bool passed_micros(double d) noexcept {
-		bool b = micros() >= d; if(b) reset(); return b;
-	}
-	bool passed_nanos(double d) noexcept {
-		bool b = nanos() >= d; if(b) reset(); return b;
-	}
+	bool passed_days(double d)    noexcept { bool b = days()    >= d; if(b) reset(); return b; }
+	bool passed_hours(double d)   noexcept { bool b = hours()   >= d; if(b) reset(); return b; }
+	bool passed_minutes(double d) noexcept { bool b = minutes() >= d; if(b) reset(); return b; }
+	bool passed_seconds(double d) noexcept { bool b = seconds() >= d; if(b) reset(); return b; }
+	bool passed_millis(double d)  noexcept { bool b = millis()  >= d; if(b) reset(); return b; }
+	bool passed_micros(double d)  noexcept { bool b = micros()  >= d; if(b) reset(); return b; }
+	bool passed_nanos(double d)   noexcept { bool b = nanos()   >= d; if(b) reset(); return b; }
 
 	// Static functions to get the time since epoch
-	static double days_now() noexcept {
-		return duration_cast<duration<double, ratio<86400>>>(now().time_since_epoch()).count();
-	}
-	static double hours_now() noexcept {
-		return duration_cast<duration<double, ratio<3600>>>(now().time_since_epoch()).count();
-	}
-	static double minutes_now() noexcept {
-		return duration_cast<duration<double, ratio<60>>>(now().time_since_epoch()).count();
-	}
-	static double seconds_now() noexcept {
-		return duration_cast<duration<double, ratio<1>>>(now().time_since_epoch()).count();
-	}
-	static double millis_now() noexcept {
-		return duration_cast<duration<double, milli>>(now().time_since_epoch()).count();
-	}
-	static double micros_now() noexcept {
-		return duration_cast<duration<double, micro>>(now().time_since_epoch()).count();
-	}
-	static double nanos_now() noexcept {
-		return duration_cast<duration<double, nano>>(now().time_since_epoch()).count();
-	}
+	static double days_now()    noexcept { return duration_cast<duration<double, ratio<86400>>>(now().time_since_epoch()).count(); }
+	static double hours_now()   noexcept { return duration_cast<duration<double, ratio<3600>>>(now().time_since_epoch()).count(); }
+	static double minutes_now() noexcept { return duration_cast<duration<double, ratio<60>>>(now().time_since_epoch()).count(); }
+	static double seconds_now() noexcept { return duration_cast<duration<double, ratio<1>>>(now().time_since_epoch()).count(); }
+	static double millis_now()  noexcept { return duration_cast<duration<double, milli>>(now().time_since_epoch()).count(); }
+	static double micros_now()  noexcept { return duration_cast<duration<double, micro>>(now().time_since_epoch()).count(); }
+	static double nanos_now()   noexcept { return duration_cast<duration<double, nano>>(now().time_since_epoch()).count(); }
 };
 
 using highres_timer = basic_timer<std::chrono::high_resolution_clock>;
