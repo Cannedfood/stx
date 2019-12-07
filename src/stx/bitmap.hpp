@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 namespace stx {
 
 
@@ -50,14 +52,14 @@ struct bitmap {
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit(
 	bitmap<Src> src, bitmap<Dst> dst,
-	Assigner assign = [](Src&a,Dst&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Src&a,Dst&b){b=std::move(a);}) noexcept;
 
 /// Copies one bitmap to another
 // The destination bitmap should not overlap with the source bitmap! (use blit_in_place for that)
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit_backwards(
 	bitmap<Src> src, bitmap<Dst> dst,
-	Assigner assign = [](Src&a,Dst&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Src&a,Dst&b){b=std::move(a);}) noexcept;
 
 /// Copies one bitmap to another
 /// The destination bitmap may overlap with the source bitmap
@@ -65,7 +67,17 @@ void blit_backwards(
 template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
 void blit_in_place(
 	bitmap<Src> src, bitmap<Dst> dst,
-	Assigner assign = [](Src&a,Dst&b){a=std::move(b);}) noexcept;
+	Assigner assign = [](Src&a,Dst&b){b=std::move(a);}) noexcept;
+
+
+// == Sampling ==================================================
+
+template<class T>
+T sample_nearest(stx::bitmap<T> src, float x, float y) {
+	unsigned ux = std::clamp<float>(std::round(x * (src.w - 1)), 0, src.w - 1);
+	unsigned uy = std::clamp<float>(std::round(y * (src.h - 1)), 0, src.h - 1);
+	return src(ux, uy);
+}
 
 } // namespace stx
 
@@ -113,7 +125,7 @@ void blit(bitmap<Src> src, bitmap<Dst> dst, Assigner assign) noexcept
 	Dst* dst_scanline = dst.data;
 	for(u32 y=0;y<src.h;y++) {
 		for(u32 x=0;x<src.w;x++) {
-			assign(dst_scanline[x], src_scanline[x]);
+			assign(src_scanline[x], dst_scanline[x]);
 		}
 		src_scanline += src.elements_per_scanline;
 		dst_scanline += dst.elements_per_scanline;
@@ -129,7 +141,7 @@ void blit_backwards(bitmap<Src> src, bitmap<Dst> dst, Assigner assign) noexcept
 	Dst* dst_scanline = dst.data;
 	for(i32 y=src.h-1;y>=0;y--) {
 		for(i32 x=src.w-1;x>=0;x--) {
-			assign(dst_scanline[x], src_scanline[x]);
+			assign(src_scanline[x], dst_scanline[x]);
 		}
 		src_scanline += src.elements_per_scanline;
 		dst_scanline += dst.elements_per_scanline;
