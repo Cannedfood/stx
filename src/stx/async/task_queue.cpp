@@ -1,6 +1,7 @@
 #include "task_queue.hpp"
 
 #include <chrono>
+#include <cstdio>
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
@@ -85,14 +86,13 @@ void task_queue_mt::start() noexcept {
 
 	std::function<void()> task;
 
-	while(true) {
-		{
-			std::unique_lock lock{m_mutex};
+	while(!m_finish) {
+		{ std::unique_lock lock{m_mutex};
 
 			// Wait until we have a task
-			if(m_tasks.empty()) {
-				m_sleeping_threads.wait(lock, [this]() { return m_finish || !m_tasks.empty(); });
-				if(m_tasks.empty() && m_finish) break;
+			while(m_tasks.empty()) {
+				if(m_finish) goto DONE;
+				m_sleeping_threads.wait_for(lock, 10ms, [this]() { return m_finish || !m_tasks.empty(); });
 			}
 
 			// Get the task
@@ -104,6 +104,7 @@ void task_queue_mt::start() noexcept {
 		task();
 	}
 
+DONE:
 	--m_num_threads;
 }
 void task_queue_mt::stop() noexcept {
