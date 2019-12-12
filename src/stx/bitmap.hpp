@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 namespace stx {
 
 
@@ -21,7 +22,7 @@ struct bitmap {
 	u32 w, h;
 	u32 elements_per_scanline;
 
-	constexpr bitmap(T* data, u32 w, u32 h) noexcept;
+	constexpr bitmap(T* data = nullptr, u32 w = 0, u32 h = 0) noexcept;
 	constexpr bitmap(T* data, u32 w, u32 h, u32 elements_per_scanline) noexcept;
 
 	constexpr bitmap<T> subimage(u32 w, u32 h) noexcept;
@@ -73,7 +74,7 @@ void blit_in_place(
 // == Sampling ==================================================
 
 template<class T>
-T sample_nearest(stx::bitmap<T> src, float x, float y) {
+T& sample_nearest(stx::bitmap<T> src, float x, float y) {
 	unsigned ux = std::clamp<float>(std::round(x * (src.w - 1)), 0, src.w - 1);
 	unsigned uy = std::clamp<float>(std::round(y * (src.h - 1)), 0, src.h - 1);
 	return src(ux, uy);
