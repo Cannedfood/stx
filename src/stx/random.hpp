@@ -45,17 +45,15 @@ public:
 	Generator& generator() noexcept { return mGenerator; }
 };
 
-inline
-random<std::random_device> default_random() {
-	return random<std::random_device>();
-}
+
+thread_local random<std::mt19937> default_random = { std::mt19937(std::random_device{}()) };
 
 template<class T>
-T rand(T min, T max) { return default_random().get<T>(min, max); }
+T rand(T min, T max) { return default_random.get<T>(min, max); }
 template<class T>
-T rand(T range) { return default_random().get<T>(range); }
+T rand(T range) { return default_random.get<T>(range); }
 template<class T>
-T rand() { return default_random().get<T>(); }
+T rand() { return default_random.get<T>(); }
 
 } // namespace stx
 
