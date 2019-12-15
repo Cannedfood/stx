@@ -23,7 +23,7 @@ public:
 			count = std::thread::hardware_concurrency() - 1;
 		}
 
-		for(unsigned i = 0; i < count; i++) {
+		for(int i = 0; i < count; i++) {
 			m_threads.emplace_back([this]() {
 				task_queue_mt::start();
 			});
