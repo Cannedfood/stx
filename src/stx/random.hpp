@@ -46,7 +46,7 @@ public:
 };
 
 
-thread_local random<std::mt19937> default_random = { std::mt19937(std::random_device{}()) };
+extern thread_local random<std::mt19937> default_random;
 
 template<class T>
 T rand(T min, T max) { return default_random.get<T>(min, max); }
