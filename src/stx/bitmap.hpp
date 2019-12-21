@@ -33,7 +33,10 @@ struct bitmap {
 		T* scanline = data;
 		for(u32 y = 0; y < h; y++) {
 			for(u32 x = 0; x < w; x++) {
-				callback(scanline[x]);
+				if constexpr(std::is_invocable_v<Callback, T, u32, u32>)
+					callback(scanline[x], x, y);
+				else
+					callback(scanline[x]);
 			}
 			scanline += elements_per_scanline;
 		}
