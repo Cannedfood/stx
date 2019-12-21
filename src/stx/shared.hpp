@@ -507,6 +507,13 @@ shared<T> share(T* t, Deleter&& del = {}) {
 template<class T>
 shared<T> share(T&& t) noexcept { return stx::make_shared<T>(std::forward<T>(t)); }
 
+template<class T>
+shared<T> share_with_fake_ownership(T* t) noexcept {
+	shared<T> result;
+	result._move_reset(t, dummy_shared_block::instance());
+	return result;
+}
+
 } // namespace stx
 
 namespace std {
