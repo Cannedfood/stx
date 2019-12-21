@@ -9,7 +9,7 @@ class entity {
 	uint64_t m_id;
 
 public:
-	constexpr entity() : m_id(~0ull) {}
+	constexpr entity(std::nullptr_t = nullptr) : m_id(~0ull) {}
 	constexpr entity(uint64_t id) : m_id(id) {}
 	constexpr entity(uint32_t index, uint32_t version) :
 		m_id(uint64_t(index) | uint64_t(version) << 32ull)
