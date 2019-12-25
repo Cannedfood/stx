@@ -6,7 +6,8 @@ TEST_CASE("Test bitmap", "[bitmap]") {
 	unsigned w = 5, h = 7;
 
 	std::vector<int> data(w*h);
-	std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
+
+	std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1e7, -1); });
 
 	stx::bitmap<int> a = { data.data(), w, h };
 
@@ -68,20 +69,42 @@ TEST_CASE("Test bitmap", "[bitmap]") {
 
 		// Test l.data < r.data case
 		overwritten_voxels = 0;
-		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
-		stx::blit_in_place(b, c, [&](int& a, int& b) {
-			if(b == 0) overwritten_voxels++;
-			a = 0;
+		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1e7, -1); });
+		stx::blit_in_place(b, c, [&](int const& src, int& dst) {
+			if(src == 0) overwritten_voxels++;
+			dst = 0;
 		});
 		REQUIRE(overwritten_voxels == 0);
 
 		// Test l.data > r.data case
 		overwritten_voxels = 0;
-		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
-		stx::blit_in_place(c, b, [&](int& a, int& b) {
-			if(b == 0) overwritten_voxels++;
-			a = 0;
+		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1e7, -1); });
+		stx::blit_in_place(c, b, [&](int const& src, int& dst) {
+			if(src == 0) overwritten_voxels++;
+			dst = 0;
 		});
 		REQUIRE(overwritten_voxels == 0);
+	}
+
+	std::array<float, 16> source = {
+		 1,-1, 1,-1,
+		-1, 1,-1, 1,
+		 1,-1, 1,-1,
+		-1, 1,-1, 1
+	};
+	std::array<float, 9> dst = {
+		0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f,
+		0.f, 0.f, 0.f
+	};
+	std::array<float, 4> kernel = {
+		1.f, 1.f,
+		1.f, 1.f,
+	};
+
+	SECTION("bitmap::convolve without border") {
+		stx::convolve(stx::bitmap<float>(source.data(), 4, 4), stx::bitmap<float>(dst.data(), 3, 3), stx::bitmap<float>(kernel.data(), 2, 2));
+
+		CHECK(std::all_of(dst.begin(), dst.end(), [](float f) { return std::abs(f) < 1e-8f; }));
 	}
 }

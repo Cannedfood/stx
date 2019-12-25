@@ -6,7 +6,7 @@ TEST_CASE("Test bitmap3d", "[bitmap3d]") {
 	unsigned w = 5, h = 7, d = 11;
 
 	std::vector<int> data(w*h*d);
-	std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
+	std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1e7, -1); });
 
 	stx::bitmap3d<int> a = { data.data(), w, h, d };
 
@@ -69,7 +69,7 @@ TEST_CASE("Test bitmap3d", "[bitmap3d]") {
 
 		// Test l.data < r.data case
 		overwritten_voxels = 0;
-		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
+		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1e7, -1); });
 		stx::blit_in_place(b, c, [&](int& a, int& b) {
 			if(b == 0) overwritten_voxels++;
 			a = 0;
@@ -78,7 +78,7 @@ TEST_CASE("Test bitmap3d", "[bitmap3d]") {
 
 		// Test l.data > r.data case
 		overwritten_voxels = 0;
-		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1, -1e7); });
+		std::generate(data.begin(), data.end(), []() { return stx::rand<int>(-1e7, -1); });
 		stx::blit_in_place(c, b, [&](int& a, int& b) {
 			if(b == 0) overwritten_voxels++;
 			a = 0;

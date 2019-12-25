@@ -53,25 +53,25 @@ struct bitmap {
 
 /// Copies one bitmap to another
 // The destination bitmap should not overlap with the source bitmap! (use blit_in_place for that)
-template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
+template<class Src, class Dst, class Assigner = void(*)(Src const&,Dst&)>
 void blit(
 	bitmap<Src> src, bitmap<Dst> dst,
-	Assigner assign = [](Src&a,Dst&b){b=std::move(a);}) noexcept;
+	Assigner assign = [](Src const& a,Dst&b){b=a;}) noexcept;
 
 /// Copies one bitmap to another
 // The destination bitmap should not overlap with the source bitmap! (use blit_in_place for that)
-template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
+template<class Src, class Dst, class Assigner = void(*)(Src const&,Dst&)>
 void blit_backwards(
 	bitmap<Src> src, bitmap<Dst> dst,
-	Assigner assign = [](Src&a,Dst&b){b=std::move(a);}) noexcept;
+	Assigner assign = [](Src const& a,Dst&b){b=a;}) noexcept;
 
 /// Copies one bitmap to another
 /// The destination bitmap may overlap with the source bitmap
 /// If this is not needed use blit, because it has better memory access patterns
-template<class Src, class Dst, class Assigner = void(*)(Src&,Dst&)>
+template<class Src, class Dst, class Assigner = void(*)(Src const&,Dst&)>
 void blit_in_place(
 	bitmap<Src> src, bitmap<Dst> dst,
-	Assigner assign = [](Src&a,Dst&b){b=std::move(a);}) noexcept;
+	Assigner assign = [](Src const& a,Dst&b){b=std::move(a);}) noexcept;
 
 
 // == Sampling ==================================================
@@ -88,7 +88,7 @@ T& sample_nearest(stx::bitmap<T> src, float x, float y) {
 template<class Src, class Dst, class Kernel, class ZeroFn = Src(*)(), class DefaultValueFn = Src(*)(size_t x, size_t y)>
 void convolve(
 	bitmap<Src> src, bitmap<Dst> dst, bitmap<Kernel> kernel,
-	Src zero = []() -> Src { return {}; },
+	ZeroFn zero = []() -> Src { return {}; },
 	DefaultValueFn defaultValue = [](size_t x, size_t y) -> Src { return {}; }) noexcept;
 
 } // namespace stx
@@ -137,7 +137,7 @@ void blit(bitmap<Src> src, bitmap<Dst> dst, Assigner assign) noexcept
 	Dst* dst_scanline = dst.data;
 	for(u32 y=0;y<src.h;y++) {
 		for(u32 x=0;x<src.w;x++) {
-			assign(src_scanline[x], dst_scanline[x]);
+			assign(const_cast<Src const&>(src_scanline[x]), dst_scanline[x]);
 		}
 		src_scanline += src.elements_per_scanline;
 		dst_scanline += dst.elements_per_scanline;
@@ -153,7 +153,7 @@ void blit_backwards(bitmap<Src> src, bitmap<Dst> dst, Assigner assign) noexcept
 	Dst* dst_scanline = dst.data;
 	for(i32 y=src.h-1;y>=0;y--) {
 		for(i32 x=src.w-1;x>=0;x--) {
-			assign(src_scanline[x], dst_scanline[x]);
+			assign(const_cast<Src const&>(src_scanline[x]), dst_scanline[x]);
 		}
 		src_scanline += src.elements_per_scanline;
 		dst_scanline += dst.elements_per_scanline;
@@ -172,9 +172,9 @@ void blit_in_place(bitmap<Src> src, bitmap<Dst> dst, Assigner assign) noexcept
 }
 
 template<class Src, class Dst, class Kernel, class ZeroFn, class DefaultValueFn>
-void convolve(bitmap<Src> src, bitmap<Dst> dst, bitmap<Kernel> kernel, Src zero, DefaultValueFn defaultValue) noexcept
+void convolve(bitmap<Src> src, bitmap<Dst> dst, bitmap<Kernel> kernel, ZeroFn zero, DefaultValueFn defaultValue) noexcept
 {
-	if(src.w == dst.w + kernel.w && src.h == dst.w + kernel.h) { // Convolution without padding
+	if(src.w == dst.w + kernel.w - 1 && src.h == dst.w + kernel.h - 1) { // Convolution without padding
 		for(size_t y = 0; y < dst.w; y++)
 		for(size_t x = 0; x < dst.h; x++)
 		{
@@ -201,8 +201,8 @@ void convolve(bitmap<Src> src, bitmap<Dst> dst, bitmap<Kernel> kernel, Src zero,
 				int src_y = y + kernel_y - offy;
 
 				// TODO: optimize? Or is the compiler smart enough to invert the if statements?
-				if(src_x < 0 || src_x >= src.w || src_y < 0 || src_y >= src.h)
-					dst(x, y) += defaultValue(src_x, src_y);
+				if(src_x < 0 || src_x >= (int)src.w || src_y < 0 || src_y >= (int)src.h)
+					dst(x, y) += defaultValue((const decltype(src_y))src_x, (const decltype(src_y))src_y);
 				else
 					dst(x, y) += src(x + kernel_x, y + kernel_y) * kernel(kernel_x, kernel_y);
 			}

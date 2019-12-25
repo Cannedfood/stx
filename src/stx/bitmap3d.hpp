@@ -105,14 +105,14 @@ template<class Src, class Dst, class Assigner>
 void invoke_assigner(
 	int from_x, int from_y, int from_z,
 	int to_x, int to_y, int to_z,
-	Src& src, Dst& dst,
+	Src const& src, Dst& dst,
 	Assigner&& assigner)
 {
 	if constexpr(std::is_invocable_v<Assigner, int, int, int, int, int, int, Src&, Dst&>) {
 		assigner(from_x, from_y, from_z, to_x, to_y, to_z, std::forward<Src>(src), std::forward<Dst>(dst));
 	}
 	else if constexpr(std::is_invocable_v<Assigner, Src&, Dst&>) {
-		assigner(std::forward<Src>(src), std::forward<Dst>(dst));
+		assigner(src, dst);
 	}
 	else {
 		static_assert(
