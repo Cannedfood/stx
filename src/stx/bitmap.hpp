@@ -83,6 +83,14 @@ T& sample_nearest(stx::bitmap<T> src, float x, float y) {
 	return src(ux, uy);
 }
 
+// == Filtering ================================================
+
+template<class Src, class Dst, class Kernel, class ZeroFn = Src(*)(), class DefaultValueFn = Src(*)(size_t x, size_t y)>
+void convolve(
+	bitmap<Src> src, bitmap<Dst> dst, bitmap<Kernel> kernel,
+	Src zero = []() -> Src { return {}; },
+	DefaultValueFn defaultValue = [](size_t x, size_t y) -> Src { return {}; }) noexcept;
+
 } // namespace stx
 
 
@@ -160,6 +168,48 @@ void blit_in_place(bitmap<Src> src, bitmap<Dst> dst, Assigner assign) noexcept
 	}
 	else {
 		blit_backwards<Src, Dst, Assigner>(src, dst, assign);
+	}
+}
+
+template<class Src, class Dst, class Kernel, class ZeroFn, class DefaultValueFn>
+void convolve(bitmap<Src> src, bitmap<Dst> dst, bitmap<Kernel> kernel, Src zero, DefaultValueFn defaultValue) noexcept
+{
+	if(src.w == dst.w + kernel.w && src.h == dst.w + kernel.h) { // Convolution without padding
+		for(size_t y = 0; y < dst.w; y++)
+		for(size_t x = 0; x < dst.h; x++)
+		{
+			dst(x, y) = zero();
+			for(size_t kernel_y = 0; kernel_y < kernel.h; kernel_y++)
+			for(size_t kernel_x = 0; kernel_x < kernel.w; kernel_x++)
+			{
+				dst(x, y) += src(x + kernel_x, y + kernel_y) * kernel(kernel_x, kernel_y);
+			}
+		}
+	}
+	else if(src.w == dst.w && src.h == dst.h) { // Convolution with padding
+		size_t offx = kernel.w / 2;
+		size_t offy = kernel.h / 2;
+
+		for(size_t y = 0; y < dst.w; y++)
+		for(size_t x = 0; x < dst.h; x++)
+		{
+			dst(x, y) = zero();
+			for(size_t kernel_y = 0; kernel_y < kernel.h; kernel_y++)
+			for(size_t kernel_x = 0; kernel_x < kernel.w; kernel_x++)
+			{
+				int src_x = x + kernel_x - offx;
+				int src_y = y + kernel_y - offy;
+
+				// TODO: optimize? Or is the compiler smart enough to invert the if statements?
+				if(src_x < 0 || src_x >= src.w || src_y < 0 || src_y >= src.h)
+					dst(x, y) += defaultValue(src_x, src_y);
+				else
+					dst(x, y) += src(x + kernel_x, y + kernel_y) * kernel(kernel_x, kernel_y);
+			}
+		}
+	}
+	else {
+		std::terminate();
 	}
 }
 
