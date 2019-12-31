@@ -12,17 +12,15 @@ class injector2;
 
 class injector2 {
 public:
+	// Create once, destroy after injector is destroyed
 	template<class T>
-	injector2& singleton() noexcept {
-		factories[typeid(T)] = stx::make_shared<SingletonFactory<T>>();
-		return *this;
-	}
-
+	injector2& singleton() noexcept { factories[typeid(T)] = stx::make_shared<SingletonFactory<T>>(); return *this; }
+	// Do not recreate until all references are gone
 	template<class T>
-	injector2& ephemeral() noexcept {
-		factories[typeid(T)] = stx::make_shared<EphemeralFactory<T>>();
-		return *this;
-	}
+	injector2& cached()    noexcept { factories[typeid(T)] = stx::make_shared<CachedFactory<T>>(); return *this; }
+	// Recreate every time
+	template<class T>
+	injector2& ephemeral() noexcept { factories[typeid(T)] = stx::make_shared<EphemeralFactory<T>>(); return *this; }
 
 	template<class T>
 	stx::shared<T> get() noexcept {
@@ -45,26 +43,64 @@ private:
 	};
 
 	template<class T>
+	class dependency_shared_block final : public shared_block {
+		using Tptr = std::remove_all_extents_t<T>*;
+	
+		alignas(T) unsigned char m_data[sizeof(T)];
+	public:
+		std::vector<stx::shared<void>> dependencies;
+
+		template<class... Args>
+		dependency_shared_block(Args&&... args) noexcept {
+			T* tmp = new(m_data) T(std::forward<Args>(args)...);
+			if(!((unsigned char*)tmp == m_data)) std::terminate();
+			detail::handle_enable_shared_from_this<T, Tptr>(tmp, this);
+		}
+	
+		T* value() { return (T*) m_data; }
+
+		void shared_block_destroy() noexcept override {
+			value()->~T();
+			dependencies.clear();
+		}
+		void shared_block_free() noexcept override { delete this; }
+	};
+
+	template<class T>
 	struct SingletonFactory final : public Factory {
 		stx::shared<void> instance;
 		stx::shared<void> get(injector2& context) noexcept {
 			if(!instance) {
-				instance = context.invoke_constructor<T, stx::shared<T>>([]<class... Args>(Args... args) { return stx::make_shared<T>(std::forward<Args>(args)...); });
+				instance = context.create<T>();
 			}
 			return instance;
 		}
 	};
 
 	template<class T>
+	struct CachedFactory final : public Factory {
+		stx::weak<void> instance;
+		stx::shared<void> get(injector2& context) noexcept {
+			auto result = instance.lock();
+			if(!result) {
+				instance = result = context.create<T>();
+			}
+			return result;
+		}
+	};
+
+	template<class T>
 	struct EphemeralFactory final : public Factory {
 		stx::shared<void> get(injector2& context) noexcept {
-			return context.invoke_constructor<T, stx::shared<T>>([]<class... Args>(Args... args) { return stx::make_shared<T>(std::forward<Args>(args)...); });
+			return context.create<T>();
 		}
 	};
 
 	template<class DoNotBindTo = void>
 	struct autobinder {
 		injector2* m_injector;
+
+		std::vector<stx::shared<void>> dependencies = {};
 
 		template<class T>
 		using basic_type_of = std::remove_reference_t<std::remove_const_t<T>>;
@@ -73,16 +109,39 @@ private:
 		const static bool can_bind_to = !std::is_same_v<basic_type_of<T>, DoNotBindTo> && !std::is_same_v<basic_type_of<T>, stx::shared<DoNotBindTo>>;
 
 		template<class T, class = std::enable_if_t<can_bind_to<T>>>
-		operator stx::shared<T>() { return m_injector->get<T>(); }
+		operator stx::shared<T>() {
+			auto result = m_injector->require<T>();
+			dependencies.push_back(result);
+			return result;
+		}
 
 		template<typename T, typename = std::enable_if_t<can_bind_to<T>>>
-		operator T&() { return *m_injector->get<T>(); }
+		operator T&() {
+			auto result = m_injector->require<T>();
+			dependencies.push_back(result);
+			return *result;
+		}
+
+		autobinder(injector2* injector) noexcept : m_injector(injector) {}
+		autobinder(autobinder&& other) noexcept                 = delete;
+		autobinder& operator=(autobinder&& other) noexcept      = delete;
+		autobinder(autobinder const& other) noexcept            = delete;
+		autobinder& operator=(autobinder const& other) noexcept = delete;
 	};
 
-	template<class T, class ExpectedResult, class Callback>
-	auto invoke_constructor(Callback&& construct) -> ExpectedResult {
+	template<class T>
+	stx::shared<T> create() {
 		using binder = autobinder<T>;
-		auto binding = binder{this};
+		binder binding{this};
+
+		auto construct = [&]<class... Args>(Args&&... args) {
+			stx::shared<T> result;
+			auto* block = new dependency_shared_block<T>(std::forward<Args>(args)...);
+			block->dependencies = std::move(binding.dependencies);
+			result._move_reset(block->value(), block);
+			return result;
+		};
+
 		if constexpr(std::is_constructible_v<T, binder&, binder&, binder&, binder&, binder&, binder&>) { return construct(binding, binding, binding, binding, binding, binding); }
 		else if constexpr(std::is_constructible_v<T, binder&, binder&, binder&, binder&, binder&>) {  return construct(binding, binding, binding, binding, binding); }
 		else if constexpr(std::is_constructible_v<T, binder&, binder&, binder&, binder&>) {  return construct(binding, binding, binding, binding); }
