@@ -7,8 +7,9 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-namespace stx {
+#include <memory>
 
+namespace stx {
 
 // == bitmap =================================================
 
@@ -48,6 +49,55 @@ struct bitmap {
 	constexpr u32 area() const noexcept { return w * h; }
 };
 
+/// A bitmap<T> with static storage
+template<class T, unsigned W, unsigned H>
+struct static_bitmap : public bitmap<T> {
+	constexpr static_bitmap() noexcept {
+		this->data = data_storage.data();
+		this->w = W;
+		this->h = H;
+	}
+
+	std::array<T, W*H> data_storage;
+};
+
+/// A bitmap<T> with storage on the heap
+template<class T, class Deleter = std::default_delete<T>>
+struct heap_bitmap : public bitmap<T> {
+	using u32 = typename bitmap<T>::u32;
+	using i32 = typename bitmap<T>::i32;
+
+	Deleter deleter;
+
+	constexpr heap_bitmap(T* data, u32 w, u32 h, Deleter del = {}) noexcept : bitmap<T>(data, w, h), deleter(std::move(del)) {}
+
+	constexpr heap_bitmap(heap_bitmap&& other) noexcept :
+		bitmap<T>(std::exchange(other.data, nullptr), std::exchange(other.w, 0), std::exchange(other.h, 0), std::exchange(other.deleter, {}))
+	{}
+
+	constexpr heap_bitmap& operator=(heap_bitmap&& other) noexcept(Deleter()((T*)nullptr)) {
+		std::swap(this->data,    other.data);
+		std::swap(this->w,       other.w);
+		std::swap(this->h,       other.h);
+		std::swap(this->deleter, other.deleter);
+		other.reset();
+	}
+
+	constexpr heap_bitmap(heap_bitmap const& other) noexcept            = delete;
+	constexpr heap_bitmap& operator=(heap_bitmap const& other) noexcept = delete;
+
+	void reset(T* t, u32 w, u32 h, Deleter del = {}) noexcept {
+		if(this->data) {
+			deleter(std::exchange(this->data, nullptr));
+		}
+		deleter = std::move(del);
+		this->data = std::move(t);
+		this->w = w;
+		this->h = h;
+	}
+
+	void reset() { reset(nullptr, 0, 0, {}); }
+};
 
 // == Blitting =================================================
 
