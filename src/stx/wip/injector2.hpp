@@ -12,20 +12,29 @@ class injector2;
 
 class injector2 {
 public:
+	injector2(injector2* fallback = nullptr) noexcept : fallback(fallback) {}
+	injector2(injector2& fallback) noexcept : injector2(&fallback) {}
+
 	// Create once, destroy after injector is destroyed
-	template<class T>
-	injector2& singleton() noexcept { factories[typeid(T)] = stx::make_shared<SingletonFactory<T>>(); return *this; }
+	template<class T, class Implementation = T>
+	injector2& singleton() noexcept { factories[typeid(T)] = stx::make_shared<SingletonFactory<T, Implementation>>(); return *this; }
 	// Do not recreate until all references are gone
-	template<class T>
-	injector2& cached()    noexcept { factories[typeid(T)] = stx::make_shared<CachedFactory<T>>(); return *this; }
+	template<class T, class Implementation = T>
+	injector2& cached()    noexcept { factories[typeid(T)] = stx::make_shared<CachedFactory<T, Implementation>>(); return *this; }
 	// Recreate every time
-	template<class T>
-	injector2& ephemeral() noexcept { factories[typeid(T)] = stx::make_shared<EphemeralFactory<T>>(); return *this; }
+	template<class T, class Implementation = T>
+	injector2& ephemeral() noexcept {
+		factories[typeid(T)] = stx::make_shared<EphemeralFactory<T, Implementation>>();
+		return *this;
+	}
 
 	template<class T>
 	stx::shared<T> get() noexcept {
 		auto iter = factories.find(typeid(T));
-		if(iter == factories.end()) return nullptr;
+		if(iter == factories.end()) {
+			if(!fallback) return nullptr;
+			return fallback->get<T>();
+		}
 		return iter->second->get(*this).cast_static<T>();
 	}
 
@@ -38,6 +47,8 @@ public:
 		return result;
 	}
 private:
+	injector2* fallback = nullptr;
+
 	struct Factory {
 		virtual stx::shared<void> get(injector2& context) noexcept = 0;
 	};
@@ -66,33 +77,33 @@ private:
 		void shared_block_free() noexcept override { delete this; }
 	};
 
-	template<class T>
+	template<class T, class Implementation>
 	struct SingletonFactory final : public Factory {
 		stx::shared<void> instance;
 		stx::shared<void> get(injector2& context) noexcept {
 			if(!instance) {
-				instance = context.create<T>();
+				instance = context.create<Implementation>().template cast_dynamic<T>();
 			}
 			return instance;
 		}
 	};
 
-	template<class T>
+	template<class T, class Implementation>
 	struct CachedFactory final : public Factory {
 		stx::weak<void> instance;
 		stx::shared<void> get(injector2& context) noexcept {
 			auto result = instance.lock();
 			if(!result) {
-				instance = result = context.create<T>();
+				instance = result = context.create<Implementation>().template cast_dynamic<T>();
 			}
 			return result;
 		}
 	};
 
-	template<class T>
+	template<class T, class Implementation>
 	struct EphemeralFactory final : public Factory {
 		stx::shared<void> get(injector2& context) noexcept {
-			return context.create<T>();
+			return context.create<Implementation>().template cast_dynamic<T>();
 		}
 	};
 
@@ -117,9 +128,27 @@ private:
 
 		template<typename T, typename = std::enable_if_t<can_bind_to<T>>>
 		operator T&() {
-			auto result = m_injector->require<T>();
-			dependencies.push_back(result);
-			return *result;
+			if constexpr(std::is_same_v<T, stx::injector2>) {
+				return *m_injector;
+			}
+			else {
+				auto result = m_injector->require<T>();
+				dependencies.push_back(result);
+				return *result;
+			}
+		}
+
+		template<typename T, typename = std::enable_if_t<can_bind_to<T>>>
+		operator T*() {
+			if constexpr(std::is_same_v<T, stx::injector2>) {
+				return m_injector;
+			}
+			else {
+				auto result = m_injector->get<T>();
+				if(result)
+					dependencies.push_back(result);
+				return result.get();
+			}
 		}
 
 		autobinder(injector2* injector) noexcept : m_injector(injector) {}
