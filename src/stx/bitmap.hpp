@@ -127,13 +127,33 @@ void blit_in_place(
 // == Sampling ==================================================
 
 template<class T>
-T& sample_nearest(stx::bitmap<T> src, float x, float y) {
+T& sample_nearest(stx::bitmap<T> src, float x, float y) noexcept {
 	unsigned ux = std::clamp<float>(std::round(x * (src.w - 1)), 0, src.w - 1);
 	unsigned uy = std::clamp<float>(std::round(y * (src.h - 1)), 0, src.h - 1);
 	return src(ux, uy);
 }
 
-// == Filtering ================================================
+template<class T, class MixFn = T(*)(T const& a, float aW, T const& b, float bW)>
+T sample_linear(
+	stx::bitmap<T> src, float x, float y,
+	MixFn mix = [](T const& a, float aW, T const& b, float bW) -> T { return a * aW + b * bW; }) noexcept
+{
+	x = std::clamp(x, 0.f, 1.f);
+	y = std::clamp(y, 0.f, 1.f);
+
+	unsigned floor_x = std::min(src.w-2, x*(src.w-1));
+	unsigned floor_y = std::min(src.h-2, y*(src.h-1));
+
+	float fract_x = x - floor_x;
+	float fract_y = y - floor_y;
+
+	return mix(
+		mix(src(floor_x + 0, floor_y + 0), 1 - fract_x, src(floor_x + 1, floor_y + 0), fract_x), 1 - fract_y,
+		mix(src(floor_x + 0, floor_y + 0), 1 - fract_x, src(floor_x + 1, floor_y + 0), fract_x), fract_y
+	);
+}
+
+// == Filtering/Signal processing ================================================
 
 template<class Src, class Dst, class Kernel, class ZeroFn = Src(*)(), class DefaultValueFn = Src(*)(size_t x, size_t y)>
 void convolve(
