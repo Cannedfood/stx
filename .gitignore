@@ -8,3 +8,9 @@ Makefile
 *.make
 obj/
 bin/
+
+# Visual studio
+*.sln
+*.vcxproj
+*.vcxproj.filters
+/.vs
