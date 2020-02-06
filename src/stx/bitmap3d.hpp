@@ -6,9 +6,9 @@
 
 #include <tuple>
 #include <algorithm>
+#include <memory>
 
 namespace stx {
-
 
 // == bitmap3d =================================================
 
@@ -25,6 +25,8 @@ struct bitmap3d {
 
 	constexpr bitmap3d(T* data, u32 w, u32 h, u32 d) noexcept;
 	constexpr bitmap3d(T* data, u32 w, u32 h, u32 d, u32 elements_per_scanline, u32 elements_per_slice) noexcept;
+
+	constexpr size_t num_voxels() const noexcept { return w * h * d; }
 
 	constexpr bitmap3d<T> subimage(u32 w, u32 h, u32 d) noexcept;
 	constexpr bitmap3d<T> subimage(i32 x, i32 y, i32 z, u32 w, u32 h, u32 d) noexcept;
@@ -53,6 +55,21 @@ struct bitmap3d {
 	constexpr u32 volume() const noexcept { return w * h * d; }
 };
 
+template<class T>
+struct heap_bitmap3d : public bitmap3d<T> {
+	std::unique_ptr<T[]> storage;
+
+	heap_bitmap3d(unsigned w, unsigned h, unsigned d) noexcept :
+		bitmap3d<T>(nullptr, w, h, d)
+	{
+		allocate();
+	}
+
+	void allocate() noexcept {
+		storage.reset(new T[this->num_voxels()]);
+		this->data = storage.get();
+	}
+};
 
 // == Blitting =================================================
 

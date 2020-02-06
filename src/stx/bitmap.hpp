@@ -43,6 +43,8 @@ struct bitmap {
 		}
 	}
 
+	constexpr u32 num_pixels() const noexcept { return w * h; }
+
 	constexpr i32 index(i32 x, i32 y) const noexcept { return x + y * elements_per_scanline; }
 	constexpr T&  operator()(i32 x, i32 y) const noexcept { return data[index(x, y)]; }
 
