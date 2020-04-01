@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include <iosfwd>
+#include <string>
 
 namespace stx {
 

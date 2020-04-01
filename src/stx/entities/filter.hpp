@@ -70,6 +70,21 @@ public:
 		mutable entities* m_entities;
 		entity            m_entity;
 		component_mask    m_mask;
+
+		template<class T>
+		using ResultT =
+			std::conditional_t<
+				std::is_same_v<T, stx::entity>, stx::entity, std::conditional_t<
+				std::is_pointer_v<T>, T,
+				T&
+			>>;
+
+		template<class T>
+		auto getValue(stx::entity e) const noexcept -> ResultT<T> {
+			if constexpr(std::is_same_v<T, stx::entity>) { return e; }
+			else if constexpr(std::is_pointer_v<T>) { return m_entities->get<std::remove_pointer_t<T>>(e); }
+			else return m_entities->getUnchecked<T>(e);
+		}
 	public:
 		constexpr iterator() noexcept
 			: m_entities(nullptr), m_entity(), m_mask()
@@ -84,8 +99,8 @@ public:
 			return *this;
 		}
 
-		std::tuple<Components&...> operator*() const noexcept {
-			return { m_entities->getUnchecked<Components>(m_entity)... };
+		std::tuple<ResultT<Components>...> operator*() const noexcept {
+			return { getValue<Components>(m_entity)... };
 		}
 
 		constexpr bool operator==(iterator const& other) const noexcept {

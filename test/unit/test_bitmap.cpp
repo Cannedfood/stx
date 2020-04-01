@@ -107,4 +107,6 @@ TEST_CASE("Test bitmap", "[bitmap]") {
 
 		CHECK(std::all_of(dst.begin(), dst.end(), [](float f) { return std::abs(f) < 1e-8f; }));
 	}
+
+	// TODO: test for bitmap::convole with border
 }

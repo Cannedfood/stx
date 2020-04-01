@@ -1,11 +1,12 @@
 #pragma once
 
+#include "injector.hpp"
+#include "shared.hpp"
+
 #include <deque>
 #include <bitset>
 #include <chrono>
-
-#include "injector.hpp"
-#include "shared.hpp"
+#include <vector>
 
 namespace stx {
 

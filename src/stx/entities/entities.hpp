@@ -7,6 +7,7 @@
 #include "entity_options.hpp"
 
 #include <cassert>
+#include <array>
 
 namespace stx {
 

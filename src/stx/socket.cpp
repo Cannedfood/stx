@@ -1,6 +1,8 @@
 #include "socket.hpp"
 
 #include <cassert>
+#include <string>
+
 extern "C" {
 	#include <memory.h>
 }

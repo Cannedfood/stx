@@ -3,6 +3,7 @@
 #include <cassert>
 #include <fstream>
 #include <algorithm>
+#include <vector>
 
 #if __has_include(<filesystem>)
 	#include <filesystem>

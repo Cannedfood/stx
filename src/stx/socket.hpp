@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <cstdint>
+#include <string_view>
 
 extern "C" {
 	#include <memory.h> // memcmp

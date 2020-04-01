@@ -3,6 +3,7 @@
 #include "task_queue.hpp"
 
 #include <thread>
+#include <vector>
 
 namespace stx {
 

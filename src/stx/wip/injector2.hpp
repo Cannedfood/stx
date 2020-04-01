@@ -1,10 +1,13 @@
 #pragma once
 
+#include "../shared.hpp"
+
 #include <functional>
 #include <type_traits>
 #include <typeindex>
-
-#include "../shared.hpp"
+#include <vector>
+#include <unordered_map>
+#include <string>
 
 namespace stx {
 

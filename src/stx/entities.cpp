@@ -9,12 +9,12 @@ namespace stx {
 
 // -- component id -------------------------------------------------------
 
-std::atomic<size_t> NumRegisteredComponents = 0;
+std::atomic<int> NumRegisteredComponents = 0;
 
-size_t ecs::new_component_id(std::type_info const& t) noexcept {
-	size_t result = NumRegisteredComponents++;
+int ecs::new_component_id(std::type_info const& t) noexcept {
+	int result = NumRegisteredComponents++;
 	// printf("%s -> %zu\n", t.name(), result);
-	if(result >= options::MaxNumComponents) {
+	if(result >= (int)options::MaxNumComponents) {
 		fprintf(stderr, "Exceeded MaxNumComponents (= %zu)\n", options::MaxNumComponents);
 		std::terminate();
 	}

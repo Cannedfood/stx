@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cassert>
 #include <functional>
+#include <algorithm>
 
 #ifdef STX_SHARED_DEBUG
 #include <typeinfo>
@@ -134,6 +135,10 @@ private:
 	}
 };
 
+// =============================================================
+// == enable_shared_from_this ==================================
+// =============================================================
+
 // ** Dummy shared_block *******************************************************
 
 class dummy_shared_block final : public shared_block {
@@ -148,10 +153,6 @@ public:
 		return &_instance;
 	}
 };
-
-// =============================================================
-// == enable_shared_from_this ==================================
-// =============================================================
 
 namespace detail {
 
@@ -227,13 +228,13 @@ class default_shared_block final : public shared_block {
 
 public:
 	template<class... Args>
-	default_shared_block(Args&&... args) noexcept {
+	default_shared_block(Args&&... args) {
 		T* tmp = new(m_data) T(std::forward<Args>(args)...);
 		if(!((unsigned char*)tmp == m_data)) std::terminate();
 		detail::handle_enable_shared_from_this<T, Tptr>(tmp, this);
 	}
 
-	T* value() { return (T*) m_data; }
+	T* value() noexcept { return (T*) m_data; }
 
 	void shared_block_destroy() noexcept override { value()->~T(); }
 	void shared_block_free() noexcept override { delete this; }
@@ -261,7 +262,19 @@ public:
 	void shared_block_free() noexcept override { delete this; }
 };
 
-// ** fake_shared_block ********************************************************
+// ** Adapter for std::unique_ptr **********************************************
+
+template<class T, class Deleter>
+class unique_ptr_shared_block final : public shared_block {
+	std::unique_ptr<T, Deleter> m_ptr;
+
+	void shared_block_destroy() noexcept final override { m_ptr.reset(); }
+	void shared_block_free() noexcept final override { delete this; }
+};
+
+// ** Dummy shared_block *******************************************************
+
+// See in section "enable_shared_from_this"
 
 // =============================================================
 // == shared<T> =============================================
@@ -284,6 +297,7 @@ public:
 	using base_t     = std::remove_all_extents_t<T>;
 
 	~shared() noexcept { reset(); }
+
 
 	shared(std::nullptr_t = nullptr) noexcept {}
 	shared& operator=(std::nullptr_t) noexcept { reset(nullptr); return *this; }
@@ -321,6 +335,12 @@ public:
 	shared(Tptr data, Deleter del) :
 		m_value(data),
 		m_block(!data ? nullptr : new pointer_shared_block<T, Deleter>(data, del))
+	{}
+
+	template<class Deleter>
+	shared(std::unique_ptr<T, Deleter> ptr) :
+		m_value(ptr.get()),
+		m_block(!ptr? nullptr : new unique_ptr_shared_block<T, Deleter>(std::move(ptr)))
 	{}
 
 	// Move related
