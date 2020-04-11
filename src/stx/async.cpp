@@ -1,5 +1,4 @@
 #include "async.hpp"
-#include "environment.hpp"
 #include "async/threadpool.hpp"
 
 #include <thread>
@@ -12,10 +11,6 @@ executor& global_threadpool() noexcept {
 
 	if(!p_threadpool) {
 		unsigned count = std::thread::hardware_concurrency() - 1;
-
-		if(const char* value = stx::env::get("STX_THREADPOOL_SIZE")) {
-			count = strtoul(value, nullptr, 10);
-		}
 
 		p_threadpool = std::make_unique<threadpool>(count);
 	}

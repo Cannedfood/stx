@@ -24,17 +24,16 @@ Stuff that's unfortunately not in the STL and more
 |`random.hpp`      | Easy random numbers (using std::random)                                      |       |
 |`hash.hpp`        | Various has algorithm (actually only fnv-1a)                                 |       |
 |`scoped.hpp`      | Execute stuff at end of scope                                                |       |
-|`list.hpp`        | Make a class a list element (using crt)                                      | Not feature complete |
-|`dlist.hpp`       | Make a class a list element (using crt)                                      | Even less feature complete |
+|`list.hpp`        | Intrusive singly-linked list using crt                                       | Not feature complete |
+|`dlist.hpp`       | Intrusive double-linked list using crt                                       | Even less feature complete |
 |`range.hpp`       | Iterator stuff (`cast_iterator` etc.)                                        |       |
-|`guid.hpp`        | Guid (`cast_iterator` etc.)                                                  | not using proper generation algorithm |
-|`timer.hpp`       | Stop timer using chrono                                                      |       |
+|`guid.hpp`        | Guid                                                                         | not using proper generation algorithm |
+|`timer.hpp`       | Stopwatch based on std::chrono                                               |       |
 |`bitmap(3d).hpp`  | Bitmap views with some pixel operations (blitting etc.)                      |       |
 |`bloom_filter.hpp`| A bloom filter                                                               |       |
 
 |Platform abstractions|                                                       | Notes |
 |---------------------|-------------------------------------------------------|-------|
-|`platform.hpp`       | Various stuff compilers have                          |       |
 |`shared_lib.hpp`     | Load shared libraries at runtime                      |       |
 
 |Quick utilities   |                                                             | Notes |
@@ -43,8 +42,6 @@ Stuff that's unfortunately not in the STL and more
 |`type.hpp`        | type_info::name demangling                                  |       |
 |`allocator.hpp`   | Various allocators (not in the STL-sense of the word)       |       |
 |`cache.hpp`       | Small utility for quickly implementing a very simple cache  |       |
-|`environment.hpp` | Deals with environment variables                            |       |
-|`serial.hpp`      | Utilities to write binary files                             |       |
 
 ## License
 All files in this repository are either licensed under the MIT or CC0 license.
