@@ -1,6 +1,6 @@
-#include "shared.hpp"
-
 #ifdef STX_SHARED_DEBUG
+
+#include "shared.hpp"
 
 #include <set>
 #include <iostream>
