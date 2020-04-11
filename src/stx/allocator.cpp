@@ -1,7 +1,5 @@
 #include "allocator.hpp"
 
-#include "platform.hpp"
-
 namespace stx {
 
 static
@@ -29,14 +27,14 @@ void _destroy_arena(char* arena) {
 	}
 }
 
-arena_allocator::arena_allocator(size_t block_size) :
+arena_allocator::arena_allocator(size_t block_size) noexcept :
 	m_arena_size(block_size),
 	m_arena(nullptr),
 	m_top(nullptr),
 	m_arena_end(nullptr)
 {}
 
-arena_allocator::~arena_allocator() {
+arena_allocator::~arena_allocator() noexcept {
 	reset();
 }
 
@@ -54,15 +52,15 @@ arena_allocator& arena_allocator::operator=(arena_allocator&& other) noexcept {
 	return *this;
 }
 
-void arena_allocator::reset() {
+void arena_allocator::reset() noexcept {
 	_destroy_arena(m_arena);
 	m_arena = m_top = m_arena_end = nullptr;
 }
 
-char* arena_allocator::alloc(size_t bytes) {
+char* arena_allocator::alloc(size_t bytes) noexcept {
 	char* new_top = m_top + bytes;
 
-	if(STX_UNLIKELY(new_top > m_arena_end)) {
+	if(new_top > m_arena_end) {
 		if(bytes > m_arena_size) {
 			// Bigger than our usual arena size:
 			//  Create a new arena just for this allocation, and append it between the current one and its predecessor
@@ -79,13 +77,13 @@ char* arena_allocator::alloc(size_t bytes) {
 	return result;
 }
 
-char* arena_allocator::alloc_string(size_t n) {
+char* arena_allocator::alloc_string(size_t n) noexcept {
 	char* result = alloc(n + 1);
 	result[n] = '\0';
 	return result;
 }
 
-void arena_allocator::undo_alloc(size_t bytes) {
+void arena_allocator::undo_alloc(size_t bytes) noexcept {
 	// TODO: arena_allocator::undo_alloc
 }
 

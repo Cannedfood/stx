@@ -9,17 +9,17 @@ namespace stx {
 
 class arena_allocator {
 public:
-	arena_allocator(size_t block_size = 4096 - sizeof(char*));
-	~arena_allocator();
+	arena_allocator(size_t block_size = 4096 - sizeof(char*)) noexcept;
+	~arena_allocator() noexcept;
 
 	arena_allocator(arena_allocator&& other) noexcept;
 	arena_allocator& operator=(arena_allocator&& other) noexcept;
 
-	char* alloc(size_t bytes);
-	char* alloc_string(size_t n);
-	void  reset();
+	char* alloc(size_t bytes) noexcept;
+	char* alloc_string(size_t n) noexcept;
+	void  reset() noexcept;
 
-	void undo_alloc(size_t bytes);
+	void undo_alloc(size_t bytes) noexcept;
 
 	template<class T, class... Args>
 	T* create(Args... args);

@@ -1,7 +1,5 @@
 #include "xml.hpp"
 
-#include "platform.hpp"
-
 #include <fstream>
 
 #include <cctype>
@@ -51,7 +49,7 @@ std::string_view parse_name(const char*& s) {
 		s++;
 	}
 
-	if(STX_UNLIKELY(beg == s)) {
+	if(beg == s) {
 		throw errors::parsing_error("Expected valid name", s);
 	}
 
@@ -327,12 +325,12 @@ const char* node::parse_regular(arena_allocator& alloc, const char* s) {
 	s = parse_attributes(alloc, s, '/');
 	if(*s == '/') {
 		s++;
-		if(STX_UNLIKELY(*s != '>')) {
+		if(*s != '>') {
 			throw errors::parsing_error("Expected closing greater-than sign >", s, m_value);
 		}
 		return ++s; // No body
 	}
-	if(STX_UNLIKELY(*s != '>')) {
+	if(*s != '>') {
 		throw errors::parsing_error("Expected closing greater-than sign >", s, m_value);
 	}
 	s++;
@@ -445,8 +443,8 @@ const char* node::parse_node(arena_allocator& alloc, const char* s) {
 	if(*s != '<')
 		return parse_content(alloc, s);
 
-	if(STX_UNLIKELY(s[1] == '!')) {
-		if(STX_LIKELY(s[2] == '-' && s[3] == '-')) {
+	if(s[1] == '!') {
+		if(s[2] == '-' && s[3] == '-') {
 			return parse_comment(alloc, s);
 		}
 		else if(
@@ -467,7 +465,7 @@ const char* node::parse_node(arena_allocator& alloc, const char* s) {
 		}
 	}
 
-	if(STX_UNLIKELY(s[1] == '?')) {
+	if(s[1] == '?') {
 		return parse_processing_instruction(alloc, s);
 	}
 
