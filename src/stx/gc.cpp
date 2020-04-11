@@ -16,12 +16,12 @@ struct object {
 	void* begin;
 	void* end;
 
-	bool marked;
+	bool marked = false;
 
-	size_t timestamp;
+	size_t timestamp = 0;
 
-	Deleter deleter;
-	void*   deleter_data;
+	Deleter deleter = {};
+	void*   deleter_data = nullptr;
 
 	std::type_info const* type = nullptr;
 
@@ -36,7 +36,7 @@ struct reference {
 
 	bool from_stack  = false;
 	bool from_object = false;
-	size_t timestamp;
+	size_t timestamp = 0;
 };
 
 static size_t _obj_timestamp = 0;
