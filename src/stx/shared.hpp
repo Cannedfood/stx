@@ -17,7 +17,7 @@
 #include "type_hacks.hpp"
 #endif
 
-// TODO: optimize memory usage with enable_shared_from_this: Only needs one pointer
+// TODO: optimize memory usage with enable_shared_from_this: shared<T> Only needs one pointer
 
 namespace stx {
 
@@ -50,9 +50,9 @@ inline void trace_reference(stx::shared<T> const& p) noexcept {
 
 void shared_debug_print(std::ostream& to) noexcept;
 #else
-inline void trace_reference(void* self, void* ptr, size_t type_size, std::type_info const* type) noexcept {}
+inline void trace_reference(void*, void*, size_t, std::type_info const*) noexcept {}
 template<class T>
-inline void trace_reference(stx::shared<T> const& p) noexcept {}
+inline void trace_reference(stx::shared<T> const&) noexcept {}
 #endif
 
 } // namespace debug
