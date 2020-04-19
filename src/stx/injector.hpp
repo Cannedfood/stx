@@ -29,6 +29,13 @@ public:
 		return *this;
 	}
 
+	template<class T, class Implementation = T>
+	stx::shared<T> create_singleton() {
+		auto& factory = factories[typeid(T)];
+		if(!factory) factory = stx::make_shared<SingletonFactory<T, Implementation>>();
+		return factory->get(*this).cast_static<T>();
+	}
+
 	template<class T>
 	stx::shared<T> get() noexcept {
 		auto iter = factories.find(typeid(T));
