@@ -34,7 +34,7 @@ struct bitmap {
 		T* scanline = data;
 		for(u32 y = 0; y < h; y++) {
 			for(u32 x = 0; x < w; x++) {
-				if constexpr(std::is_invocable_v<Callback, T, u32, u32>)
+				if constexpr(std::is_invocable_v<Callback, T&, u32, u32>)
 					callback(scanline[x], x, y);
 				else
 					callback(scanline[x]);
@@ -47,6 +47,14 @@ struct bitmap {
 
 	constexpr i32 index(i32 x, i32 y) const noexcept { return x + y * elements_per_scanline; }
 	constexpr T&  operator()(i32 x, i32 y) const noexcept { return data[index(x, y)]; }
+
+	constexpr T&  sample_wrapped(i32 x, i32 y) {
+		x = x % w;
+		if(x < 0) x += w;
+		y = y % h;
+		if(y < 0) y += h;
+		return data[index(x, y)];
+	}
 
 	constexpr u32 area() const noexcept { return w * h; }
 };
@@ -64,7 +72,7 @@ struct static_bitmap : public bitmap<T> {
 };
 
 /// A bitmap<T> with storage on the heap
-template<class T, class Deleter = std::default_delete<T>>
+template<class T, class Deleter = std::default_delete<T[]>>
 struct heap_bitmap : public bitmap<T> {
 	using u32 = typename bitmap<T>::u32;
 	using i32 = typename bitmap<T>::i32;
@@ -72,6 +80,7 @@ struct heap_bitmap : public bitmap<T> {
 	Deleter deleter;
 
 	constexpr heap_bitmap(T* data, u32 w, u32 h, Deleter del = {}) noexcept : bitmap<T>(data, w, h), deleter(std::move(del)) {}
+	heap_bitmap(u32 w, u32 h) noexcept : heap_bitmap(new T[w*h], w, h, std::default_delete<T[]>()) {}
 
 	constexpr heap_bitmap(heap_bitmap&& other) noexcept :
 		bitmap<T>(std::exchange(other.data, nullptr), std::exchange(other.w, 0), std::exchange(other.h, 0), std::exchange(other.deleter, {}))
