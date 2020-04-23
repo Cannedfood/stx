@@ -372,6 +372,8 @@ public:
 		_copy_reset(other.m_value, other.m_block);
 	}
 
+	stx::weak<T> get_weak_ref() const noexcept { return stx::weak<T>(*this); }
+
 	shared_block::refcount refcount() const noexcept { return m_block ? m_block->strong_refs() : 0; }
 	shared_block::refcount weak_refcount() const noexcept { return m_block ? m_block->weak_refs() : 0; }
 
