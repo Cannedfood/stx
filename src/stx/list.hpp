@@ -111,7 +111,7 @@ struct list {
 	~list() noexcept;
 
 	explicit /// Constructs list, BUT DOESN'T TAKE OWNERSHIP
-	constexpr list(T* l);
+	constexpr list(T* l) noexcept;
 
 	constexpr void add(T* t) noexcept;
 	constexpr void add(std::initializer_list<T*> t) noexcept;
@@ -146,11 +146,12 @@ class list_element_iterator : public std::iterator<std::forward_iterator_tag, T>
 {
 	mutable list_element<T>* m_element;
 public:
-	list_element_iterator() :
+	constexpr list_element_iterator() noexcept :
 		m_element(nullptr)
 	{}
-	list_element_iterator(list_element<T>* t) : m_element(t) {}
-	list_element_iterator(T* t) :
+	constexpr list_element_iterator(list_element<T>* t) noexcept : m_element(t) {}
+
+	list_element_iterator(T* t) noexcept :
 		list_element_iterator(list_element<T>::_elem(t))
 	{}
 
@@ -286,7 +287,7 @@ template<class T> constexpr
 list<T>::list() noexcept {}
 
 template<class T> constexpr
-list<T>::list(T* l) : m_elements(l) {}
+list<T>::list(T* l) noexcept : m_elements(l) {}
 
 template<class T> constexpr
 list<T>::list(list_t&& l) noexcept :
