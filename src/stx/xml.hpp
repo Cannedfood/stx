@@ -175,7 +175,7 @@ size_t name_hash(std::string_view sv) noexcept {
 		return result;
 	}
 	else if constexpr(sizeof(size_t) == 8) {
-		size_t result = 14695981039346656037ul;
+		size_t result = size_t(14695981039346656037ul);
 		for(auto& c : sv) {
 			result ^= c;
 			result *= 1099511628211ul;

@@ -17,7 +17,7 @@ class executor {
 public:
 	inline virtual ~executor() {}
 
-	inline virtual void defer(std::function<void()> fn, float priority = 0) noexcept { fn(); }
+	inline virtual void defer(std::function<void()> fn, float priority = 0) noexcept { (void)priority; fn(); }
 
 	template<class Callback, class T>
 	void defer(Callback&& callback, weak<T> context, float priority) noexcept;

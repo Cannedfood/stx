@@ -5,6 +5,7 @@
 #include <utility> // std::move
 #include <limits> // std::numeric_limits<size_t>
 #include <iosfwd>
+#include <string>
 
 namespace stx {
 

@@ -12,8 +12,8 @@ namespace stx {
 
 class task_queue : public executor {
 public:
-	task_queue() noexcept = default;
-	~task_queue() noexcept = default;
+	task_queue() noexcept {}
+	~task_queue() noexcept {}
 	void defer(std::function<void()> task, float priority = 0) noexcept override;
 	bool execute_tasks() noexcept;
 

@@ -14,9 +14,10 @@ address ipv4(uint32_t ip, uint16_t port) noexcept {
 	sockaddr_in addr_thing {
 		.sin_family = (sa_family_t)domain::ipv4,
 		.sin_port = htons(port),
-		.sin_addr = { .s_addr = htonl(ip) },
+		.sin_addr = {},
 		.sin_zero = {}
 	};
+	addr_thing.sin_addr.s_addr = htonl(ip); // Hack because Winsock defines s_addr as a macro [facepalm]
 	memcpy((void*)(sockaddr_storage*)&addr, &addr_thing, sizeof(addr_thing));
 	addr.length = sizeof(addr_thing);
 	return addr;
@@ -54,7 +55,7 @@ bool socket::open(domain d, socktype t, protocol p) noexcept {
 }
 void socket::close() noexcept {
 	if(m_handle >= 0) {
-		#ifdef STX_WINDOWS_SOCKET
+		#ifdef STX_WINDOWS_SOCKETS
 			::closesocket(m_handle);
 		#else
 			::close(m_handle);
@@ -90,10 +91,10 @@ socket socket::accept(address* addr) noexcept {
 
 // TCP-ish
 int socket::send(const void* data, size_t len, int flags) noexcept {
-	return ::send(m_handle, data, len, flags);
+	return ::send(m_handle, (const char*)data, len, flags);
 }
 int socket::recv(void* data,       size_t len, int flags) noexcept {
-	return ::recv(m_handle, data, len, flags);
+	return ::recv(m_handle, (char*)data, len, flags);
 }
 
 // UDP-ish
@@ -107,7 +108,7 @@ int socket::recvfrom(void*       buf, size_t len, address* from, int flags) noex
 	);
 }
 int socket::sendto  (void const* buf, size_t len, address const& to,   int flags) noexcept {
-	return ::sendto(m_handle, buf, len, flags, to, to.length);
+	return ::sendto(m_handle, (const char*) buf, len, flags, to, to.length);
 }
 
 // Options
@@ -122,7 +123,7 @@ bool socket::option(sockopt_level level, sockopt opt, void const* value, size_t 
 		case sockopt::non_blocking:{
 			#if defined(STX_WINDOWS_SOCKETS)
 				// Not tested, on a linux machine right now
-				err_code = ioctlsocket(m_handle, FIONBIO, value);
+				err_code = ioctlsocket(m_handle, FIONBIO, (u_long*)value);
 			#elif defined(STX_LINUX_SOCKETS)
 				int flags = fcntl(m_handle, F_GETFL, 0);
 				if (flags < 0) {
@@ -136,7 +137,7 @@ bool socket::option(sockopt_level level, sockopt opt, void const* value, size_t 
 			#endif
 		} break;
 		default: {
-			err_code = ::setsockopt(m_handle, (int)level, (int) opt, value, size);
+			err_code = ::setsockopt(m_handle, (int)level, (int) opt, (const char*)value, size);
 		} break;
 	}
 	return err_code >= 0;

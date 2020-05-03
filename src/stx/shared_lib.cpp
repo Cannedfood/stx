@@ -67,18 +67,19 @@ shared_lib& shared_lib::operator=(shared_lib&& other) noexcept {
 namespace stx {
 
 bool shared_lib::open(const char* libname, unsigned flags) noexcept {
-	m_handle = LoadLibrary((std::string(filename) + ".dll").c_str());
+	std::wstring libnameW(libname, libname + strlen(libname));
+	m_handle = LoadLibrary((libnameW + L".dll").c_str());
 	return is_open();
 }
 
 void shared_lib::close() noexcept {
 	if(m_handle) {
-		FreeLibrary(m_handle);
+		FreeLibrary((HMODULE)m_handle);
 		m_handle = nullptr;
 	}
 }
 
-void* shared_lib::getp(const char* symbol) const noexcept { return GetProcAdress(m_handle, symbol); }
+void* shared_lib::getp(const char* symbol) const noexcept { return GetProcAddress((HMODULE)m_handle, symbol); }
 
 unsigned shared_lib::supported_flags() noexcept { return 0; }
 

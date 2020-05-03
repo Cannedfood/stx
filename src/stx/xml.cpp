@@ -36,8 +36,8 @@ bool is_name_character(char c) {
 
 static
 std::string_view trim_whitespace(std::string_view s) {
-	while(s.size() && std::iswspace(s.front())) s.remove_prefix(1);
-	while(s.size() && std::iswspace(s.back())) s.remove_suffix(1);
+	while(s.size() && std::isspace(s.front())) s.remove_prefix(1);
+	while(s.size() && std::isspace(s.back())) s.remove_suffix(1);
 	return s;
 }
 

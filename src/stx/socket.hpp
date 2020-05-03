@@ -11,8 +11,11 @@ extern "C" {
 #if ( defined(WIN32) || defined(_WIN32) || defined(__WIN32) ) && !defined(__CYGWIN__)
 	#define STX_WINDOWS_SOCKETS
 	extern "C" {
-		#include <winsock.h>
+		#include <WinSock2.h>
+		#include <ws2ipdef.h>
 	}
+	using socklen_t = int;
+	using sa_family_t = decltype(sockaddr::sa_family);
 #else
 	#define STX_LINUX_SOCKETS
 	extern "C" {
@@ -54,8 +57,11 @@ enum class sockopt_level {
 
 enum class sockopt {
 	reuse_address = SO_REUSEADDR,
-	reuse_port    = SO_REUSEPORT,
-
+#ifdef STX_WINDOWS_SOCKETS
+	reuse_port    = SO_REUSEADDR, // TODO: Is this the correct behavior?
+#else
+	reuse_port = SO_REUSEPORT,
+#endif
 	non_blocking = -2062144233
 };
 
