@@ -79,16 +79,20 @@ struct heap_bitmap : public bitmap<T> {
 
 	Deleter deleter;
 
-	constexpr heap_bitmap(Deleter&& del = {}) noexcept : bitmap<T>(nullptr, 0, 0), deleter(std::move(del)) {}
-	constexpr heap_bitmap(T* data, u32 w, u32 h, Deleter&& del = {}) noexcept : bitmap<T>(data, w, h), deleter(std::move(del)) {}
+	heap_bitmap(Deleter&& del = {}) noexcept : bitmap<T>(nullptr, 0, 0), deleter(std::move(del)) {}
+	heap_bitmap(T* data, u32 w, u32 h, Deleter&& del = {}) noexcept : bitmap<T>(data, w, h), deleter(std::move(del)) {}
 	heap_bitmap(u32 w, u32 h) noexcept : heap_bitmap(new T[w*h], w, h, std::default_delete<T[]>()) {}
 
-	constexpr heap_bitmap(heap_bitmap&& other) noexcept :
+	~heap_bitmap() noexcept { reset(); }
+
+	heap_bitmap(heap_bitmap&) = delete;
+	heap_bitmap& operator=(heap_bitmap&) = delete;
+
+	heap_bitmap(heap_bitmap&& other) noexcept :
 		bitmap<T>(std::exchange(other.data, nullptr), std::exchange(other.w, 0), std::exchange(other.h, 0)),
 		deleter(std::exchange(other.deleter, {}))
 	{}
-
-	constexpr heap_bitmap& operator=(heap_bitmap&& other) noexcept(noexcept(Deleter()((T*)nullptr))) {
+	heap_bitmap& operator=(heap_bitmap&& other) noexcept(noexcept(Deleter()((T*)nullptr))) {
 		std::swap(this->data,    other.data);
 		std::swap(this->w,       other.w);
 		std::swap(this->h,       other.h);
