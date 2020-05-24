@@ -4,22 +4,43 @@
 #include <stx/wip/rasterizer.hpp>
 #include <stx/random.hpp>
 
-bool isInsideOfTriangle(float ptx, float pty, float v1x, float v1y, float v2x, float v2y, float v3x, float v3y) {
-	auto sign = [](float p1x, float p1y, float p2x, float p2y, float p3x, float p3y) {
-		return (p1x - p3x) * (p2y - p3y) - (p2x - p3x) * (p1y - p3y);
-	};
+#include <cmath>
 
-    float d1 = sign(ptx, pty, v1x, v1y, v2x, v1y);
-    float d2 = sign(ptx, pty, v2x, v2y, v3x, v2y);
-    float d3 = sign(ptx, pty, v3x, v3y, v1x, v3y);
+struct Triangle {
+    Triangle(float x1, float y1, float x2, float y2, float x3, float y3) {
+        this->x3 = x3;
+        this->y3 = y3;
+        y23 = y2 - y3;
+        x32 = x3 - x2;
+        y31 = y3 - y1;
+        x13 = x1 - x3;
+        det = y23 * x13 - x32 * y31;
+        minD = std::min(det, 0.f);
+        maxD = std::max(det, 0.f);
+    }
 
-    bool has_neg = (d1 < 0) || (d2 < 0) || (d3 < 0);
-    bool has_pos = (d1 > 0) || (d2 > 0) || (d3 > 0);
+    bool contains(float x, float y) {
+        float dx = x - x3;
+        float dy = y - y3;
+        float a = y23 * dx + x32 * dy;
+        if (a < minD || a > maxD)
+            return false;
+        float b = y31 * dx + x13 * dy;
+        if (b < minD || b > maxD)
+            return false;
+        float c = det - a - b;
+        if (c < minD || c > maxD)
+            return false;
+        return true;
+    }
 
-    return !(has_neg && has_pos);
-}
+    float x3, y3;
+    float y23, x32, y31, x13;
+    float det, minD, maxD;
+};
 
 TEST_CASE("Test rasterizer", "[rasterizer]") {
+	// TODO: switch to Catch2 GENERATE (currently crashes)
 	// float x1 = GENERATE(random(0.f, 100.f)), y1 = GENERATE(random(0.f, 100.f));
 	// float x2 = GENERATE(random(0.f, 100.f)), y2 = GENERATE(random(0.f, 100.f));
 	// float x3 = GENERATE(random(0.f, 100.f)), y3 = GENERATE(random(0.f, 100.f));
@@ -50,26 +71,51 @@ TEST_CASE("Test rasterizer", "[rasterizer]") {
 		);
 	}
 
-	// SECTION("Check that rasterization is correct") {
-	// 	stx::heap_bitmap<bool> image(10, 10);
-	// 	image.each([](bool& b) { b = false; });
+	SECTION("Check that rasterization is correct") {
+		stx::heap_bitmap<bool> image(32, 32);
+		image.each([](bool& b) { b = false; });
 
-	// 	float x1 = GENERATE(random(0.f, 20.f)), y1 = GENERATE(random(0.f, 20.f));
-	// 	float x2 = GENERATE(random(0.f, 20.f)), y2 = GENERATE(random(0.f, 20.f));
-	// 	float x3 = GENERATE(random(0.f, 20.f)), y3 = GENERATE(random(0.f, 20.f));
+		// float x1 = GENERATE(random(0.f, 20.f)), y1 = GENERATE(random(0.f, 20.f));
+		// float x2 = GENERATE(random(0.f, 20.f)), y2 = GENERATE(random(0.f, 20.f));
+		// float x3 = GENERATE(random(0.f, 20.f)), y3 = GENERATE(random(0.f, 20.f));
 
-	// 	stx::rasterize_triangle(
-	// 		x1, y1,
-	// 		x2, y2,
-	// 		x3, y3,
-	// 		[&](int x, int y) {
-	// 			image(x, y) = true;
-	// 			CHECK(isInsideOfTriangle(x, y, x1, y1, x2, y2, x3, y3));
-	// 		}
-	// 	);
+		Triangle triangle(x1, y1, x2, y2, x3, y3);
 
-	// 	image.each([&](bool value, unsigned x, unsigned y) {
-	// 		CHECK(value == isInsideOfTriangle(x, y, x1, y1, x2, y2, x3, y3));
-	// 	});
-	// }
+		stx::rasterize_triangle(
+			x1, y1,
+			x2, y2,
+			x3, y3,
+			[&](int x, int y) { image(x, y) = true; }
+		);
+
+
+		image.each([&](bool value, unsigned x, unsigned y) {
+			CHECK(value == triangle.contains(x, y));
+		});
+
+		// puts("------------------");
+		// for(size_t y = 0; y < image.h; y++) {
+		// 	for(size_t x = 0; x < image.w; x++) {
+		// 		printf(image(x, y)?"X":" ");
+		// 	}
+		// 	printf("\n");
+		// }
+
+		// Triangle triangle(x1, y1, x2, y2, x3, y3);
+		// puts("------------------");
+		// for(size_t y = 0; y < image.h; y++) {
+		// 	for(size_t x = 0; x < image.w; x++) {
+		// 		printf(triangle.contains(x, y)?"X":" ");
+		// 	}
+		// 	printf("\n");
+		// }
+		// puts("------------------");
+		// for(size_t y = 0; y < image.h; y++) {
+		// 	for(size_t x = 0; x < image.w; x++) {
+		// 		printf(triangle.contains(x, y) != image(x, y)?"X":" ");
+		// 	}
+		// 	printf("\n");
+		// }
+		// puts("------------------");
+	}
 }

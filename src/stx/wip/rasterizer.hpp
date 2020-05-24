@@ -45,13 +45,19 @@ void rasterize_triangle(
 
 	// Sort the points so that ay < by < ay
 	if(ay > by) {
+		std::swap(ax, bx);
 		std::swap(ay, by);
+		std::swap(az, bz);
 	}
 	if(by > cy) {
+		std::swap(bx, cx);
 		std::swap(by, cy);
+		std::swap(bz, cz);
 
 		if(ay > by) {
+			std::swap(ax, bx);
 			std::swap(ay, by);
+			std::swap(az, bz);
 		}
 	}
 
