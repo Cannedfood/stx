@@ -198,7 +198,7 @@ TEST_CASE("GC stress test", "[gc]") {
 		e = make_gc<thing>(thing { .count = { count } });
 	}
 
-	CHECK(count == things.size());
+	CHECK(count == (int)things.size());
 	CHECK(garbage_collector::total_obj_count() == things.size());
 	CHECK(garbage_collector::total_ref_count() == things.size());
 
@@ -219,11 +219,11 @@ TEST_CASE("GC stress test", "[gc]") {
 	garbage_collector::mark_and_sweep();
 	CHECK(garbage_collector::total_obj_count() == things.size());
 	CHECK(garbage_collector::total_ref_count() == things.size() * 2);
-	CHECK(count == things.size());
+	CHECK(count == (int)things.size());
 
-	CHECK(count == things.size());
+	CHECK(count == (int)things.size());
 	garbage_collector::mark_and_sweep();
-	CHECK(count == things.size());
+	CHECK(count == (int)things.size());
 
 	things.clear();
 	garbage_collector::mark_and_sweep();
@@ -275,10 +275,4 @@ TEST_CASE("gc_alloc works", "[gc]") {
 	garbage_collector::mark_and_sweep();
 	CHECK(garbage_collector::total_ref_count() == 0);
 	CHECK(garbage_collector::total_obj_count() == 0);
-}
-
-TEST_CASE("Test destruction order") {
-	// TODO
-
-
 }
