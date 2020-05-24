@@ -1,7 +1,7 @@
 workspace 'stx'
 
 language   'C++'
-cppdialect 'C++latest'
+cppdialect 'C++17'
 
 configurations {
 	'dev',
@@ -54,8 +54,3 @@ project 'test'
 	files 'test/unit/**.cpp'
 	links 'stx'
 	links {'pthread'}
-
-project 'perf'
-	kind 'ConsoleApp'
-	files 'test/performance/**.cpp'
-	links 'stx'

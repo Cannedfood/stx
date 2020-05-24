@@ -6,7 +6,7 @@
 #include <cassert>
 #include <fstream>
 
-#include "type.hpp"
+#include "../type.hpp"
 
 namespace stx {
 

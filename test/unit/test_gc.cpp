@@ -4,7 +4,7 @@
 
 #include <stx/random.hpp>
 
-#include <stx/gc.hpp>
+#include <stx/unmaintained/gc.hpp>
 
 #include <fstream>
 #include <iostream>
