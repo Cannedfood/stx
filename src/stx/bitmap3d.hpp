@@ -7,6 +7,7 @@
 #include <tuple>
 #include <algorithm>
 #include <memory>
+#include <functional>
 
 namespace stx {
 
@@ -40,7 +41,10 @@ struct bitmap3d {
 			T* scanline = slice;
 			for(u32 y = 0; y < h; y++) {
 				for(u32 x = 0; x < w; x++) {
-					callback(scanline[x]);
+					if constexpr(std::is_invocable_v<Callback, T&, u32, u32, u32>)
+						callback(scanline[x], x, y, z);
+					else
+						callback(scanline[x]);
 				}
 				scanline += elements_per_scanline;
 			}
