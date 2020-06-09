@@ -46,11 +46,15 @@ includedirs 'src/'
 
 project 'stx'
 	kind 'SharedLib'
-	files 'src/**.cpp'
-	links {'dl', 'pthread', 'stdc++fs'}
+	files 'src/**'
+	filter 'system:not windows'
+		links {'dl', 'pthread', 'stdc++fs'}
+	filter {}
 
 project 'test'
 	kind 'ConsoleApp'
-	files 'test/unit/**.cpp'
+	files 'test/unit/**'
 	links 'stx'
-	links {'pthread'}
+	filter 'system:not windows'
+		links {'pthread'}
+	filter {}

@@ -11,13 +11,12 @@ namespace stx {
 
 address ipv4(uint32_t ip, uint16_t port) noexcept {
 	address addr;
-	sockaddr_in addr_thing {
-		.sin_family = (sa_family_t)domain::ipv4,
-		.sin_port = htons(port),
-		.sin_addr = {},
-		.sin_zero = {}
-	};
+	sockaddr_in addr_thing{};
+	addr_thing.sin_family = (sa_family_t)domain::ipv4;
+	addr_thing.sin_port = htons(port);
+	addr_thing.sin_addr = {};
 	addr_thing.sin_addr.s_addr = htonl(ip); // Hack because Winsock defines s_addr as a macro [facepalm]
+
 	memcpy((void*)(sockaddr_storage*)&addr, &addr_thing, sizeof(addr_thing));
 	addr.length = sizeof(addr_thing);
 	return addr;

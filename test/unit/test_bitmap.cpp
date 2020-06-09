@@ -2,6 +2,8 @@
 #include <stx/bitmap.hpp>
 #include <stx/random.hpp>
 
+#include <array>
+
 TEST_CASE("Test bitmap", "[bitmap]") {
 	unsigned w = 5, h = 7;
 

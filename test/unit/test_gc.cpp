@@ -234,7 +234,7 @@ TEST_CASE("GC stress test", "[gc]") {
 
 struct recursive_ref {
 	std::vector<gc<recursive_ref>, gc_alloc<gc<recursive_ref>>> refs;
-	recursive_ref() : refs({ this }) {}
+	recursive_ref() : refs(gc_alloc<gc<recursive_ref>>(this)) {}
 };
 
 TEST_CASE("gc_alloc works", "[gc]") {

@@ -45,10 +45,10 @@ struct list_element {
 
 	constexpr T* back(T* end = nullptr) noexcept;
 
-	constexpr iterator begin() noexcept;
-	constexpr iterator end() noexcept;
-	constexpr const_iterator cbegin() const noexcept;
-	constexpr const_iterator cend() const noexcept;
+	constexpr iterator begin() noexcept { return iterator(this); }
+	constexpr iterator end() noexcept { return iterator(); }
+	constexpr const_iterator cbegin() const noexcept { return const_iterator(this); }
+	constexpr const_iterator cend() const noexcept { return const_iterator(); }
 
 	template<class Pred>
 	void insert_to(T*& to, Pred&& pred) {
@@ -260,15 +260,6 @@ T* list_element<T>::back(T* end) noexcept {
 	}
 	return t;
 }
-
-template<class T> constexpr
-typename list_element<T>::iterator list_element<T>::begin() noexcept { return iterator(this); }
-template<class T> constexpr
-typename list_element<T>::iterator list_element<T>::end() noexcept { return iterator(); }
-template<class T> constexpr
-typename list_element<T>::const_iterator list_element<T>::cbegin() const noexcept { return const_iterator(this); }
-template<class T> constexpr
-typename list_element<T>::const_iterator list_element<T>::cend() const noexcept { return const_iterator(); }
 
 template<class T> constexpr
 void list_element<T>::_reset(T** toThis, T* next) noexcept {

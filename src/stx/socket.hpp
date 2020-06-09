@@ -10,6 +10,8 @@ extern "C" {
 
 #if ( defined(WIN32) || defined(_WIN32) || defined(__WIN32) ) && !defined(__CYGWIN__)
 	#define STX_WINDOWS_SOCKETS
+
+	#pragma comment(lib, "Ws2_32.lib")
 	extern "C" {
 		#include <WinSock2.h>
 		#include <ws2ipdef.h>
