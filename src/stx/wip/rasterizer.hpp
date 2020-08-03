@@ -28,6 +28,31 @@ struct arithmetic_void {
 };
 
 template<class Z, class Callback>
+void rasterize_triangle(float ax,float ay,Z az,  float bx,float by,Z bz,  float cx,float cy,Z cz,  Callback&& callback);
+template<class Callback>          
+void rasterize_triangle(float ax,float ay,  float bx,float by,  float cx,float cy,  Callback&& callback);
+
+template<class W, class Callback>
+void rasterize_line(
+	float ax, float ay, float az, W aw,
+	float bx, float by, float bz, W bw,
+	Callback&& callback);
+template<class Callback>
+void rasterize_line(
+	float ax, float ay, float az,
+	float bx, float by, float bz,
+	Callback&& callback);
+
+#ifdef STX_RASTERIZER_BITMAP_SUPPORT
+template<class Z> void rasterize_triangle(float ax,float ay,Z az,  float bx,float by,Z bz,  float cx,float cy,Z cz,  stx::bitmap<Z> output);
+#endif
+
+} // namespace stx
+
+
+namespace stx {
+
+template<class Z, class Callback>
 void rasterize_triangle(
 	float ax, float ay, Z az,
 	float bx, float by, Z bz,
@@ -167,6 +192,51 @@ void rasterize_triangle(
 		cx, cy, arithmetic_void{},
 		[&](int x, int y, arithmetic_void _) {
 			callback(x, y);
+		}
+	);
+}
+
+template<class W, class Callback>
+void rasterize_line(
+	float ax, float ay, float az, W aw,
+	float bx, float by, float bz, W bw,
+	Callback&& callback)
+{
+	float diffX = bx - ax;
+	float diffY = by - ay;
+	float diffZ = bz - az;
+	W     diffW = bw - aw;
+
+	float absmax = std::max(std::abs(diffX), std::max(std::abs(diffY), std::abs(diffZ)));
+
+	float stepX = diffX / absmax;
+	float stepY = diffY / absmax;
+	float stepZ = diffZ / absmax;
+	W     stepW = diffW / absmax;
+
+	float x = ax, y = ay, z = az;
+	W     w = aw;
+	while(x <= bx) {
+		callback(x, y, z, w);
+
+		x += stepX;
+		y += stepY;
+		z += stepZ;
+		w += stepW;
+	}
+}
+
+template<class Callback>
+void rasterize_line(
+	float ax, float ay, float az,
+	float bx, float by, float bz,
+	Callback&& callback)
+{
+	rasterize_line(
+		ax, ay, az, arithmetic_void(),
+		bx, by, bz, arithmetic_void(),
+		[&callback](float x, float y, float z, arithmetic_void) {
+			callback(x, y, z);
 		}
 	);
 }
