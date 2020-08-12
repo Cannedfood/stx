@@ -405,6 +405,7 @@ public:
 	Tptr  operator->() const noexcept { return m_value; }
 	auto& operator*()  const noexcept { return *m_value; }
 	Tptr  get()        const noexcept { return m_value; }
+	shared_block* get_block() const noexcept { return m_block; }
 
 	template<class Tx>
 	shared<Tx> cast_dynamic() const noexcept {

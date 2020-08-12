@@ -65,21 +65,34 @@ public:
 
 	template<class T>
 	operator stx::shared<T>() noexcept { return get<T>(); }
-private:
-	injector* fallback = nullptr;
 
+	std::vector<stx::shared<void>> all() {
+		std::vector<stx::shared<void>> result;
+		if(fallback) { result = fallback->all(); }
+
+		for(auto& factory : factories) {
+			result.push_back(factory.second->get(*this));
+		}
+		return result;
+	}
+
+public:
 	struct Factory {
 		virtual stx::shared<void> get(injector& context) noexcept = 0;
 	};
 
-	template<class T>
-	class dependency_shared_block final : public shared_block {
-		using Tptr = std::remove_all_extents_t<T>*;
-	
-		alignas(T) unsigned char m_data[sizeof(T)];
+	struct dependency_shared_block_base {
 	public:
 		std::vector<stx::shared<void>> dependencies;
+		virtual ~dependency_shared_block_base() {}
+	};
 
+	template<class T>
+	class dependency_shared_block final : public shared_block, public dependency_shared_block_base {
+		using Tptr = std::remove_all_extents_t<T>*;
+
+		alignas(T) unsigned char m_data[sizeof(T)];
+	public:
 		template<class... Args>
 		dependency_shared_block(Args&&... args) noexcept {
 			T* tmp = new(m_data) T(std::forward<Args>(args)...);
@@ -126,6 +139,7 @@ private:
 		}
 	};
 
+private:
 	template<class DoNotBindTo = void>
 	struct autobinder {
 		injector* m_injector;
@@ -203,6 +217,7 @@ private:
 		}
 	}
 
+	injector* fallback = nullptr;
 	std::unordered_map<std::type_index, stx::shared<Factory>> factories;
 };
 
