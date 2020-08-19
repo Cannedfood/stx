@@ -6,15 +6,13 @@ Stuff that's unfortunately not in the STL and more
 
 |Parsers        |                                                       | Notes |
 |---------------|-------------------------------------------------------|-------|
-|`xml.hpp`      | A xml parser                                          |       |
+|`xml.hpp`      | A xml parser                                          | No longer maintained, I use [pugi xml](https://github.com/zeux/pugixml) instead |
 |`csv.hpp`      | A csv parser                                          |       |
 |`config.hpp`   | A key-value store and .ini parser                     |       |
 
 |Architecture   |                                                       | Notes |
 |---------------|-------------------------------------------------------|-------|
 |`injector.hpp` | A utility for dependency injection                    |       |
-|`systems.hpp`  | A system manager for game engines                     |       |
-|`entities.hpp` | Entity part of an Entity Component System             |       |
 |`config.hpp`   | A key-value store and .ini parser                     |       |
 
 |STL-Likes (containers and well-behaved types) |                                                  | Notes |
@@ -24,8 +22,6 @@ Stuff that's unfortunately not in the STL and more
 |`random.hpp`      | Easy random numbers (using std::random)                                      |       |
 |`hash.hpp`        | Various has algorithm (actually only fnv-1a)                                 |       |
 |`scoped.hpp`      | Execute stuff at end of scope                                                |       |
-|`list.hpp`        | Intrusive singly-linked list using crt                                       | Not feature complete |
-|`dlist.hpp`       | Intrusive double-linked list using crt                                       | Even less feature complete |
 |`range.hpp`       | Iterator stuff (`cast_iterator` etc.)                                        |       |
 |`guid.hpp`        | Guid                                                                         | not using proper generation algorithm |
 |`timer.hpp`       | Stopwatch based on std::chrono                                               |       |
