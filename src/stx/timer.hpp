@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <string>
+#include <deque>
 
 namespace stx {
 
@@ -29,6 +30,7 @@ public:
 	template<class Duration = clock_duration>
 	Duration time() const noexcept { return duration_cast<Duration>(now() - m_begin); }
 
+	std::string poll_string() { auto result = to_string(time<>()); reset(); return result; }
 	std::string to_string() const { return to_string(time<>()); }
 
 	template<class T, class Rep>
@@ -96,6 +98,29 @@ public:
 using highres_timer = basic_timer<std::chrono::high_resolution_clock>;
 using steady_timer  = basic_timer<std::chrono::steady_clock>;
 using timer         = highres_timer;
+
+struct running_average {
+	std::deque<float> values;
+	float sum = 0;
+	size_t maxValues = 0;
+public:
+	running_average(size_t count) :
+		maxValues(count)
+	{}
+
+	void addSample(float f) noexcept {
+		sum += f;
+		values.push_back(f);
+		while(values.size() > maxValues) {
+			sum -= values.front();
+			values.pop_front();
+		}
+	}
+
+	operator float() const noexcept {
+		return values.empty()? 0 : sum / values.size();
+	}
+};
 
 } // namespace stx
 
