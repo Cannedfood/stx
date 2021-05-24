@@ -2,6 +2,7 @@
 #define STX_TYPE_INCLUDED
 
 #include <string>
+#include <typeinfo>
 
 #pragma once
 
