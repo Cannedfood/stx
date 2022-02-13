@@ -247,7 +247,7 @@ TEST_CASE("gc_alloc works", "[gc]") {
 
 		using gc_map = std::map<int, int, std::less<>, gc_alloc<std::pair<const int, int>>>;
 
-		gc_map map(gc_alloc{owner.get()});
+		gc_map map(gc_alloc<int>{owner.get()});
 		for (size_t i = 0; i < 100; i++) {
 			map.emplace(rnd.get<int>(), rnd.get<int>());
 		}
